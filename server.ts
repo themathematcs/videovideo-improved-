@@ -521,15 +521,42 @@ function generateTopicAwareVideoPlan(
   pacing = "balanced",
   targetDuration = 30
 ) {
-  const inputTopic = (rawInput || "Creative Video Storytelling").trim();
+  const rawInputTopic = (rawInput || "Creative Video Storytelling").trim();
   const sceneDuration = pacing === "fast" ? 3.5 : pacing === "cinematic" ? 7 : 5;
-  const lower = inputTopic.toLowerCase();
 
-  // Check if the user entered multiple sentences (an actual script)
-  const userSentences = inputTopic
+  // Intelligent meta-prompt cleaner: if user writes a prompt like "Write a fast-paced script about X. Hook audience with Y...",
+  // extract the core content sentences and remove formatting/instruction directives ("Write a...", "Match with...", "subtitles", etc.)
+  let cleanedInput = rawInputTopic;
+  if (/^(write|create|generate)\s+a/i.test(cleanedInput)) {
+    cleanedInput = cleanedInput.replace(/^(write|create|generate)\s+a\s+[^a-z0-9]*\bscript\s+(about|on)\s+/i, "");
+  }
+
+  const sentenceCandidates = cleanedInput
     .split(/(?<=[.?!])\s+|\n+/)
     .map(s => s.trim())
     .filter(s => s.length > 5);
+
+  let userSentences = sentenceCandidates.filter(s => {
+    const low = s.toLowerCase();
+    return !(
+      low.startsWith("write ") ||
+      low.startsWith("create ") ||
+      low.startsWith("generate ") ||
+      low.includes("match with") ||
+      low.includes("subtitles") ||
+      low.includes("music") ||
+      low.includes("stock footage") ||
+      low.includes("hook the audience")
+    );
+  });
+
+  // If instruction sentences were all filtered out or prompt was phrased as a single meta instruction, extract clauses or use rawInputTopic
+  if (userSentences.length === 0) {
+    userSentences = [rawInputTopic];
+  }
+
+  const inputTopic = userSentences.join(" ");
+  const lower = inputTopic.toLowerCase();
 
   const stopWords = new Set([
     "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with",
@@ -549,6 +576,8 @@ function generateTopicAwareVideoPlan(
 
   if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lower)) {
     domain = "cyber";
+  } else if (/(morning|routine|productivity|focus|minimalist|habit|lifestyle|relax|meditation|wellness|mindful|mental|calm)/.test(lower)) {
+    domain = "health";
   } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lower)) {
     domain = "culinary";
   } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lower)) {
@@ -563,8 +592,6 @@ function generateTopicAwareVideoPlan(
     domain = "space";
   } else if (/(car|supercar|driving|race|racing|drift|drifting|speed|porsche|ferrari|lamborghini|motorcycle|track|engine|automotive)/.test(lower)) {
     domain = "cars";
-  } else if (/(meditation|health|wellness|mindful|mental|spa|peace|calm|skincare|breathe|therapy|relax)/.test(lower)) {
-    domain = "health";
   } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lower)) {
     domain = "art";
   } else if (/(tech|code|coding|software|ai|robot|computer|developer|laptop|matrix|algorithm|data)/.test(lower)) {
@@ -622,8 +649,30 @@ function generateTopicAwareVideoPlan(
       };
     });
   } else {
-    // Build domain scene pool that can expand to 60+ seconds
-    let basePool: SceneSpec[] = [];
+    // Check if prompt has comma or 'and' clauses for custom multi-part decomposition
+    const parts = inputTopic.split(/[,;&]|\s+for\s+|\s+and\s+/).map(p => p.trim()).filter(p => p.length > 3);
+    if (parts.length >= 2) {
+      music_keyword = "minimalist ambient focus peaceful";
+      music_mood = "peaceful focus";
+      rawScenes = parts.map((part, idx) => {
+        const narration = idx === 0
+          ? `Discover ${part}, crafted for maximum impact and intentional execution.`
+          : idx === parts.length - 1
+          ? `Mastering ${part} to unlock your absolute highest potential.`
+          : `Integrating ${part} into your daily ritual for sustainable excellence.`;
+        const trans: 'fade' | 'splitscreen' | 'zoom' | 'slide' = (idx % 4 === 1) ? 'splitscreen' : (idx % 4 === 2) ? 'zoom' : (idx % 4 === 3) ? 'slide' : 'fade';
+        return {
+          narration,
+          search_keywords: `${part} minimalist aesthetic cinematic b-roll`,
+          secondary_keywords: `${inputTopic} professional workflow detail`,
+          duration: sceneDuration,
+          subtitle: part.charAt(0).toUpperCase() + part.slice(1),
+          transition: trans
+        };
+      });
+    } else {
+      // Build domain scene pool that can expand to 60+ seconds
+      let basePool: SceneSpec[] = [];
     switch (domain) {
       case "cyber":
         music_keyword = "dark cyber synthwave electronic suspense";
@@ -799,6 +848,7 @@ function generateTopicAwareVideoPlan(
     const requiredCount = Math.max(3, Math.min(basePool.length, calculatedSceneCount));
     rawScenes = basePool.slice(0, requiredCount);
   }
+}
 
   const scenes = rawScenes.map((sc, idx) => ({
     scene_number: idx + 1,
