@@ -116,6 +116,8 @@ function extractSemanticStockKeywords(
     domain = "cars";
   } else if (/(meditation|health|wellness|mindful|mental|spa|peace|calm|skincare|breathe|therapy|relax|doctor|hospital|medical)/.test(lowerWhole)) {
     domain = "health";
+  } else if (/(pyramid|giza|egypt|ancient|history|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization)/.test(lowerWhole)) {
+    domain = "history";
   } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lowerWhole)) {
     domain = "art";
   }
@@ -171,6 +173,23 @@ function extractSemanticStockKeywords(
       secondary: "server farm data center glowing lights",
       music: "dark cyber synthwave electronic suspense",
       mood: "tense cyber thriller"
+    };
+  }
+
+  if (domain === "history") {
+    if (/(pyramid|giza|egypt|sphinx|pharaoh|tomb)/.test(lowerSentence)) {
+      return {
+        keywords: "great pyramid giza egypt ancient monument drone",
+        secondary: "sphinx egypt desert ancient civilization aerial",
+        music: "mysterious cinematic ambient desert atmospheric",
+        mood: "epic ancient mystery"
+      };
+    }
+    return {
+      keywords: "ancient history archaeological site monument ruins",
+      secondary: "ancient civilization historical mystery desert",
+      music: "mysterious cinematic ambient desert atmospheric",
+      mood: "epic ancient mystery"
     };
   }
 
@@ -316,6 +335,10 @@ function fallbackRuleBasedParser(script: string) {
     domainTag = "renewable energy solar wind";
     music_keywords = ["clean ambient future", "uplifting orchestral inspire", "inspiring corporate"];
     sfx_keywords = ["wind turbine breeze", "electrical hum", "subtle digital click"];
+  } else if (/(pyramid|giza|egypt|ancient|history|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization)/.test(lower)) {
+    domainTag = "great pyramid giza egypt ancient monument";
+    music_keywords = ["mysterious cinematic ambient desert", "epic ancient mystery", "atmospheric drone"];
+    sfx_keywords = ["wind blow desert", "mysterious chime", "stone rumbling"];
   } else if (/(code|software|developer|app|programming|engineer|tech|ai|robot)/.test(lower)) {
     domainTag = "software developer technology";
     music_keywords = ["tech ambient synth", "lofi chill coding", "modern electronic pulse"];
@@ -437,7 +460,7 @@ OUTPUT FORMAT:
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+      model: "gemini-2.5-flash",
       contents: promptText,
       config: {
         systemInstruction,
@@ -571,13 +594,15 @@ function generateTopicAwareVideoPlan(
 
   const primaryTopic = promptWords.slice(0, 3).join(" ") || "cinematic scene";
 
-  type DomainType = "cyber" | "culinary" | "wildlife" | "sports" | "travel" | "crypto" | "space" | "cars" | "health" | "art" | "tech" | "custom";
+  type DomainType = "cyber" | "culinary" | "wildlife" | "sports" | "travel" | "crypto" | "space" | "cars" | "health" | "art" | "tech" | "history" | "custom";
   let domain: DomainType = "custom";
 
   if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lower)) {
     domain = "cyber";
   } else if (/(morning|routine|productivity|focus|minimalist|habit|lifestyle|relax|meditation|wellness|mindful|mental|calm)/.test(lower)) {
     domain = "health";
+  } else if (/(pyramid|giza|egypt|ancient|history|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization)/.test(lower)) {
+    domain = "history";
   } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lower)) {
     domain = "culinary";
   } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lower)) {
@@ -686,6 +711,16 @@ function generateTopicAwareVideoPlan(
           { narration: `The digital battlefield is already active—reshaping the future of global security.`, search_keywords: `digital world map network connections cyber`, duration: sceneDuration, subtitle: "The Digital Battlefield", transition: "fade" },
           { narration: `Continuous threat hunting and hardened cyber defense protocols protecting digital sovereignty.`, search_keywords: `cybersecurity firewall lock digital network shield`, duration: sceneDuration, subtitle: "Hardened Defense", transition: "slide" },
           { narration: `In the era of modern cyber warfare, information is the ultimate strategic weapon.`, search_keywords: `server farm data center glowing lights`, duration: sceneDuration, subtitle: "The Ultimate Weapon", transition: "fade" }
+        ];
+        break;
+      case "history":
+        music_keyword = "mysterious cinematic ambient desert atmospheric";
+        music_mood = "epic ancient mystery";
+        basePool = [
+          { narration: `Unveiling the profound mysteries of the Great Pyramid of Giza, an enduring marvel of ancient engineering.`, search_keywords: `great pyramid giza egypt ancient monument drone`, duration: sceneDuration, subtitle: "The Great Pyramid", transition: "fade" },
+          { narration: `If you multiply the height of the Great Pyramid by one billion, it equals the exact distance from the Earth to the Sun.`, search_keywords: `ancient egyptian pyramid desert sun aerial`, secondary_keywords: `pyramids of giza aerial cinematic shot`, duration: sceneDuration, subtitle: "Cosmic Alignment", transition: "splitscreen" },
+          { narration: `The precise geographic coordinates of the Great Pyramid match the exact speed of light in meters per second.`, search_keywords: `ancient hieroglyphs stone carving mystery history`, duration: sceneDuration, subtitle: "Speed of Light Coordinates", transition: "zoom" },
+          { narration: `An unbelievable coincidence, or advanced ancient knowledge lost to the sands of time?`, search_keywords: `mysterious ancient ruins sphinx egypt desert`, secondary_keywords: `ancient stone monument historical mystery`, duration: sceneDuration, subtitle: "Ancient Engineering", transition: "fade" }
         ];
         break;
       case "culinary":
@@ -933,7 +968,7 @@ Include a catchy project title, cohesive full script, scene breakdowns with stoc
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+      model: "gemini-2.5-flash",
       contents: promptText,
       config: {
         systemInstruction,
