@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
-import { exec } from "child_process";
+import { exec, execSync } from "child_process";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -60,6 +60,18 @@ function getGeminiClient(): GoogleGenAI | null {
     }
   }
   return aiClient;
+}
+
+// -------------------------------------------------------------
+// SPEECH-AWARE DURATION CALCULATOR
+// -------------------------------------------------------------
+function computeSpeechAwareDuration(text: string, basePacingDuration: number = 5): number {
+  if (!text || !text.trim()) return basePacingDuration;
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  // Natural narration speaking rate is ~2.1 words/sec.
+  // Add 1.2s padding (0.4s pre-speech buffer + 0.8s post-speech buffer)
+  const needed = (words.length / 2.1) + 1.2;
+  return Math.max(basePacingDuration, Math.round(needed * 10) / 10);
 }
 
 // -------------------------------------------------------------
@@ -238,8 +250,8 @@ function generateAssContent(
     const dur = Math.max(1, Number(sc.duration) || 5);
     const textRaw = (sc.subtitle || sc.narration || "").trim();
     if (textRaw) {
-      // Clean and break long text into 2 balanced lines if needed
-      const cleanText = textRaw.replace(/[\r\n]+/g, " ").replace(/"/g, "'");
+      // Clean and break long text into 2 balanced lines if needed, stripping special ASS tag braces
+      const cleanText = textRaw.replace(/[\r\n]+/g, " ").replace(/[{}]/g, "").replace(/"/g, "'");
       const words = cleanText.split(/\s+/);
       let formattedText = cleanText;
       if (words.length > 7) {
@@ -599,11 +611,12 @@ function generateTopicAwareVideoPlan(
         music_mood = semantic.mood;
       }
       const trans: 'fade' | 'splitscreen' | 'zoom' | 'slide' = (idx % 4 === 1) ? 'splitscreen' : (idx % 4 === 2) ? 'zoom' : (idx % 4 === 3) ? 'slide' : 'fade';
+      const speechDur = computeSpeechAwareDuration(sentence, sceneDuration);
       return {
         narration: sentence,
         search_keywords: semantic.keywords,
         secondary_keywords: semantic.secondary,
-        duration: sceneDuration,
+        duration: speechDur,
         subtitle: sentence.split(/\s+/).slice(0, 7).join(" "),
         transition: trans
       };
@@ -1063,16 +1076,71 @@ app.post("/api/render-complete-video", async (req, res) => {
     const downloadedClips: string[] = [];
     const voiceClips: string[] = [];
     let hasAnyVoiceover = false;
+    const finalScenesSpecs: Array<{ duration: number; subtitle?: string; narration?: string }> = [];
 
     for (let i = 0; i < scenes.length; i++) {
       const sc = scenes[i];
       const videoUrl = sc.videoUrl;
-      const targetDur = sc.duration || 5;
       if (!videoUrl) continue;
 
       const rawClipPath = path.join(tmpDir, `raw_clip_${i}.mp4`);
       const normClipPath = path.join(tmpDir, `norm_clip_${i}.mp4`);
+      const voiceScenePath = path.join(tmpDir, `voice_scene_${i}.mp3`);
+      const rawVoicePath = path.join(tmpDir, `voice_raw_${i}.mp3`);
 
+      // 1. Generate Voiceover Narration for this scene FIRST to measure exact speaking duration
+      const sceneNarration = (sc.narration || sc.subtitle || "").trim();
+      let exactVoiceDur = 0;
+
+      if (sceneNarration) {
+        try {
+          const voiceBuf = await synthesizeNeuralSpeechBuffer(sceneNarration, voice, voiceRate, voicePitch);
+          await fs.promises.writeFile(rawVoicePath, voiceBuf);
+          try {
+            const probeOut = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${rawVoicePath}"`).toString().trim();
+            exactVoiceDur = parseFloat(probeOut) || 0;
+          } catch (pErr) {
+            console.warn(`Duration probe notice:`, pErr);
+          }
+        } catch (vErr) {
+          console.warn(`Voice synthesis warning for scene ${i}:`, vErr);
+        }
+      }
+
+      // Calculate TRUE required duration:
+      // Must be at least the requested scene duration AND at least exactVoiceDur + 0.6s (natural comfort buffer so it is never cut off!)
+      const baseRequestedDur = Math.max(1, Number(sc.duration) || 5);
+      const targetDur = exactVoiceDur > 0
+        ? Math.max(baseRequestedDur, Math.ceil((exactVoiceDur + 0.6) * 10) / 10)
+        : baseRequestedDur;
+
+      finalScenesSpecs.push({
+        duration: targetDur,
+        subtitle: sc.subtitle || sc.narration || "",
+        narration: sc.narration || sc.subtitle || ""
+      });
+
+      // 2. Pad voiceover to exact targetDur
+      if (exactVoiceDur > 0 && fs.existsSync(rawVoicePath)) {
+        try {
+          await new Promise((resolve, reject) => {
+            const cmd = `ffmpeg -y -i "${rawVoicePath}" -filter_complex "apad=whole_dur=${targetDur}" -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
+            exec(cmd, (err) => err ? reject(err) : resolve(true));
+          });
+          voiceClips.push(voiceScenePath);
+          hasAnyVoiceover = true;
+        } catch (padErr) {
+          console.warn(`Voice padding notice for scene ${i}:`, padErr);
+        }
+      } else {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        voiceClips.push(voiceScenePath);
+      }
+
+      // 3. Download & process video clip with -stream_loop -1 -t ${targetDur}
       try {
         const resp = await fetch(videoUrl);
         if (!resp.ok) continue;
@@ -1086,64 +1154,27 @@ app.post("/api/render-complete-video", async (req, res) => {
           if (secResp.ok) {
             await fs.promises.writeFile(secRawPath, Buffer.from(await secResp.arrayBuffer()));
             await new Promise((resolve, reject) => {
-              // For 16:9 (1920x1080), side-by-side splitscreen is two 960x1080 panels (hstack)
-              // For 9:16 (1080x1920), stacked or side-by-side dual panel: two 1080x960 panels stacked vertically (vstack)
               const splitCmd = isPortrait
-                ? `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -t ${targetDur} -i "${secRawPath}" -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`
-                : `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -t ${targetDur} -i "${secRawPath}" -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+                ? `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`
+                : `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
               exec(splitCmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           } else {
             // Fallback to standard dimension if secondary fetch fails
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH}" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           }
         } else {
-          // Standard clip normalization (dynamic dimensions based on aspectRatio)
+          // Standard clip normalization with seamless stream_loop, exact framerate and SAR 1:1
           await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH}" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+            const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
             exec(cmd, (err) => err ? reject(err) : resolve(true));
           });
           downloadedClips.push(normClipPath);
-        }
-
-        // Generate Voiceover Narration for this scene
-        const voiceScenePath = path.join(tmpDir, `voice_scene_${i}.mp3`);
-        const sceneNarration = (sc.narration || sc.subtitle || "").trim();
-
-        if (sceneNarration) {
-          try {
-            const voiceBuf = await synthesizeNeuralSpeechBuffer(sceneNarration, voice, voiceRate, voicePitch);
-            const rawVoicePath = path.join(tmpDir, `voice_raw_${i}.mp3`);
-            await fs.promises.writeFile(rawVoicePath, voiceBuf);
-
-            // Pad or trim audio to exactly match scene duration with stereo 44.1kHz rate
-            await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -i "${rawVoicePath}" -filter_complex "apad=whole_dur=${targetDur}" -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
-              exec(cmd, (err) => err ? reject(err) : resolve(true));
-            });
-            voiceClips.push(voiceScenePath);
-            hasAnyVoiceover = true;
-          } catch (vErr) {
-            console.warn(`Voice synthesis failed for scene ${i}:`, vErr);
-            // Fallback to silence for this scene
-            await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
-              exec(cmd, (err) => err ? reject(err) : resolve(true));
-            });
-            voiceClips.push(voiceScenePath);
-          }
-        } else {
-          // Empty narration -> silent track for this scene duration
-          await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
-            exec(cmd, (err) => err ? reject(err) : resolve(true));
-          });
-          voiceClips.push(voiceScenePath);
         }
       } catch (clipErr) {
         console.warn(`Error processing scene clip ${i}:`, clipErr);
@@ -1175,7 +1206,7 @@ app.post("/api/render-complete-video", async (req, res) => {
 
         const fullVoicePath = path.join(tmpDir, "master_voice.mp3");
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -f concat -safe 0 -i "${voiceConcatPath}" -c:a libmp3lame -b:a 192k "${fullVoicePath}"`;
+          const cmd = `ffmpeg -y -f concat -safe 0 -i "${voiceConcatPath}" -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${fullVoicePath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         masterVoicePath = fullVoicePath;
@@ -1202,61 +1233,73 @@ app.post("/api/render-complete-video", async (req, res) => {
     // 4. Generate Subtitles ASS file if requested
     let assLocalPath: string | null = null;
     if (subtitlesStyle !== "none") {
-      const assContent = generateAssContent(scenes, subtitlesStyle, aspectRatio);
+      const assContent = generateAssContent(finalScenesSpecs, subtitlesStyle, aspectRatio);
       const assPath = path.join(tmpDir, "subtitles.ass");
       await fs.promises.writeFile(assPath, assContent, "utf8");
       assLocalPath = assPath;
     }
 
-    // 5. Final Audio, Video & Subtitles Assembly
+    // 5. Final Audio, Video & Subtitles Assembly with Universal Standards
+    // - pix_fmt yuv420p
+    // - -movflags +faststart (places moov header at beginning for 100% Windows/QuickTime/mobile player compatibility)
+    // - AAC stereo 44.1kHz audio
     let finalOutputPath = stitchedPath;
     const finalMixedPath = path.join(tmpDir, "production_final.mp4");
     const vol = Math.max(0.05, Math.min(1, Number(musicVolume) || 0.25));
 
     if (assLocalPath) {
+      // Escape path for ffmpeg filter
+      const escapedAssPath = assLocalPath.replace(/\\/g, "/").replace(/'/g, "'\\\\''");
+
       // Burn subtitles using the ASS filter and mix audio
       if (masterVoicePath && musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else if (masterVoicePath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else if (musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       }
     } else {
-      // Subtitles disabled -> stream copy video
+      // Subtitles disabled -> mix audio and ensure faststart MP4 container
       if (masterVoicePath && musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else if (masterVoicePath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -map 0:v -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else if (musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      } else {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
@@ -1264,12 +1307,14 @@ app.post("/api/render-complete-video", async (req, res) => {
     }
 
     const safeTitle = (title || "complete_video").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const stat = await fs.promises.stat(finalOutputPath);
     res.setHeader("Content-Type", "video/mp4");
+    res.setHeader("Content-Length", stat.size);
     res.setHeader("Content-Disposition", `attachment; filename="${safeTitle}.mp4"`);
 
     const readStream = fs.createReadStream(finalOutputPath);
     readStream.pipe(res);
-    readStream.on("close", async () => {
+    res.on("finish", async () => {
       try {
         await fs.promises.rm(tmpDir, { recursive: true, force: true });
       } catch {}

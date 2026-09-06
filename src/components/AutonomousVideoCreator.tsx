@@ -25,7 +25,7 @@ interface AutonomousVideoCreatorProps {
   onExportToStoryboard?: (plan: any) => void;
 }
 
-// Guaranteed rock-solid fallback stock video footage pool
+// Guaranteed rock-solid diverse fallback stock video footage pool
 const FALLBACK_STOCK_VIDEOS: StockMediaItem[] = [
   {
     id: "fallback-v1-code",
@@ -79,6 +79,58 @@ const FALLBACK_STOCK_VIDEOS: StockMediaItem[] = [
     duration: 14,
     author: "Pixabay Video",
   },
+  {
+    id: "fallback-v5-nature",
+    source: "pixabay",
+    type: "video",
+    title: "Cinematic Nature Forest Stream",
+    previewUrl: "https://cdn.pixabay.com/video/2016/05/12/2953-166547631_large.mp4",
+    downloadUrl: "https://cdn.pixabay.com/video/2016/05/12/2953-166547631_large.mp4",
+    thumbnailUrl: "https://cdn.pixabay.com/photo/2015/12/01/20/28/forest-1072828_640.jpg",
+    width: 1920,
+    height: 1080,
+    duration: 12,
+    author: "Pixabay Video",
+  },
+  {
+    id: "fallback-v6-space",
+    source: "pixabay",
+    type: "video",
+    title: "Deep Space Nebula Stars",
+    previewUrl: "https://cdn.pixabay.com/video/2020/03/30/34190-401340156_large.mp4",
+    downloadUrl: "https://cdn.pixabay.com/video/2020/03/30/34190-401340156_large.mp4",
+    thumbnailUrl: "https://cdn.pixabay.com/photo/2016/10/20/18/35/sunrise-1756274_640.jpg",
+    width: 1920,
+    height: 1080,
+    duration: 16,
+    author: "Pixabay Video",
+  },
+  {
+    id: "fallback-v7-abstract",
+    source: "pixabay",
+    type: "video",
+    title: "Abstract Particle Waves",
+    previewUrl: "https://cdn.pixabay.com/video/2021/04/07/70685-535384435_large.mp4",
+    downloadUrl: "https://cdn.pixabay.com/video/2021/04/07/70685-535384435_large.mp4",
+    thumbnailUrl: "https://cdn.pixabay.com/photo/2018/01/14/23/12/nature-3082832_640.jpg",
+    width: 1920,
+    height: 1080,
+    duration: 10,
+    author: "Pixabay Video",
+  },
+  {
+    id: "fallback-v8-ocean",
+    source: "pixabay",
+    type: "video",
+    title: "Ocean Waves Aerial",
+    previewUrl: "https://cdn.pixabay.com/video/2017/05/16/9119-218087965_large.mp4",
+    downloadUrl: "https://cdn.pixabay.com/video/2017/05/16/9119-218087965_large.mp4",
+    thumbnailUrl: "https://cdn.pixabay.com/photo/2016/09/19/22/46/lake-1681534_640.jpg",
+    width: 1920,
+    height: 1080,
+    duration: 15,
+    author: "Pixabay Video",
+  }
 ];
 
 export interface StudioNeuralVoice {
@@ -476,8 +528,16 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     }
   }, [availableVoices, selectedVoiceURI, voiceGender, voicePitch, voiceRate, musicVolume]);
 
+  // Helper to calculate speech-aware duration with natural breathing buffers
+  const estimateNarrationDuration = (text: string, baseDuration: number = 5): number => {
+    if (!text || !text.trim()) return baseDuration;
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const needed = (words.length / 2.1) + 1.2;
+    return Math.max(baseDuration, Math.round(needed * 10) / 10);
+  };
+
   // Master Speech Narration Helper (Studio Neural AI Voice default with strict single-voice guard)
-  const speakNarration = useCallback((text: string) => {
+  const speakNarration = useCallback((text: string, targetSceneIdx?: number) => {
     if (!voiceoverEnabled || !text || !text.trim()) return;
 
     // Increment call ID to ensure only the latest speech invocation can make sound
@@ -507,6 +567,19 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
         const url = `/api/tts?text=${encodeURIComponent(text.trim())}&voice=${encodeURIComponent(selectedNeuralVoice)}&rate=${encodeURIComponent(voicePacingRate)}&pitch=${encodeURIComponent(voicePitchOffset)}`;
         const audio = new Audio(url);
         voiceAudioRef.current = audio;
+
+        // Ensure active scene duration accommodates the actual synthesized speech duration + buffer
+        audio.onloadedmetadata = () => {
+          if (audio.duration && !isNaN(audio.duration) && typeof targetSceneIdx === "number") {
+            const requiredDur = Math.ceil((audio.duration + 0.6) * 10) / 10;
+            setLoadedScenes((prev) => {
+              if (!prev[targetSceneIdx] || prev[targetSceneIdx].duration >= requiredDur) return prev;
+              const updated = [...prev];
+              updated[targetSceneIdx] = { ...updated[targetSceneIdx], duration: requiredDur };
+              return updated;
+            });
+          }
+        };
 
         // Duck background music during speech
         if (audioElementRef.current) {
@@ -654,8 +727,10 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       setStepIndex(1);
       setCurrentStep(PIPELINE_STEPS[1]);
 
-      // Step 2: Fetch stock video clips for each scene
+      // Step 2: Fetch stock video clips for each scene with strict uniqueness enforcement
       const scenesWithMedia: AutoVideoScene[] = [];
+      const usedVideoIds = new Set<string>();
+
       for (let idx = 0; idx < planData.scenes.length; idx++) {
         const scene = planData.scenes[idx];
         let chosenMedia: StockMediaItem | undefined;
@@ -667,20 +742,36 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           if (searchRes.ok) {
             const data = await searchRes.json();
             const videos = (data.results || []).filter((r: any) => r.type === "video" && (r.previewUrl || r.downloadUrl));
-            if (videos.length > 0) {
-              chosenMedia = videos[0];
+            for (const v of videos) {
+              if (!usedVideoIds.has(v.id)) {
+                chosenMedia = v;
+                break;
+              }
             }
           }
         } catch (err) {
           console.warn(`Stock search notice for scene ${scene.scene_number}:`, err);
         }
 
-        // Guaranteed fallback video if search returned 0
+        // Guaranteed fallback / rotation if search returned 0 or all were used
         if (!chosenMedia) {
-          chosenMedia = FALLBACK_STOCK_VIDEOS[idx % FALLBACK_STOCK_VIDEOS.length];
+          for (let fIdx = 0; fIdx < FALLBACK_STOCK_VIDEOS.length; fIdx++) {
+            const candidate = FALLBACK_STOCK_VIDEOS[(idx + fIdx) % FALLBACK_STOCK_VIDEOS.length];
+            if (!usedVideoIds.has(candidate.id)) {
+              chosenMedia = candidate;
+              break;
+            }
+          }
+          if (!chosenMedia) {
+            chosenMedia = FALLBACK_STOCK_VIDEOS[idx % FALLBACK_STOCK_VIDEOS.length];
+          }
         }
 
-        // If scene is splitscreen, fetch secondary video clip
+        if (chosenMedia) {
+          usedVideoIds.add(chosenMedia.id);
+        }
+
+        // If scene is splitscreen, fetch secondary video clip ensuring uniqueness
         let secondaryMedia: StockMediaItem | undefined;
         if (scene.transition === "splitscreen" || scene.layout === "splitscreen" || scene.secondary_keywords) {
           const secQuery = scene.secondary_keywords || `${scene.search_keywords} detail`;
@@ -691,7 +782,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             if (secRes.ok) {
               const sData = await secRes.json();
               const sVideos = (sData.results || []).filter(
-                (r: any) => r.type === "video" && (r.previewUrl || r.downloadUrl) && r.id !== chosenMedia?.id
+                (r: any) => r.type === "video" && (r.previewUrl || r.downloadUrl) && !usedVideoIds.has(r.id)
               );
               if (sVideos.length > 0) {
                 secondaryMedia = sVideos[0];
@@ -701,12 +792,26 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             console.warn("Secondary video fetch error:", e);
           }
           if (!secondaryMedia) {
-            secondaryMedia = FALLBACK_STOCK_VIDEOS[(idx + 1) % FALLBACK_STOCK_VIDEOS.length];
+            for (let fIdx = 0; fIdx < FALLBACK_STOCK_VIDEOS.length; fIdx++) {
+              const candidate = FALLBACK_STOCK_VIDEOS[(idx + fIdx + 3) % FALLBACK_STOCK_VIDEOS.length];
+              if (!usedVideoIds.has(candidate.id)) {
+                secondaryMedia = candidate;
+                break;
+              }
+            }
+            if (!secondaryMedia) {
+              secondaryMedia = FALLBACK_STOCK_VIDEOS[(idx + 1) % FALLBACK_STOCK_VIDEOS.length];
+            }
+          }
+          if (secondaryMedia) {
+            usedVideoIds.add(secondaryMedia.id);
           }
         }
 
+        const speechDur = estimateNarrationDuration(scene.narration, scene.duration);
         scenesWithMedia.push({
           ...scene,
+          duration: speechDur,
           videoAsset: chosenMedia,
           secondaryVideoAsset: secondaryMedia,
         });
@@ -858,6 +963,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     const scene = scenesList[targetIdx];
     if (!scene) return;
 
+    currentSceneIndexRef.current = targetIdx;
     setActiveSceneIndex(targetIdx);
     const videoUrl = scene.videoAsset?.downloadUrl || scene.videoAsset?.previewUrl;
     if (!videoUrl) return;
@@ -922,8 +1028,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       }
     }
 
-    // Trigger Voiceover Narration
-    speakNarration(scene.narration);
+    // Trigger Voiceover Narration with speech duration guard
+    speakNarration(scene.narration, targetIdx);
 
     // Ensure background music is playing
     if (audioElementRef.current && audioElementRef.current.paused) {
@@ -956,7 +1062,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
         for (let i = 0; i < loadedScenes.length; i++) {
           const sDur = loadedScenes[i].duration;
           if (nextTime >= accTime && nextTime < accTime + sDur) {
-            if (i !== activeSceneIndex) {
+            if (i !== currentSceneIndexRef.current) {
+              currentSceneIndexRef.current = i;
               handlePlayScene(i, loadedScenes, nextTime - accTime);
             }
             break;
@@ -971,7 +1078,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     return () => {
       if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
     };
-  }, [isPlaying, loadedScenes, activeSceneIndex, activeBuffer, speakNarration]);
+  }, [isPlaying, loadedScenes, activeBuffer, speakNarration]);
 
   // Master Play / Pause
   const handlePlay = () => {
@@ -992,7 +1099,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     }
 
     if (currentScene) {
-      speakNarration(currentScene.narration);
+      speakNarration(currentScene.narration, activeSceneIndex);
     }
   };
 
@@ -1031,6 +1138,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       } catch {}
     }
     setCurrentTime(0);
+    currentSceneIndexRef.current = 0;
     setActiveSceneIndex(0);
     setTimeout(() => {
       handlePlayScene(0, loadedScenes, 0);
@@ -1048,6 +1156,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       const sDur = loadedScenes[i].duration;
       if (clamped >= accTime && (clamped < accTime + sDur || i === loadedScenes.length - 1)) {
         const offset = clamped - accTime;
+        currentSceneIndexRef.current = i;
         handlePlayScene(i, loadedScenes, offset);
         const activeVideo = activeBuffer === "A" ? videoRefA.current : videoRefB.current;
         if (activeVideo) {
@@ -1109,6 +1218,10 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
 
       setRenderProgressMsg("Preparing final MP4 for download...");
       const blob = await resp.blob();
+      if (!blob || blob.size < 1000) {
+        throw new Error("Rendered video stream was empty or incomplete");
+      }
+
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
@@ -1126,9 +1239,11 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       }, 3000);
     } catch (err: any) {
       console.error("Complete video render error:", err);
-      alert("Could not export complete video: " + err.message);
-      setIsRenderingCompleteVideo(false);
-      setRenderProgressMsg("");
+      setRenderProgressMsg("Error: " + (err.message || "Failed to download video"));
+      setTimeout(() => {
+        setIsRenderingCompleteVideo(false);
+        setRenderProgressMsg("");
+      }, 6000);
     }
   };
 
