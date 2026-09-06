@@ -811,6 +811,18 @@ function generateTopicAwareVideoPlan(
     layout: sc.transition === "splitscreen" ? ("splitscreen" as const) : ("standard" as const)
   }));
 
+  // Append a dedicated Subscriber Outro Scene at the end of every video to drive subscriber growth
+  scenes.push({
+    scene_number: scenes.length + 1,
+    narration: "If you enjoyed this video, hit that subscribe button, leave a like, and turn on notifications so you never miss out on future content!",
+    search_keywords: "neon subscribe notification click button glowing digital animation",
+    secondary_keywords: "subscribe button youtube icon motion",
+    duration: 5,
+    subtitle: "Subscribe & Turn on Notifications!",
+    transition: "fade",
+    layout: "standard"
+  });
+
   const total_duration = scenes.reduce((sum, s) => sum + s.duration, 0);
 
   return {
