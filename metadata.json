@@ -1,0 +1,6 @@
+{
+  "name": "AI Video B-Roll Assistant",
+  "description": "Analyze video scripts into scenes, generate structured B-roll stock asset plans for Pexels and Pixabay, recommend background music and SFX, and create autonomous videos with live playback and rendering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
