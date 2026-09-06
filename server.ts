@@ -62,7 +62,212 @@ function getGeminiClient(): GoogleGenAI | null {
   return aiClient;
 }
 
-// Fallback high-accuracy rule-based script parser if Gemini is unavailable
+// -------------------------------------------------------------
+// SEMANTIC STOCK VIDEO KEYWORD EXTRACTOR & DOMAIN MAPPER
+// -------------------------------------------------------------
+const NON_VISUAL_STOPWORDS = new Set([
+  "meet", "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with",
+  "by", "about", "into", "through", "is", "are", "was", "were", "this", "that", "these",
+  "those", "they", "them", "their", "we", "us", "our", "you", "your", "he", "she", "it",
+  "its", "make", "create", "show", "video", "tell", "story", "generate", "autonomous",
+  "don", "t", "s", "just", "play", "game", "write", "post", "fake", "pose", "convince",
+  "quietly", "open", "result", "drained", "second", "seconds", "coming", "already",
+  "here", "paying", "fund", "entire", "unit", "operator", "operators", "most", "break",
+  "personal", "profit", "hard", "soft", "long", "short", "also", "some", "like", "very"
+]);
+
+function extractSemanticStockKeywords(
+  sentence: string,
+  wholeText: string,
+  sceneIdx: number
+): { keywords: string; secondary: string; music: string; mood: string } {
+  const lowerWhole = (wholeText + " " + sentence).toLowerCase();
+  const lowerSentence = sentence.toLowerCase();
+
+  // Detect Primary Domain
+  let domain = "tech";
+  if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lowerWhole)) {
+    domain = "cyber";
+  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock|market|money|invest|wealth|economy|wall street|assets|launder|cash|dollars)/.test(lowerWhole)) {
+    domain = "crypto";
+  } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lowerWhole)) {
+    domain = "culinary";
+  } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lowerWhole)) {
+    domain = "wildlife";
+  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|sports|bodybuilding|football|basketball)/.test(lowerWhole)) {
+    domain = "sports";
+  } else if (/(travel|tokyo|paris|city|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore|europe|japan)/.test(lowerWhole)) {
+    domain = "travel";
+  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope)/.test(lowerWhole)) {
+    domain = "space";
+  } else if (/(car|supercar|driving|race|racing|drift|drifting|speed|porsche|ferrari|lamborghini|motorcycle|track|engine|automotive)/.test(lowerWhole)) {
+    domain = "cars";
+  } else if (/(meditation|health|wellness|mindful|mental|spa|peace|calm|skincare|breathe|therapy|relax|doctor|hospital|medical)/.test(lowerWhole)) {
+    domain = "health";
+  } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lowerWhole)) {
+    domain = "art";
+  }
+
+  // Domain-Specific Visual Sequences
+  if (domain === "cyber") {
+    // Check specific sub-intent in the sentence
+    if (/(job|recruiter|linkedin|software engineer|coding test|interview|developer|programmer|phishing|resume|hiring|scam)/.test(lowerSentence)) {
+      return {
+        keywords: "software engineer typing laptop office desk",
+        secondary: "programmer workspace multiple monitors code",
+        music: "dark cyber synthwave electronic suspense",
+        mood: "tense electronic pulse"
+      };
+    }
+    if (/(crypto|bitcoin|ethereum|exchange|digital assets|drained|launder|bridges|cash|dollar|money|wealth|blockchain|defi|billions)/.test(lowerSentence)) {
+      return {
+        keywords: "cryptocurrency bitcoin trading chart graph screen",
+        secondary: "digital currency matrix money transfer glowing",
+        music: "tense electronic pulse technology",
+        mood: "high stakes financial"
+      };
+    }
+    if (/(warfare|military|nuclear|weapons|regime|pyongyang|defense|missile|radar|satellite|command)/.test(lowerSentence)) {
+      return {
+        keywords: "cyber warfare military command center glowing monitors",
+        secondary: "digital world map network connections cyber",
+        music: "cinematic suspense trailer drone",
+        mood: "dark atmospheric thriller"
+      };
+    }
+    if (/(hack|lazarus|cyber unit|operator|state-sponsored|trojan|malware|backdoor|exploit|breach|firewall|payload|system)/.test(lowerSentence)) {
+      const cyberPool = [
+        "hacker typing computer dark room code",
+        "cyber attack server room data center flashing lights",
+        "hooded hacker keyboard typing green matrix",
+        "cybersecurity firewall lock digital network shield"
+      ];
+      const secPool = [
+        "matrix binary code stream glowing screen",
+        "server rack data blinking neon lights",
+        "cyber threat map live digital connections"
+      ];
+      return {
+        keywords: cyberPool[sceneIdx % cyberPool.length],
+        secondary: secPool[sceneIdx % secPool.length],
+        music: "dark cyber synthwave electronic suspense",
+        mood: "dark electronic pulse"
+      };
+    }
+    return {
+      keywords: "cyber security hacker computer dark room",
+      secondary: "server farm data center glowing lights",
+      music: "dark cyber synthwave electronic suspense",
+      mood: "tense cyber thriller"
+    };
+  }
+
+  if (domain === "crypto") {
+    if (/(trading|chart|market|graph|candlestick|exchange|price)/.test(lowerSentence)) {
+      return {
+        keywords: "stock trading charts market graphs screen trader",
+        secondary: "candlestick chart financial analytics screen",
+        music: "dark modern electronic corporate pulse",
+        mood: "high tech financial"
+      };
+    }
+    return {
+      keywords: "cryptocurrency bitcoin blockchain digital wealth",
+      secondary: "server farm blockchain data nodes futuristic",
+      music: "dark modern electronic corporate pulse",
+      mood: "high tech financial"
+    };
+  }
+
+  // Generic fallback with intelligent word extraction
+  const words = lowerSentence
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !NON_VISUAL_STOPWORDS.has(w));
+  
+  const meaningfulSubject = words.slice(0, 3).join(" ");
+  const fallbackKeywords = meaningfulSubject ? `${meaningfulSubject} ${domain} cinematic` : `${domain} high quality footage`;
+  
+  return {
+    keywords: fallbackKeywords,
+    secondary: `${domain} detail close up motion`,
+    music: `${domain} ambient modern`,
+    mood: `${domain} inspiring`
+  };
+}
+
+// -------------------------------------------------------------
+// SUBTITLE GENERATION (ASS SUBSTATION ALPHA)
+// -------------------------------------------------------------
+function formatAssTime(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const cs = Math.floor((seconds % 1) * 100);
+  return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+}
+
+function generateAssContent(
+  scenes: Array<{ duration: number; subtitle?: string; narration?: string }>,
+  subtitlesStyle: string = "highlight",
+  aspectRatio: string = "16:9"
+): string {
+  const isPortrait = aspectRatio === "9:16";
+  const resX = isPortrait ? 1080 : 1920;
+  const resY = isPortrait ? 1920 : 1080;
+  const fontSize = isPortrait ? 56 : 46;
+  const marginV = isPortrait ? 220 : 75;
+
+  // Colors in ASS are &HAABBGGRR (Alpha, Blue, Green, Red)
+  // Yellow highlight: &H0000FFFF (&H00BBGGRR -> BB=00, GG=FF, RR=FF)
+  // White: &H00FFFFFF
+  // Black outline: &H00000000
+  // Shadow: &H80000000
+
+  let styleLine = `Style: Default,DejaVu Sans,${fontSize},&H0000FFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3.5,2,2,40,40,${marginV},1`;
+  if (subtitlesStyle === "classic") {
+    styleLine = `Style: Default,DejaVu Sans,${fontSize},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3.5,2,2,40,40,${marginV},1`;
+  } else if (subtitlesStyle === "minimal") {
+    styleLine = `Style: Default,DejaVu Sans,${fontSize - 4},&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,3,2,1,2,40,40,${marginV},1`;
+  }
+
+  let events = "";
+  let currentTime = 0;
+
+  for (const sc of scenes) {
+    const dur = Math.max(1, Number(sc.duration) || 5);
+    const textRaw = (sc.subtitle || sc.narration || "").trim();
+    if (textRaw) {
+      // Clean and break long text into 2 balanced lines if needed
+      const cleanText = textRaw.replace(/[\r\n]+/g, " ").replace(/"/g, "'");
+      const words = cleanText.split(/\s+/);
+      let formattedText = cleanText;
+      if (words.length > 7) {
+        const mid = Math.ceil(words.length / 2);
+        formattedText = words.slice(0, mid).join(" ") + "\\N" + words.slice(mid).join(" ");
+      }
+
+      const startTimeStr = formatAssTime(currentTime);
+      const endTimeStr = formatAssTime(currentTime + dur);
+      events += `Dialogue: 0,${startTimeStr},${endTimeStr},Default,,0,0,0,,${formattedText}\n`;
+    }
+    currentTime += dur;
+  }
+
+  return `[Script Info]
+ScriptType: v4.00+
+PlayResX: ${resX}
+PlayResY: ${resY}
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+${styleLine}
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+${events}`;
+}
 function fallbackRuleBasedParser(script: string) {
   const cleanScript = script.trim();
   const sentences = cleanScript
@@ -301,7 +506,8 @@ function generateTopicAwareVideoPlan(
   rawInput: string,
   style = "tech",
   aspectRatio = "16:9",
-  pacing = "balanced"
+  pacing = "balanced",
+  targetDuration = 30
 ) {
   const inputTopic = (rawInput || "Creative Video Storytelling").trim();
   const sceneDuration = pacing === "fast" ? 3.5 : pacing === "cinematic" ? 7 : 5;
@@ -326,10 +532,12 @@ function generateTopicAwareVideoPlan(
 
   const primaryTopic = promptWords.slice(0, 3).join(" ") || "cinematic scene";
 
-  type DomainType = "culinary" | "wildlife" | "sports" | "travel" | "crypto" | "space" | "cars" | "health" | "art" | "tech" | "custom";
+  type DomainType = "cyber" | "culinary" | "wildlife" | "sports" | "travel" | "crypto" | "space" | "cars" | "health" | "art" | "tech" | "custom";
   let domain: DomainType = "custom";
 
-  if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lower)) {
+  if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lower)) {
+    domain = "cyber";
+  } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lower)) {
     domain = "culinary";
   } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lower)) {
     domain = "wildlife";
@@ -337,7 +545,7 @@ function generateTopicAwareVideoPlan(
     domain = "sports";
   } else if (/(travel|tokyo|paris|city|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore|europe|japan)/.test(lower)) {
     domain = "travel";
-  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock|market|money|invest|wealth|economy|wall street)/.test(lower)) {
+  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock|market|money|invest|wealth|economy|wall street|assets|launder|cash|dollars)/.test(lower)) {
     domain = "crypto";
   } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope)/.test(lower)) {
     domain = "space";
@@ -347,7 +555,7 @@ function generateTopicAwareVideoPlan(
     domain = "health";
   } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lower)) {
     domain = "art";
-  } else if (/(tech|code|coding|software|ai|robot|cyber|computer|developer|laptop|matrix|algorithm|data)/.test(lower)) {
+  } else if (/(tech|code|coding|software|ai|robot|computer|developer|laptop|matrix|algorithm|data)/.test(lower)) {
     domain = "tech";
   }
 
@@ -366,418 +574,217 @@ function generateTopicAwareVideoPlan(
 
   let rawScenes: SceneSpec[] = [];
 
-  if (userSentences.length >= 3) {
-    rawScenes = userSentences.slice(0, 5).map((sentence, idx) => {
-      const sWords = sentence.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
-      const sQuery = sWords.slice(0, 3).join(" ") || primaryTopic;
-      const trans: 'fade' | 'splitscreen' | 'zoom' | 'slide' = idx === 1 ? 'splitscreen' : idx === 2 ? 'zoom' : idx === 3 ? 'slide' : 'fade';
+  // Calculate target scene count based on targetDuration (e.g. 15s -> 3-4 scenes, 60s -> 9-12 scenes, 90s -> 12-18 scenes)
+  const calculatedSceneCount = Math.max(3, Math.min(16, Math.round(targetDuration / sceneDuration)));
+
+  if (userSentences.length >= 2) {
+    // Combine short fragments (< 4 words) with the subsequent sentence for natural narration chunking
+    const mergedSentences: string[] = [];
+    for (let i = 0; i < userSentences.length; i++) {
+      const s = userSentences[i];
+      const wordCount = s.split(/\s+/).length;
+      if (wordCount <= 3 && i + 1 < userSentences.length) {
+        mergedSentences.push(`${s} ${userSentences[i + 1]}`);
+        i++; // skip next since merged
+      } else {
+        mergedSentences.push(s);
+      }
+    }
+
+    const limit = Math.max(mergedSentences.length, calculatedSceneCount);
+    rawScenes = mergedSentences.slice(0, limit).map((sentence, idx) => {
+      const semantic = extractSemanticStockKeywords(sentence, inputTopic, idx);
+      if (idx === 0) {
+        music_keyword = semantic.music;
+        music_mood = semantic.mood;
+      }
+      const trans: 'fade' | 'splitscreen' | 'zoom' | 'slide' = (idx % 4 === 1) ? 'splitscreen' : (idx % 4 === 2) ? 'zoom' : (idx % 4 === 3) ? 'slide' : 'fade';
       return {
         narration: sentence,
-        search_keywords: `${sQuery} footage`,
-        secondary_keywords: `${primaryTopic} detail`,
+        search_keywords: semantic.keywords,
+        secondary_keywords: semantic.secondary,
         duration: sceneDuration,
-        subtitle: sentence.split(/\s+/).slice(0, 6).join(" "),
+        subtitle: sentence.split(/\s+/).slice(0, 7).join(" "),
         transition: trans
       };
     });
   } else {
+    // Build domain scene pool that can expand to 60+ seconds
+    let basePool: SceneSpec[] = [];
     switch (domain) {
+      case "cyber":
+        music_keyword = "dark cyber synthwave electronic suspense";
+        music_mood = "dark electronic cyber";
+        basePool = [
+          { narration: `In the shadows of the digital realm, sophisticated cyber operators execute precision strikes against global infrastructure.`, search_keywords: `hacker typing computer dark room code`, duration: sceneDuration, subtitle: "Elite Cyber Threat", transition: "fade" },
+          { narration: `Bypassing advanced firewalls and deploying stealth malware quietly into enterprise systems.`, search_keywords: `cyber attack server room data center flashing lights`, secondary_keywords: `matrix binary code stream glowing screen`, duration: sceneDuration, subtitle: "Stealth Infiltration", transition: "splitscreen" },
+          { narration: `High-value digital assets and critical credentials drained within minutes across decentralized bridges.`, search_keywords: `cryptocurrency bitcoin trading chart graph screen`, duration: sceneDuration, subtitle: "Digital Asset Heist", transition: "zoom" },
+          { narration: `Software engineers and defense firms targeted through weaponized exploits and trojanized payloads.`, search_keywords: `software engineer typing laptop office desk`, secondary_keywords: `hooded hacker keyboard typing green matrix`, duration: sceneDuration, subtitle: "Targeted Infiltration", transition: "splitscreen" },
+          { narration: `Nation-state cyber warfare funding strategic military operations and geopolitical agendas.`, search_keywords: `cyber warfare military command center glowing monitors`, duration: sceneDuration, subtitle: "State-Sponsored Warfare", transition: "zoom" },
+          { narration: `The digital battlefield is already active—reshaping the future of global security.`, search_keywords: `digital world map network connections cyber`, duration: sceneDuration, subtitle: "The Digital Battlefield", transition: "fade" },
+          { narration: `Continuous threat hunting and hardened cyber defense protocols protecting digital sovereignty.`, search_keywords: `cybersecurity firewall lock digital network shield`, duration: sceneDuration, subtitle: "Hardened Defense", transition: "slide" },
+          { narration: `In the era of modern cyber warfare, information is the ultimate strategic weapon.`, search_keywords: `server farm data center glowing lights`, duration: sceneDuration, subtitle: "The Ultimate Weapon", transition: "fade" }
+        ];
+        break;
       case "culinary":
         music_keyword = "italian acoustic cafe guitar warm";
         music_mood = "warm acoustic culinary";
-        rawScenes = [
-          {
-            narration: `Every authentic culinary masterpiece begins with the freshest ingredients and culinary passion.`,
-            search_keywords: `${primaryTopic} ingredients fresh kitchen cooking`,
-            duration: sceneDuration,
-            subtitle: "Authentic Culinary Art",
-            transition: "fade"
-          },
-          {
-            narration: `Simmering to perfection over heat, bringing rich flavors and fragrant herbs to life.`,
-            search_keywords: `chef boiling pasta pan olive oil`,
-            secondary_keywords: `chopping garlic vegetables culinary cutting`,
-            duration: sceneDuration,
-            subtitle: "Crafting the Dish",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Infusing fresh sauces and aromatics that awaken the senses and elevate every detail.`,
-            search_keywords: `chef tossing pasta saucepan flames delicious`,
-            duration: sceneDuration,
-            subtitle: "Rich Flavor Symphony",
-            transition: "zoom"
-          },
-          {
-            narration: `Plated with perfection and ready to savor—a dining experience that speaks for itself.`,
-            search_keywords: `delicious pasta plate restaurant dining serving`,
-            duration: sceneDuration,
-            subtitle: "Culinary Perfection",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Every authentic culinary masterpiece begins with the freshest ingredients and culinary passion.`, search_keywords: `${primaryTopic} ingredients fresh kitchen cooking`, duration: sceneDuration, subtitle: "Authentic Culinary Art", transition: "fade" },
+          { narration: `Simmering to perfection over heat, bringing rich flavors and fragrant herbs to life.`, search_keywords: `chef boiling pasta pan olive oil`, secondary_keywords: `chopping garlic vegetables culinary cutting`, duration: sceneDuration, subtitle: "Crafting the Dish", transition: "splitscreen" },
+          { narration: `Infusing fresh sauces and aromatics that awaken the senses and elevate every detail.`, search_keywords: `chef tossing pasta saucepan flames delicious`, duration: sceneDuration, subtitle: "Rich Flavor Symphony", transition: "zoom" },
+          { narration: `Garnishing with hand-picked herbs, aged cheeses, and extra virgin olive oil for unmatched depth.`, search_keywords: `chef garnishing plate food plating detail`, secondary_keywords: `artisan cheese grating culinary chef`, duration: sceneDuration, subtitle: "Artisan Finishing", transition: "splitscreen" },
+          { narration: `The aroma fills the room as the golden crust and simmering juices reach their peak harmony.`, search_keywords: `hot delicious meal steaming restaurant table`, duration: sceneDuration, subtitle: "Perfect Texture", transition: "zoom" },
+          { narration: `Plated with perfection and ready to savor—a dining experience that speaks for itself.`, search_keywords: `delicious pasta plate restaurant dining serving`, duration: sceneDuration, subtitle: "Culinary Perfection", transition: "fade" },
+          { narration: `Sharing exceptional cuisine that brings people together around warmth, taste, and tradition.`, search_keywords: `friends dining eating restaurant cheerful wine`, duration: sceneDuration, subtitle: "Memorable Gathering", transition: "slide" },
+          { narration: `An exquisite celebration of flavor crafted with genuine culinary mastery.`, search_keywords: `gourmet restaurant dessert coffee finish luxury`, duration: sceneDuration, subtitle: "Taste of Excellence", transition: "fade" }
         ];
         break;
 
       case "wildlife":
         music_keyword = "cinematic nature wildlife ambient inspirational";
         music_mood = "majestic wilderness";
-        rawScenes = [
-          {
-            narration: `Across vast untamed landscapes, life thrives in pure harmony under the open sky.`,
-            search_keywords: `${primaryTopic} savannah safari nature landscape sunrise`,
-            duration: sceneDuration,
-            subtitle: "The Wild Frontier",
-            transition: "fade"
-          },
-          {
-            narration: `Majestic creatures navigate the wilderness, demonstrating raw grace and instincts.`,
-            search_keywords: `wildlife roaming safari animals close up`,
-            secondary_keywords: `aerial savanna plain trees golden hour`,
-            duration: sceneDuration,
-            subtitle: "Untamed Instincts",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Every movement is attuned to the pulse of nature, creating unforgettable spectacles.`,
-            search_keywords: `wild animals watering hole sunset safari`,
-            duration: sceneDuration,
-            subtitle: "Pulse of the Wild",
-            transition: "zoom"
-          },
-          {
-            narration: `As the golden sun sets over the horizon, the eternal beauty of the wild endures.`,
-            search_keywords: `african savannah sunset acacia tree silhouette`,
-            duration: sceneDuration,
-            subtitle: "Eternal Horizons",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Across vast untamed landscapes, life thrives in pure harmony under the open sky.`, search_keywords: `${primaryTopic} savannah safari nature landscape sunrise`, duration: sceneDuration, subtitle: "The Wild Frontier", transition: "fade" },
+          { narration: `Majestic creatures navigate the wilderness, demonstrating raw grace and instincts.`, search_keywords: `wildlife roaming safari animals close up`, secondary_keywords: `aerial savanna plain trees golden hour`, duration: sceneDuration, subtitle: "Untamed Instincts", transition: "splitscreen" },
+          { narration: `Every movement is attuned to the pulse of nature, creating unforgettable spectacles.`, search_keywords: `wild animals watering hole sunset safari`, duration: sceneDuration, subtitle: "Pulse of the Wild", transition: "zoom" },
+          { narration: `Predators and herds coexist in a delicate, ancient balance carved across generations.`, search_keywords: `lions safari wildlife tracking grassland`, secondary_keywords: `herd zebra wildebeest running savanna`, duration: sceneDuration, subtitle: "Ancient Balance", transition: "splitscreen" },
+          { narration: `From morning mist over riverbanks to soaring eagles catching the thermals.`, search_keywords: `eagle flying soaring mountains wildlife nature`, duration: sceneDuration, subtitle: "Sovereign Skies", transition: "zoom" },
+          { narration: `As the golden sun sets over the horizon, the eternal beauty of the wild endures.`, search_keywords: `african savannah sunset acacia tree silhouette`, duration: sceneDuration, subtitle: "Eternal Horizons", transition: "fade" },
+          { narration: `Under starlit wilderness skies, nocturnal life awakens with quiet, watchful eyes.`, search_keywords: `night safari wilderness stars milky way silhouette`, duration: sceneDuration, subtitle: "Night in the Wild", transition: "slide" },
+          { narration: `Protecting these precious ecosystems ensures the rhythm of nature continues unbroken.`, search_keywords: `nature conservation lush green forest river aerial`, duration: sceneDuration, subtitle: "Preserving the Wild", transition: "fade" }
         ];
         break;
 
       case "sports":
         music_keyword = "energetic electronic workout pulse power";
         music_mood = "high energy athletic";
-        rawScenes = [
-          {
-            narration: `Greatness is forged long before the spotlight—built through discipline and early morning dedication.`,
-            search_keywords: `${primaryTopic} athlete training morning workout gym`,
-            duration: sceneDuration,
-            subtitle: "Forged in Discipline",
-            transition: "fade"
-          },
-          {
-            narration: `Pushing past limits and testing endurance through explosive power and precise form.`,
-            search_keywords: `weightlifting dumbbells workout intense gym`,
-            secondary_keywords: `athlete running track cardio sprint`,
-            duration: sceneDuration,
-            subtitle: "Relentless Drive",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Sweat, focus, and continuous repetitions turn every challenge into measurable strength.`,
-            search_keywords: `crossfit battle ropes intense training fitness`,
-            duration: sceneDuration,
-            subtitle: "Peak Performance",
-            transition: "zoom"
-          },
-          {
-            narration: `Victory belongs to those who never surrender—ready to conquer the next milestone.`,
-            search_keywords: `athlete victory celebrate breathing sunset gym`,
-            duration: sceneDuration,
-            subtitle: "Unstoppable Momentum",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Greatness is forged long before the spotlight—built through discipline and early morning dedication.`, search_keywords: `${primaryTopic} athlete training morning workout gym`, duration: sceneDuration, subtitle: "Forged in Discipline", transition: "fade" },
+          { narration: `Pushing past limits and testing endurance through explosive power and precise form.`, search_keywords: `weightlifting dumbbells workout intense gym`, secondary_keywords: `athlete running track cardio sprint`, duration: sceneDuration, subtitle: "Relentless Drive", transition: "splitscreen" },
+          { narration: `Sweat, focus, and continuous repetitions turn every challenge into measurable strength.`, search_keywords: `crossfit battle ropes intense training fitness`, duration: sceneDuration, subtitle: "Peak Performance", transition: "zoom" },
+          { narration: `Refining technique, explosive speed, and mental agility with razor-sharp concentration.`, search_keywords: `athlete sprinting sprinting starting blocks track`, secondary_keywords: `gym boxing punching bag training`, duration: sceneDuration, subtitle: "Laser Focus", transition: "splitscreen" },
+          { narration: `Breaking through mental barriers to achieve what once seemed completely impossible.`, search_keywords: `muscular athlete chalk hands barbell deadlift`, duration: sceneDuration, subtitle: "Breakthrough Power", transition: "zoom" },
+          { narration: `Victory belongs to those who never surrender—ready to conquer the next milestone.`, search_keywords: `athlete victory celebrate breathing sunset gym`, duration: sceneDuration, subtitle: "Unstoppable Momentum", transition: "fade" },
+          { narration: `The journey never stops; every finish line is simply the start of a greater challenge.`, search_keywords: `athlete tying shoes sunrise mountain running`, duration: sceneDuration, subtitle: "Never Settle", transition: "slide" },
+          { narration: `Rise, execute, and dominate your potential today.`, search_keywords: `championship celebration stadium crowd cheering`, duration: sceneDuration, subtitle: "Champion Mindset", transition: "fade" }
         ];
         break;
 
       case "travel":
         music_keyword = "chillhop lofi travel wanderlust beat";
         music_mood = "atmospheric wanderlust";
-        rawScenes = [
-          {
-            narration: `Stepping into a new city full of wonder, history, and vibrant hidden corners.`,
-            search_keywords: `${primaryTopic} city streets architecture travel aerial`,
-            duration: sceneDuration,
-            subtitle: "Arrival & Exploration",
-            transition: "fade"
-          },
-          {
-            narration: `From bustling urban avenues to historic alleys, every district tells a timeless story.`,
-            search_keywords: `${primaryTopic} bustling streets crowd pedestrians`,
-            secondary_keywords: `${primaryTopic} landmark scenic panorama`,
-            duration: sceneDuration,
-            subtitle: "Stories in the Streets",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Immersing in authentic local culture, unique flavors, and unforgettable sights.`,
-            search_keywords: `${primaryTopic} night lights evening city cafe`,
-            duration: sceneDuration,
-            subtitle: "Local Culture",
-            transition: "zoom"
-          },
-          {
-            narration: `Memories etched against the skyline, inspiring the journey to the next destination.`,
-            search_keywords: `${primaryTopic} sunset viewpoint skyline panoramic`,
-            duration: sceneDuration,
-            subtitle: "Endless Horizons",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Stepping into a new city full of wonder, history, and vibrant hidden corners.`, search_keywords: `${primaryTopic} city streets architecture travel aerial`, duration: sceneDuration, subtitle: "Arrival & Exploration", transition: "fade" },
+          { narration: `From bustling urban avenues to historic alleys, every district tells a timeless story.`, search_keywords: `${primaryTopic} bustling streets crowd pedestrians`, secondary_keywords: `${primaryTopic} landmark scenic panorama`, duration: sceneDuration, subtitle: "Stories in the Streets", transition: "splitscreen" },
+          { narration: `Immersing in authentic local culture, unique flavors, and unforgettable sights.`, search_keywords: `${primaryTopic} night lights evening city cafe`, duration: sceneDuration, subtitle: "Local Culture", transition: "zoom" },
+          { narration: `Wandering through historic markets rich with artisan crafts and local traditions.`, search_keywords: `vibrant travel market food stall spices artisan`, secondary_keywords: `scenic rooftop view city horizon sunset`, duration: sceneDuration, subtitle: "Authentic Charm", transition: "splitscreen" },
+          { narration: `Capturing moments of stillness in ancient temples, museums, and coastal lookouts.`, search_keywords: `scenic viewpoint ocean cliff historic architecture`, duration: sceneDuration, subtitle: "Timeless Wonder", transition: "zoom" },
+          { narration: `Memories etched against the skyline, inspiring the journey to the next destination.`, search_keywords: `${primaryTopic} sunset viewpoint skyline panoramic`, duration: sceneDuration, subtitle: "Endless Horizons", transition: "fade" },
+          { narration: `Connecting with people, sharing stories, and embracing the beauty of exploration.`, search_keywords: `travelers laughing scenic landscape mountain lake`, duration: sceneDuration, subtitle: "Wanderlust Spirit", transition: "slide" },
+          { narration: `The world is vast, inviting you to discover something extraordinary around every turn.`, search_keywords: `aerial scenic coastline golden hour travel destination`, duration: sceneDuration, subtitle: "The Journey Awaits", transition: "fade" }
         ];
         break;
 
       case "crypto":
         music_keyword = "dark modern electronic corporate pulse";
         music_mood = "high tech financial";
-        rawScenes = [
-          {
-            narration: `Decentralized finance is reshaping global commerce at the speed of modern technology.`,
-            search_keywords: `${primaryTopic} bitcoin blockchain cryptocurrency digital`,
-            duration: sceneDuration,
-            subtitle: "The Financial Frontier",
-            transition: "fade"
-          },
-          {
-            narration: `Real-time data feeds and market volatility demand calculated focus and algorithmic precision.`,
-            search_keywords: `stock trading charts market graphs screen`,
-            secondary_keywords: `trader multiple screens trading desk crypto`,
-            duration: sceneDuration,
-            subtitle: "Algorithmic Precision",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Navigating global liquidity and digital assets with clear strategy and discipline.`,
-            search_keywords: `digital currency blockchain network nodes matrix`,
-            duration: sceneDuration,
-            subtitle: "Decentralized Liquidity",
-            transition: "zoom"
-          },
-          {
-            narration: `Unlocking the boundless potential of the new borderless economy.`,
-            search_keywords: `high tech digital finance futuristic city glowing`,
-            duration: sceneDuration,
-            subtitle: "Future of Wealth",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Decentralized finance is reshaping global commerce at the speed of modern technology.`, search_keywords: `${primaryTopic} bitcoin blockchain cryptocurrency digital`, duration: sceneDuration, subtitle: "The Financial Frontier", transition: "fade" },
+          { narration: `Real-time data feeds and market volatility demand calculated focus and algorithmic precision.`, search_keywords: `stock trading charts market graphs screen`, secondary_keywords: `trader multiple screens trading desk crypto`, duration: sceneDuration, subtitle: "Algorithmic Precision", transition: "splitscreen" },
+          { narration: `Navigating global liquidity and digital assets with clear strategy and discipline.`, search_keywords: `digital currency blockchain network nodes matrix`, duration: sceneDuration, subtitle: "Decentralized Liquidity", transition: "zoom" },
+          { narration: `Smart contracts execute immutable transactions across decentralized networks globally.`, search_keywords: `server farm data nodes glowing lights futuristic`, secondary_keywords: `crypto mining hardware digital network`, duration: sceneDuration, subtitle: "Smart Contracts", transition: "splitscreen" },
+          { narration: `Analyzing on-chain metrics and liquidity patterns to uncover high-conviction trends.`, search_keywords: `financial analytics candlestick chart trading matrix`, duration: sceneDuration, subtitle: "Market Intelligence", transition: "zoom" },
+          { narration: `Unlocking the boundless potential of the new borderless economy.`, search_keywords: `high tech digital finance futuristic city glowing`, duration: sceneDuration, subtitle: "Future of Wealth", transition: "fade" }
         ];
         break;
 
       case "space":
         music_keyword = "deep space cosmic ambient synth universe";
         music_mood = "deep cosmic mystery";
-        rawScenes = [
-          {
-            narration: `Gazing into the unfathomable depths of the cosmos, where billions of worlds await.`,
-            search_keywords: `${primaryTopic} cosmos galaxy deep space stars nebula`,
-            duration: sceneDuration,
-            subtitle: "Infinite Cosmos",
-            transition: "fade"
-          },
-          {
-            narration: `Celestial forces and swirling nebulas sculpt the fabric of space and time.`,
-            search_keywords: `planets orbiting solar system space telescope`,
-            secondary_keywords: `space station astronaut earth orbit view`,
-            duration: sceneDuration,
-            subtitle: "Cosmic Forces",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Bold missions and exploratory probes venture where no human has dared before.`,
-            search_keywords: `rocket launch space shuttle stars exploration`,
-            duration: sceneDuration,
-            subtitle: "Venturing Beyond",
-            transition: "zoom"
-          },
-          {
-            narration: `Expanding the boundaries of human knowledge across the eternal stellar frontier.`,
-            search_keywords: `earth from space sunrise atmosphere blue planet`,
-            duration: sceneDuration,
-            subtitle: "The Final Frontier",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Gazing into the unfathomable depths of the cosmos, where billions of worlds await.`, search_keywords: `${primaryTopic} cosmos galaxy deep space stars nebula`, duration: sceneDuration, subtitle: "Infinite Cosmos", transition: "fade" },
+          { narration: `Celestial forces and swirling nebulas sculpt the fabric of space and time.`, search_keywords: `planets orbiting solar system space telescope`, secondary_keywords: `space station astronaut earth orbit view`, duration: sceneDuration, subtitle: "Cosmic Forces", transition: "splitscreen" },
+          { narration: `Bold missions and exploratory probes venture where no human has dared before.`, search_keywords: `rocket launch space shuttle stars exploration`, duration: sceneDuration, subtitle: "Venturing Beyond", transition: "zoom" },
+          { narration: `Astronomers map distant star clusters and exoplanets with interstellar precision.`, search_keywords: `space telescope observatory starry night milky way`, secondary_keywords: `mars rover red planet surface exploration`, duration: sceneDuration, subtitle: "Deep Space Mapping", transition: "splitscreen" },
+          { narration: `Witnessing supernova remnants and gravitational waves ripples across the dark void.`, search_keywords: `glowing nebula cosmic gas stellar explosion space`, duration: sceneDuration, subtitle: "Stellar Evolution", transition: "zoom" },
+          { narration: `Expanding the boundaries of human knowledge across the eternal stellar frontier.`, search_keywords: `earth from space sunrise atmosphere blue planet`, duration: sceneDuration, subtitle: "The Final Frontier", transition: "fade" }
         ];
         break;
 
       case "cars":
         music_keyword = "fast rock electronic driving energy";
         music_mood = "adrenaline high speed";
-        rawScenes = [
-          {
-            narration: `Pure aerodynamic perfection engineered to dominate both the road and the racetrack.`,
-            search_keywords: `${primaryTopic} sports car supercar driving race track`,
-            duration: sceneDuration,
-            subtitle: "Precision Engineering",
-            transition: "fade"
-          },
-          {
-            narration: `Engines roaring at high RPMs, delivering immediate throttle response and surgical handling.`,
-            search_keywords: `car driving fast mountain highway sunset`,
-            secondary_keywords: `cockpit driver hands steering wheel speed`,
-            duration: sceneDuration,
-            subtitle: "Raw Horsepower",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Carving through sharp apexes with uncompromising traction and mechanical balance.`,
-            search_keywords: `sports car drifting race circuit tire smoke`,
-            duration: sceneDuration,
-            subtitle: "Track Dominance",
-            transition: "zoom"
-          },
-          {
-            narration: `The open asphalt calls—where passion meets pure unadulterated performance.`,
-            search_keywords: `luxury car driving into sunset scenic road`,
-            duration: sceneDuration,
-            subtitle: "Pure Driving Passion",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Pure aerodynamic perfection engineered to dominate both the road and the racetrack.`, search_keywords: `${primaryTopic} sports car supercar driving race track`, duration: sceneDuration, subtitle: "Precision Engineering", transition: "fade" },
+          { narration: `Engines roaring at high RPMs, delivering immediate throttle response and surgical handling.`, search_keywords: `car driving fast mountain highway sunset`, secondary_keywords: `cockpit driver hands steering wheel speed`, duration: sceneDuration, subtitle: "Raw Horsepower", transition: "splitscreen" },
+          { narration: `Carving through sharp apexes with uncompromising traction and mechanical balance.`, search_keywords: `sports car drifting race circuit tire smoke`, duration: sceneDuration, subtitle: "Track Dominance", transition: "zoom" },
+          { narration: `Aerodynamic carbon fiber curves engineered to channel downforce and slice through air.`, search_keywords: `supercar carbon fiber wheel brake caliper detail`, secondary_keywords: `pit stop racing team mechanics tire change`, duration: sceneDuration, subtitle: "Aerodynamic Mastery", transition: "splitscreen" },
+          { narration: `Acceleration pinning you into the seat as speedometer needles climb effortlessly.`, search_keywords: `dashboard gauges speedometer glowing racing night`, duration: sceneDuration, subtitle: "Pure Acceleration", transition: "zoom" },
+          { narration: `The open asphalt calls—where passion meets pure unadulterated performance.`, search_keywords: `luxury car driving into sunset scenic road`, duration: sceneDuration, subtitle: "Pure Driving Passion", transition: "fade" }
         ];
         break;
 
       case "health":
         music_keyword = "calming meditation ambient piano peaceful";
         music_mood = "peaceful restorative";
-        rawScenes = [
-          {
-            narration: `True wellness begins from within—cultivating stillness in a fast-moving world.`,
-            search_keywords: `${primaryTopic} meditation peaceful nature breathing calm`,
-            duration: sceneDuration,
-            subtitle: "Inner Stillness",
-            transition: "fade"
-          },
-          {
-            narration: `Restoring balance and replenishing vital energy through intentional daily mindfulness.`,
-            search_keywords: `yoga stretch morning sunlight peaceful room`,
-            secondary_keywords: `healthy lifestyle tea water fresh fruits`,
-            duration: sceneDuration,
-            subtitle: "Restorative Balance",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Gentle movement and calm breathing harmonize the physical body with mental clarity.`,
-            search_keywords: `meditation seaside ocean waves breeze serene`,
-            duration: sceneDuration,
-            subtitle: "Clarity & Calm",
-            transition: "zoom"
-          },
-          {
-            narration: `Embracing a lifestyle of longevity, vitality, and deep peace every single day.`,
-            search_keywords: `peaceful forest sunlight green trees wellness`,
-            duration: sceneDuration,
-            subtitle: "Vital Harmony",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `True wellness begins from within—cultivating stillness in a fast-moving world.`, search_keywords: `${primaryTopic} meditation peaceful nature breathing calm`, duration: sceneDuration, subtitle: "Inner Stillness", transition: "fade" },
+          { narration: `Restoring balance and replenishing vital energy through intentional daily mindfulness.`, search_keywords: `yoga stretch morning sunlight peaceful room`, secondary_keywords: `healthy lifestyle tea water fresh fruits`, duration: sceneDuration, subtitle: "Restorative Balance", transition: "splitscreen" },
+          { narration: `Gentle movement and calm breathing harmonize the physical body with mental clarity.`, search_keywords: `meditation seaside ocean waves breeze serene`, duration: sceneDuration, subtitle: "Clarity & Calm", transition: "zoom" },
+          { narration: `Nourishing body and spirit with wholesome nutrition, hydration, and positive habits.`, search_keywords: `fresh organic food green smoothie preparing healthy`, secondary_keywords: `walking barefoot grass morning dew nature`, duration: sceneDuration, subtitle: "Nourishing Habits", transition: "splitscreen" },
+          { narration: `Releasing tension, resetting the nervous system, and discovering deep peace.`, search_keywords: `sunlight through trees peaceful forest stream water`, duration: sceneDuration, subtitle: "Deep Relaxation", transition: "zoom" },
+          { narration: `Embracing a lifestyle of longevity, vitality, and deep peace every single day.`, search_keywords: `peaceful forest sunlight green trees wellness`, duration: sceneDuration, subtitle: "Vital Harmony", transition: "fade" }
         ];
         break;
 
       case "art":
         music_keyword = "creative chill jazz stylish groove";
         music_mood = "inspirational artistic";
-        rawScenes = [
-          {
-            narration: `Every creative journey starts with a blank canvas and a spark of raw imagination.`,
-            search_keywords: `${primaryTopic} art studio painting creative design`,
-            duration: sceneDuration,
-            subtitle: "The Creative Spark",
-            transition: "fade"
-          },
-          {
-            narration: `Blending texture, light, and vibrant color palettes into bold expressive forms.`,
-            search_keywords: `artist painting canvas brush strokes close up`,
-            secondary_keywords: `creative hands crafting pottery sculpt`,
-            duration: sceneDuration,
-            subtitle: "Expressive Craft",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Attention to nuance transforms simple materials into timeless works of art.`,
-            search_keywords: `art gallery exhibition modern sculpture lighting`,
-            duration: sceneDuration,
-            subtitle: "Refined Vision",
-            transition: "zoom"
-          },
-          {
-            narration: `Inspiring audiences and sharing a unique creative perspective with the world.`,
-            search_keywords: `artist standing in studio admiring finished work`,
-            duration: sceneDuration,
-            subtitle: "Creative Fulfillment",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Every creative journey starts with a blank canvas and a spark of raw imagination.`, search_keywords: `${primaryTopic} art studio painting creative design`, duration: sceneDuration, subtitle: "The Creative Spark", transition: "fade" },
+          { narration: `Blending texture, light, and vibrant color palettes into bold expressive forms.`, search_keywords: `artist painting canvas brush strokes close up`, secondary_keywords: `creative hands crafting pottery sculpt`, duration: sceneDuration, subtitle: "Expressive Craft", transition: "splitscreen" },
+          { narration: `Attention to nuance transforms simple materials into timeless works of art.`, search_keywords: `art gallery exhibition modern sculpture lighting`, duration: sceneDuration, subtitle: "Refined Vision", transition: "zoom" },
+          { narration: `Experimenting with new mediums, bold brushstrokes, and captivating color harmonies.`, search_keywords: `palette mixing paint colors artist creative studio`, secondary_keywords: `design studio digital tablet stylus drawing`, duration: sceneDuration, subtitle: "Creative Exploration", transition: "splitscreen" },
+          { narration: `Letting inspiration guide each stroke until the deeper meaning comes into focus.`, search_keywords: `modern art gallery visitors admiring artwork`, duration: sceneDuration, subtitle: "Artistic Depth", transition: "zoom" },
+          { narration: `Inspiring audiences and sharing a unique creative perspective with the world.`, search_keywords: `artist standing in studio admiring finished work`, duration: sceneDuration, subtitle: "Creative Fulfillment", transition: "fade" }
         ];
         break;
 
       case "tech":
         music_keyword = "tech ambient synth modern digital";
         music_mood = "futuristic technology";
-        rawScenes = [
-          {
-            narration: `Breakthrough technologies and automated workflows are transforming modern industries.`,
-            search_keywords: `${primaryTopic} futuristic technology modern interface digital`,
-            duration: sceneDuration,
-            subtitle: "Technological Frontier",
-            transition: "fade"
-          },
-          {
-            narration: `Intelligent algorithms execute rapid computation with remarkable speed and precision.`,
-            search_keywords: `software developer screen code typing laptop`,
-            secondary_keywords: `server room matrix neon lights data`,
-            duration: sceneDuration,
-            subtitle: "High Speed Intelligence",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Connecting vision with seamless execution across cloud-scale architectures.`,
-            search_keywords: `futuristic city drone aerial night neon`,
-            duration: sceneDuration,
-            subtitle: "Scalable Innovation",
-            transition: "zoom"
-          },
-          {
-            narration: `Empowering creators and builders to invent the future of digital experiences.`,
-            search_keywords: `modern tech team collaboration futuristic display`,
-            duration: sceneDuration,
-            subtitle: "Building the Future",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Breakthrough technologies and automated workflows are transforming modern industries.`, search_keywords: `${primaryTopic} futuristic technology modern interface digital`, duration: sceneDuration, subtitle: "Technological Frontier", transition: "fade" },
+          { narration: `Intelligent algorithms execute rapid computation with remarkable speed and precision.`, search_keywords: `software developer screen code typing laptop`, secondary_keywords: `server room matrix neon lights data`, duration: sceneDuration, subtitle: "High Speed Intelligence", transition: "splitscreen" },
+          { narration: `Connecting vision with seamless execution across cloud-scale architectures.`, search_keywords: `futuristic city drone aerial night neon`, duration: sceneDuration, subtitle: "Scalable Innovation", transition: "zoom" },
+          { narration: `Machine learning models continuously optimize complex distributed data systems.`, search_keywords: `ai neural network data visualization matrix glowing`, secondary_keywords: `microchip processor circuit board glowing lights`, duration: sceneDuration, subtitle: "Intelligent Systems", transition: "splitscreen" },
+          { narration: `Modern developer pipelines streamline deployment from idea to production in seconds.`, search_keywords: `software engineering team modern workspace monitors`, duration: sceneDuration, subtitle: "Continuous Delivery", transition: "zoom" },
+          { narration: `Empowering creators and builders to invent the future of digital experiences.`, search_keywords: `modern tech team collaboration futuristic display`, duration: sceneDuration, subtitle: "Building the Future", transition: "fade" },
+          { narration: `Next-generation interfaces deliver seamless, responsive interaction across all devices.`, search_keywords: `smartphone tablet modern digital interface clean`, duration: sceneDuration, subtitle: "Next-Gen Experience", transition: "slide" },
+          { narration: `The digital transformation is accelerating—unlocking limitless potential for tomorrow.`, search_keywords: `smart city skyline glowing network connectivity aerial`, duration: sceneDuration, subtitle: "The Future is Now", transition: "fade" }
         ];
         break;
 
       default:
         music_keyword = `${primaryTopic} ambient cinematic`;
         music_mood = "cinematic atmospheric";
-        rawScenes = [
-          {
-            narration: `Exploring ${inputTopic}—discovering the unique nuances and compelling moments that define it.`,
-            search_keywords: `${primaryTopic} cinematic establishing footage`,
-            duration: sceneDuration,
-            subtitle: `${title} - Introduction`,
-            transition: "fade"
-          },
-          {
-            narration: `Delving deeper into the process, highlighting dynamic action and essential details.`,
-            search_keywords: `${primaryTopic} action close up detail`,
-            secondary_keywords: `${primaryTopic} perspective angle motion`,
-            duration: sceneDuration,
-            subtitle: "Dynamic Exploration",
-            transition: "splitscreen"
-          },
-          {
-            narration: `Each perspective brings fresh insight, combining craft, rhythm, and clarity.`,
-            search_keywords: `${primaryTopic} high quality professional video`,
-            duration: sceneDuration,
-            subtitle: "Depth & Perspective",
-            transition: "zoom"
-          },
-          {
-            narration: `A cohesive visual journey leaving a lasting impression and inspiring fresh vision.`,
-            search_keywords: `${primaryTopic} sunset cinematic finish beautiful`,
-            duration: sceneDuration,
-            subtitle: "Lasting Impression",
-            transition: "fade"
-          }
+        basePool = [
+          { narration: `Exploring ${inputTopic}—discovering the unique nuances and compelling moments that define it.`, search_keywords: `${primaryTopic} cinematic establishing footage`, duration: sceneDuration, subtitle: `${title} - Introduction`, transition: "fade" },
+          { narration: `Delving deeper into the process, highlighting dynamic action and essential details.`, search_keywords: `${primaryTopic} action close up detail`, secondary_keywords: `${primaryTopic} perspective angle motion`, duration: sceneDuration, subtitle: "Dynamic Exploration", transition: "splitscreen" },
+          { narration: `Each perspective brings fresh insight, combining craft, rhythm, and clarity.`, search_keywords: `${primaryTopic} high quality professional video`, duration: sceneDuration, subtitle: "Depth & Perspective", transition: "zoom" },
+          { narration: `Uncovering key details and moments that captivate the eye and tell a vivid story.`, search_keywords: `${primaryTopic} modern creative visual motion`, secondary_keywords: `${primaryTopic} close up aesthetic detail`, duration: sceneDuration, subtitle: "Vivid Detail", transition: "splitscreen" },
+          { narration: `Bringing precision, style, and cinematic atmosphere into every single frame.`, search_keywords: `${primaryTopic} cinematic motion lighting aesthetic`, duration: sceneDuration, subtitle: "Cinematic Atmosphere", transition: "zoom" },
+          { narration: `A cohesive visual journey leaving a lasting impression and inspiring fresh vision.`, search_keywords: `${primaryTopic} sunset cinematic finish beautiful`, duration: sceneDuration, subtitle: "Lasting Impression", transition: "fade" },
+          { narration: `Synthesizing ideas into meaningful experiences that resonate with viewers everywhere.`, search_keywords: `${primaryTopic} golden hour panoramic landscape`, duration: sceneDuration, subtitle: "Enduring Vision", transition: "slide" },
+          { narration: `Ready to share, inspire, and captivate audiences across the world.`, search_keywords: `${primaryTopic} beautiful cinematic finish aerial`, duration: sceneDuration, subtitle: "Final Masterpiece", transition: "fade" }
         ];
         break;
     }
+
+    // Select enough scenes to satisfy the requested duration (e.g., up to 60s)
+    const requiredCount = Math.max(3, Math.min(basePool.length, calculatedSceneCount));
+    rawScenes = basePool.slice(0, requiredCount);
   }
 
   const scenes = rawScenes.map((sc, idx) => ({
@@ -808,20 +815,28 @@ function generateTopicAwareVideoPlan(
 
 // Autonomous Video Creation: Generate complete video narrative, scenes, and music cues
 app.post("/api/auto-video/plan", async (req, res) => {
-  const { prompt, script, style = "tech", aspectRatio = "16:9", pacing = "balanced" } = req.body;
+  const {
+    prompt,
+    script,
+    style = "tech",
+    aspectRatio = "16:9",
+    pacing = "balanced",
+    targetDuration = 30
+  } = req.body;
   const inputTopic = (prompt || script || "Creative Video Storytelling").trim();
   const sceneDuration = pacing === "fast" ? 3.5 : pacing === "cinematic" ? 7 : 5;
+  const targetNumScenes = Math.max(3, Math.min(16, Math.round(Number(targetDuration || 30) / sceneDuration)));
 
   const systemInstruction = `You are an expert Autonomous AI Video Director and Producer.
 Your goal is to transform a custom user prompt or video script into an autonomous video production plan ready for instant playback and rendering.
 
 RULES:
-1. Generate an engaging, high-impact narration script split into 3 to 5 sequential scenes tailored precisely to the user's specific topic.
+1. Generate an engaging, high-impact narration script split into ${targetNumScenes} sequential scenes tailored precisely to the user's specific topic and target video duration (~${targetDuration}s).
 2. For each scene:
    - "narration": A punchy, spoken sentence (8-16 words) that fits natural voiceover delivery.
-   - "search_keywords": 2-4 ultra-descriptive visual keywords tuned for Pexels / Pixabay stock videography.
+   - "search_keywords": 2-4 ultra-descriptive visual keywords tuned for Pexels / Pixabay stock videography (${aspectRatio === "9:16" ? "portrait/vertical short-form video style" : "cinematic 16:9 style"}).
    - "secondary_keywords": Optional secondary B-roll search query for split-screen comparison scenes.
-   - "duration": Target duration in seconds (between 4.0 and 6.5 seconds).
+   - "duration": Target duration in seconds (between 3.5 and 7.0 seconds).
    - "subtitle": Short on-screen subtitle caption text (max 8 words) for bold display.
    - "transition": One of "fade", "splitscreen", "zoom", "slide".
 3. Under "music_keyword", provide the ideal royalty-free background music search query matching the genre and vibe.
@@ -830,8 +845,9 @@ RULES:
   const promptText = `Produce an autonomous video plan for:
 Topic / Prompt: "${inputTopic}"
 Style: ${style}
-Aspect Ratio: ${aspectRatio}
+Aspect Ratio: ${aspectRatio} (${aspectRatio === "9:16" ? "9:16 Portrait / Vertical Short Form" : "16:9 Landscape Widescreen"})
 Target Pacing: ${pacing} (approx ${sceneDuration}s per scene)
+Target Total Video Duration: approx ${targetDuration} seconds (${targetNumScenes} total scenes)
 
 Include a catchy project title, cohesive full script, scene breakdowns with stock video keywords, secondary keywords for split screen, and the exact background music search keyword.`;
 
@@ -885,7 +901,7 @@ Include a catchy project title, cohesive full script, scene breakdowns with stoc
       secondary_keywords: s.secondary_keywords || `${inputTopic} detail`,
       duration: Math.max(3, Math.min(10, Number(s.duration) || sceneDuration)),
       subtitle: s.subtitle || s.narration?.slice(0, 40) || "",
-      transition: s.transition || (idx === 1 ? "splitscreen" : idx === 2 ? "zoom" : "fade"),
+      transition: s.transition || (idx % 4 === 1 ? "splitscreen" : idx % 4 === 2 ? "zoom" : "fade"),
       layout: s.transition === "splitscreen" ? "splitscreen" : "standard"
     }));
 
@@ -904,7 +920,7 @@ Include a catchy project title, cohesive full script, scene breakdowns with stoc
   } catch (err: any) {
     console.log("Using smart dynamic topic-aware generator for prompt:", inputTopic);
     // Intelligent, high-quality dynamic topic-aware generator
-    const dynamicPlan = generateTopicAwareVideoPlan(inputTopic, style, aspectRatio, pacing);
+    const dynamicPlan = generateTopicAwareVideoPlan(inputTopic, style, aspectRatio, pacing, Number(targetDuration) || 30);
     return res.json(dynamicPlan);
   }
 });
@@ -1016,11 +1032,13 @@ app.get("/api/proxy-video", async (req, res) => {
   }
 });
 
-// Render & Stitch Complete Video (with all scenes, transitions, split screen, synced voiceover, and ducked music)
+// Render & Stitch Complete Video (with all scenes, transitions, split screen, synced voiceover, ducked music, and burned-in subtitles)
 app.post("/api/render-complete-video", async (req, res) => {
   const {
     title = "complete_video",
     scenes = [],
+    aspectRatio = "16:9",
+    subtitlesStyle = "highlight",
     musicUrl,
     musicVolume = 0.3,
     voice = "en-US-JennyNeural",
@@ -1031,6 +1049,10 @@ app.post("/api/render-complete-video", async (req, res) => {
   if (!scenes || scenes.length === 0) {
     return res.status(400).json({ error: "No scenes provided for complete video render" });
   }
+
+  const isPortrait = aspectRatio === "9:16";
+  const targetW = isPortrait ? 1080 : 1920;
+  const targetH = isPortrait ? 1920 : 1080;
 
   const renderId = "render_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
   const tmpDir = path.join("/tmp", renderId);
@@ -1064,22 +1086,26 @@ app.post("/api/render-complete-video", async (req, res) => {
           if (secResp.ok) {
             await fs.promises.writeFile(secRawPath, Buffer.from(await secResp.arrayBuffer()));
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -t ${targetDur} -i "${secRawPath}" -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
-              exec(cmd, (err) => err ? reject(err) : resolve(true));
+              // For 16:9 (1920x1080), side-by-side splitscreen is two 960x1080 panels (hstack)
+              // For 9:16 (1080x1920), stacked or side-by-side dual panel: two 1080x960 panels stacked vertically (vstack)
+              const splitCmd = isPortrait
+                ? `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -t ${targetDur} -i "${secRawPath}" -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`
+                : `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -t ${targetDur} -i "${secRawPath}" -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              exec(splitCmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           } else {
-            // Fallback to standard 1080p if secondary fetch fails
+            // Fallback to standard dimension if secondary fetch fails
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -vf "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH}" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           }
         } else {
-          // Standard clip normalization (1920x1080 30fps)
+          // Standard clip normalization (dynamic dimensions based on aspectRatio)
           await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -vf "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+            const cmd = `ffmpeg -y -t ${targetDur} -i "${rawClipPath}" -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH}" -c:v libx264 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
             exec(cmd, (err) => err ? reject(err) : resolve(true));
           });
           downloadedClips.push(normClipPath);
@@ -1173,32 +1199,68 @@ app.post("/api/render-complete-video", async (req, res) => {
       }
     }
 
-    // 4. Final Audio & Video Assembly
+    // 4. Generate Subtitles ASS file if requested
+    let assLocalPath: string | null = null;
+    if (subtitlesStyle !== "none") {
+      const assContent = generateAssContent(scenes, subtitlesStyle, aspectRatio);
+      const assPath = path.join(tmpDir, "subtitles.ass");
+      await fs.promises.writeFile(assPath, assContent, "utf8");
+      assLocalPath = assPath;
+    }
+
+    // 5. Final Audio, Video & Subtitles Assembly
     let finalOutputPath = stitchedPath;
     const finalMixedPath = path.join(tmpDir, "production_final.mp4");
     const vol = Math.max(0.05, Math.min(1, Number(musicVolume) || 0.25));
 
-    if (masterVoicePath && musicLocalPath) {
-      // Both Voiceover (vol 1.0) and ducked Background Music (vol 0.2-0.3)
-      await new Promise((resolve, reject) => {
-        const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
-        exec(cmd, (err) => err ? reject(err) : resolve(true));
-      });
-      finalOutputPath = finalMixedPath;
-    } else if (masterVoicePath) {
-      // Voiceover only
-      await new Promise((resolve, reject) => {
-        const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
-        exec(cmd, (err) => err ? reject(err) : resolve(true));
-      });
-      finalOutputPath = finalMixedPath;
-    } else if (musicLocalPath) {
-      // Background music only
-      await new Promise((resolve, reject) => {
-        const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
-        exec(cmd, (err) => err ? reject(err) : resolve(true));
-      });
-      finalOutputPath = finalMixedPath;
+    if (assLocalPath) {
+      // Burn subtitles using the ASS filter and mix audio
+      if (masterVoicePath && musicLocalPath) {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      } else if (masterVoicePath) {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      } else if (musicLocalPath) {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      } else {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -filter_complex "[0:v]ass='${assLocalPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      }
+    } else {
+      // Subtitles disabled -> stream copy video
+      if (masterVoicePath && musicLocalPath) {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      } else if (masterVoicePath) {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      } else if (musicLocalPath) {
+        await new Promise((resolve, reject) => {
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest "${finalMixedPath}"`;
+          exec(cmd, (err) => err ? reject(err) : resolve(true));
+        });
+        finalOutputPath = finalMixedPath;
+      }
     }
 
     const safeTitle = (title || "complete_video").replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -1517,6 +1579,10 @@ app.get("/api/stock/search", async (req, res) => {
   const query = (req.query.query as string || "").trim();
   const mediaType = (req.query.mediaType as string || "video").toLowerCase();
   const source = (req.query.source as string || "all").toLowerCase();
+  const orientationParam = (req.query.orientation as string || "").toLowerCase();
+  const aspectRatioParam = (req.query.aspectRatio as string || "").toLowerCase();
+  const isPortrait = orientationParam === "portrait" || aspectRatioParam === "9:16";
+  const pexelsOrientation = isPortrait ? "portrait" : "landscape";
 
   if (!query) {
     return res.json({ results: [], rateLimits: rateLimitState });
@@ -1529,7 +1595,7 @@ app.get("/api/stock/search", async (req, res) => {
   if (source === "all" || source === "pexels") {
     try {
       if (mediaType === "video") {
-        const pexUrl = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=6&orientation=landscape`;
+        const pexUrl = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=6&orientation=${pexelsOrientation}`;
         const pexRes = await fetch(pexUrl, {
           headers: { Authorization: PEXELS_KEY }
         });
@@ -1579,7 +1645,7 @@ app.get("/api/stock/search", async (req, res) => {
         }
       } else {
         // Pexels photo search
-        const pexUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=landscape`;
+        const pexUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=${pexelsOrientation}`;
         const pexRes = await fetch(pexUrl, {
           headers: { Authorization: PEXELS_KEY }
         });
@@ -1696,7 +1762,7 @@ app.get("/api/stock/search", async (req, res) => {
   if (results.length === 0 && query.split(/\s+/).length > 1) {
     const fallbackQuery = query.split(/\s+/).slice(0, 2).join(" ");
     try {
-      const pexRes = await fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(fallbackQuery)}&per_page=6&orientation=landscape`, {
+      const pexRes = await fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(fallbackQuery)}&per_page=6&orientation=${pexelsOrientation}`, {
         headers: { Authorization: PEXELS_KEY }
       });
       if (pexRes.ok) {

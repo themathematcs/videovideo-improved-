@@ -248,6 +248,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const [useRawScript, setUseRawScript] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
   const [pacing, setPacing] = useState<"fast" | "balanced" | "cinematic">("balanced");
+  const [targetDuration, setTargetDuration] = useState<number>(30);
   const [vibeStyle, setVibeStyle] = useState<string>("tech");
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
   const [subtitlesStyle, setSubtitlesStyle] = useState<"highlight" | "classic" | "minimal" | "none">("highlight");
@@ -641,6 +642,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           style: vibeStyle,
           aspectRatio,
           pacing,
+          targetDuration,
         }),
       });
 
@@ -660,7 +662,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
 
         try {
           const searchRes = await fetch(
-            `/api/stock/search?query=${encodeURIComponent(scene.search_keywords)}&mediaType=video&source=all`
+            `/api/stock/search?query=${encodeURIComponent(scene.search_keywords)}&mediaType=video&source=all&aspectRatio=${aspectRatio}`
           );
           if (searchRes.ok) {
             const data = await searchRes.json();
@@ -684,7 +686,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           const secQuery = scene.secondary_keywords || `${scene.search_keywords} detail`;
           try {
             const secRes = await fetch(
-              `/api/stock/search?query=${encodeURIComponent(secQuery)}&mediaType=video&source=all`
+              `/api/stock/search?query=${encodeURIComponent(secQuery)}&mediaType=video&source=all&aspectRatio=${aspectRatio}`
             );
             if (secRes.ok) {
               const sData = await secRes.json();
@@ -1074,6 +1076,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     try {
       const payload = {
         title: videoPlan?.title || "complete_autonomous_video",
+        aspectRatio: aspectRatio,
+        subtitlesStyle: subtitlesStyle,
         musicUrl: selectedMusic?.download_url || selectedMusic?.preview_url,
         musicVolume: musicVolume,
         voice: selectedNeuralVoice,
@@ -1085,7 +1089,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           transition: sc.transition || "fade",
           videoUrl: sc.videoAsset?.downloadUrl || sc.videoAsset?.previewUrl,
           secondaryVideoUrl: sc.secondaryVideoAsset?.downloadUrl || sc.secondaryVideoAsset?.previewUrl,
-          subtitle: sc.subtitle,
+          subtitle: sc.subtitle || sc.narration || "",
           narration: sc.narration || sc.subtitle || ""
         }))
       };
@@ -1275,7 +1279,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             )}
 
             {/* Video Configuration Options */}
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-3 gap-2.5 pt-2">
               {/* Aspect Ratio */}
               <div>
                 <label className="block text-[11px] font-medium text-stone-400 mb-1">
@@ -1310,6 +1314,23 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                 </div>
               </div>
 
+              {/* Target Duration */}
+              <div>
+                <label className="block text-[11px] font-medium text-stone-400 mb-1">
+                  Duration
+                </label>
+                <select
+                  value={targetDuration}
+                  onChange={(e) => setTargetDuration(Number(e.target.value))}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-200 text-xs focus:outline-none focus:border-amber-500 h-[38px] cursor-pointer font-medium"
+                >
+                  <option value={15}>⏱️ 15s (Shorts)</option>
+                  <option value={30}>⏱️ 30s (Balanced)</option>
+                  <option value={60}>⏱️ 60s (1 Minute)</option>
+                  <option value={90}>⏱️ 90s (1.5 Min)</option>
+                </select>
+              </div>
+
               {/* Pacing */}
               <div>
                 <label className="block text-[11px] font-medium text-stone-400 mb-1">
@@ -1318,7 +1339,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                 <select
                   value={pacing}
                   onChange={(e: any) => setPacing(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-200 text-xs focus:outline-none focus:border-amber-500 h-[38px]"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-200 text-xs focus:outline-none focus:border-amber-500 h-[38px] cursor-pointer"
                 >
                   <option value="fast">⚡ Fast (3.5s)</option>
                   <option value="balanced">⏱️ Balanced (5s)</option>
