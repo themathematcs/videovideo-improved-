@@ -1,5 +1,6 @@
 import React from "react";
-import { Sparkles, Wand2, FileText, ArrowRight } from "lucide-react";
+import { Sparkles, Wand2, FileText, ArrowRight, Smartphone, Monitor, Cpu } from "lucide-react";
+import { VideoFormat } from "../types";
 
 interface ScriptInputProps {
   script: string;
@@ -10,6 +11,9 @@ interface ScriptInputProps {
   isAnalyzing: boolean;
   autoSearchOnAnalyze: boolean;
   setAutoSearchOnAnalyze: (val: boolean) => void;
+  videoFormat: VideoFormat;
+  setVideoFormat: (format: VideoFormat) => void;
+  usedModel?: string | null;
 }
 
 const PRESETS = [
@@ -44,6 +48,9 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
   isAnalyzing,
   autoSearchOnAnalyze,
   setAutoSearchOnAnalyze,
+  videoFormat,
+  setVideoFormat,
+  usedModel,
 }) => {
   const lineCount = script.trim() ? script.trim().split(/\n+/).length : 0;
   const wordCount = script.trim() ? script.trim().split(/\s+/).length : 0;
@@ -77,12 +84,57 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
         </div>
       </div>
 
+      {/* Format Selector (Landscape 16:9 vs Shorts 9:16) & AI Model Indicator */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-stone-950/70 p-2.5 rounded-xl border border-stone-800">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-stone-300">Format:</span>
+          <div className="inline-flex p-0.5 rounded-lg bg-stone-900 border border-stone-800 text-xs font-medium">
+            <button
+              onClick={() => setVideoFormat("landscape")}
+              className={`px-3 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
+                videoFormat === "landscape"
+                  ? "bg-amber-500 text-stone-950 font-bold shadow-xs"
+                  : "text-stone-400 hover:text-stone-200"
+              }`}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span>Landscape (16:9)</span>
+            </button>
+            <button
+              onClick={() => setVideoFormat("portrait")}
+              className={`px-3 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
+                videoFormat === "portrait"
+                  ? "bg-amber-500 text-stone-950 font-bold shadow-xs"
+                  : "text-stone-400 hover:text-stone-200"
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Shorts / Reels (9:16)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* AI Engine Model Rotation Info */}
+        <div className="flex items-center gap-2 text-xs text-stone-400">
+          <Cpu className="w-3.5 h-3.5 text-amber-400" />
+          <span>AI Engine:</span>
+          <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-md bg-stone-900 border border-stone-800 text-amber-300 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            {usedModel ? usedModel : "Gemini 2.5 Flash ➔ Autonomous Engine"}
+          </span>
+        </div>
+      </div>
+
       {/* Script Textarea */}
       <div className="relative">
         <textarea
           id="script-input-textarea"
           value={script}
           onChange={(e) => setScript(e.target.value)}
+          data-gramm="false"
+          data-gramm_editor="false"
+          data-enable-grammarly="false"
+          spellCheck={false}
           placeholder="Paste or write your video script here line by line... (e.g., 'Software engineering is evolving fast. Developers are using modern tools to build applications faster than ever before.')"
           rows={4}
           className="w-full px-4 py-3 rounded-xl bg-stone-950 border border-stone-800 text-stone-100 text-sm font-sans placeholder:text-stone-600 focus:outline-hidden focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all leading-relaxed resize-y"

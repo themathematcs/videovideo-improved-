@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { Copy, Check, Download, Terminal, Shield, RefreshCw, Layers } from "lucide-react";
 import { generatePythonScript } from "../pythonTemplate";
+import { VideoFormat } from "../types";
 
-export const PythonScriptView: React.FC = () => {
+interface PythonScriptViewProps {
+  videoFormat?: VideoFormat;
+}
+
+export const PythonScriptView: React.FC<PythonScriptViewProps> = ({ videoFormat = "landscape" }) => {
   const [copied, setCopied] = useState(false);
-  const scriptContent = generatePythonScript();
+  const scriptContent = generatePythonScript(undefined, undefined, undefined, videoFormat);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(scriptContent);

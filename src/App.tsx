@@ -6,11 +6,13 @@ import { AudioSuggestionsPanel } from "./components/AudioSuggestionsPanel";
 import { AutonomousVideoCreator } from "./components/AutonomousVideoCreator";
 import { JsonExportView } from "./components/JsonExportView";
 import { PythonScriptView } from "./components/PythonScriptView";
-import { ProjectPlan, Scene, StockMediaItem, SystemRateLimits } from "./types";
+import { ProjectPlan, Scene, StockMediaItem, SystemRateLimits, VideoFormat } from "./types";
 import { Download, FileJson, Terminal, Film, Sparkles, AlertCircle, Play, Music } from "lucide-react";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"storyboard" | "audio" | "json" | "python" | "auto">("auto");
+  const [videoFormat, setVideoFormat] = useState<VideoFormat>("landscape");
+  const [usedModel, setUsedModel] = useState<string | null>(null);
   
   // Initial script using the exact test prompt requested by the user
   const [script, setScript] = useState(
@@ -20,6 +22,7 @@ export default function App() {
 
   const [plan, setPlan] = useState<ProjectPlan>({
     project_name: "software_evolution",
+    video_format: "landscape",
     scenes: [
       {
         scene_number: 1,
@@ -76,22 +79,39 @@ export default function App() {
     fetchRateLimits();
   }, [fetchRateLimits]);
 
+  // Handle format toggle (Landscape 16:9 vs Shorts 9:16)
+  const handleVideoFormatChange = (newFormat: VideoFormat) => {
+    setVideoFormat(newFormat);
+    setPlan((prev) => ({
+      ...prev,
+      video_format: newFormat,
+      project_name: newFormat === "portrait" && prev.project_name === "software_evolution" ? "software_evolution_shorts" : prev.project_name
+    }));
+
+    // Trigger immediate re-search for the new orientation across all scenes
+    plan.scenes.forEach((s) => {
+      searchSceneAssets(s.scene_number, s.search_keywords, s.media_type, "all", newFormat);
+    });
+  };
+
   // Search stock media for a specific scene
   const searchSceneAssets = useCallback(
     async (
       sceneNumber: number,
       query: string,
       mediaType: "video" | "image",
-      source: "all" | "pexels" | "pixabay" = "all"
+      source: "all" | "pexels" | "pixabay" = "all",
+      formatOverride?: VideoFormat
     ) => {
       if (!query.trim()) return;
 
+      const format = formatOverride || videoFormat;
       setSceneLoading((prev) => ({ ...prev, [sceneNumber]: true }));
       setSceneErrors((prev) => ({ ...prev, [sceneNumber]: "" }));
 
       try {
         const res = await fetch(
-          `/api/stock/search?query=${encodeURIComponent(query)}&mediaType=${mediaType}&source=${source}`
+          `/api/stock/search?query=${encodeURIComponent(query)}&mediaType=${mediaType}&source=${source}&orientation=${format}`
         );
 
         if (!res.ok) {
@@ -130,7 +150,7 @@ export default function App() {
         setSceneLoading((prev) => ({ ...prev, [sceneNumber]: false }));
       }
     },
-    []
+    [videoFormat]
   );
 
   // Trigger search on initial mount for default scenes
@@ -151,7 +171,7 @@ export default function App() {
       const res = await fetch("/api/analyze-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ script: script.trim() }),
+        body: JSON.stringify({ script: script.trim(), format: videoFormat }),
       });
 
       if (!res.ok) {
@@ -159,8 +179,12 @@ export default function App() {
       }
 
       const data = await res.json();
+      if (data.used_model) {
+        setUsedModel(data.used_model);
+      }
       const updatedPlan: ProjectPlan = {
         project_name: projectName.trim() || data.project_name || "video_project",
+        video_format: videoFormat,
         scenes: (data.scenes || []).map((s: any, idx: number) => ({
           scene_number: s.scene_number || idx + 1,
           script_line: s.script_line || "",
@@ -179,7 +203,7 @@ export default function App() {
       // Auto-fetch stock assets for each generated scene
       if (autoSearchOnAnalyze) {
         updatedPlan.scenes.forEach((s) => {
-          searchSceneAssets(s.scene_number, s.search_keywords, s.media_type);
+          searchSceneAssets(s.scene_number, s.search_keywords, s.media_type, "all", videoFormat);
         });
       }
     } catch (err: any) {
@@ -299,6 +323,9 @@ export default function App() {
               isAnalyzing={isAnalyzing}
               autoSearchOnAnalyze={autoSearchOnAnalyze}
               setAutoSearchOnAnalyze={setAutoSearchOnAnalyze}
+              videoFormat={videoFormat}
+              setVideoFormat={handleVideoFormatChange}
+              usedModel={usedModel}
             />
 
             {/* Global Toolbar for Storyboard Actions */}
@@ -383,6 +410,7 @@ export default function App() {
             onExportToStoryboard={(autoPlan) => {
               setPlan({
                 project_name: autoPlan.project_name || "auto_video",
+                video_format: autoPlan.aspect_ratio === "9:16" ? "portrait" : "landscape",
                 scenes: autoPlan.scenes || [],
                 audio_suggestions: autoPlan.audio_suggestions || {
                   music_keywords: ["tech ambient synth", "cinematic inspirational"],
@@ -390,6 +418,9 @@ export default function App() {
                 }
               });
               setProjectName(autoPlan.project_name || "auto_video");
+              if (autoPlan.aspect_ratio) {
+                setVideoFormat(autoPlan.aspect_ratio === "9:16" ? "portrait" : "landscape");
+              }
               if (autoPlan.scenes) {
                 const mediaMap: Record<number, StockMediaItem[]> = {};
                 autoPlan.scenes.forEach((s: any) => {
@@ -417,6 +448,7 @@ export default function App() {
                   searchResults={sceneMedia[scene.scene_number] || []}
                   isLoadingResults={Boolean(sceneLoading[scene.scene_number])}
                   searchError={sceneErrors[scene.scene_number]}
+                  videoFormat={videoFormat}
                 />
               ))}
             </div>
@@ -441,7 +473,7 @@ export default function App() {
         {activeTab === "json" && <JsonExportView plan={plan} />}
 
         {/* Tab 4: Python Downloader View */}
-        {activeTab === "python" && <PythonScriptView />}
+        {activeTab === "python" && <PythonScriptView videoFormat={videoFormat} />}
       </main>
 
       {/* Troubleshooting Modal for 0xc10100be */}

@@ -1,3 +1,5 @@
+export type VideoFormat = 'landscape' | 'portrait';
+
 export interface Scene {
   scene_number: number;
   script_line: string;
@@ -26,6 +28,7 @@ export interface AudioTrackItem {
 
 export interface ProjectPlan {
   project_name: string;
+  video_format?: VideoFormat;
   scenes: Scene[];
   audio_suggestions?: AudioSuggestions;
 }
@@ -70,6 +73,7 @@ export interface AutoVideoScene {
   layout?: 'standard' | 'splitscreen';
   videoAsset?: StockMediaItem;
   secondaryVideoAsset?: StockMediaItem;
+  is_outro?: boolean;
 }
 
 export interface AutoVideoPlan {

@@ -7,6 +7,7 @@ interface VideoPlayerPreviewProps {
   isSelected?: boolean;
   onSelect?: () => void;
   sceneNumber: number;
+  videoFormat?: 'landscape' | 'portrait';
 }
 
 export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
@@ -14,6 +15,7 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
   isSelected,
   onSelect,
   sceneNumber,
+  videoFormat = 'landscape',
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -70,7 +72,6 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
     const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(item.downloadUrl)}&filename=${encodeURIComponent(filename)}`;
 
     try {
-      // Step 1: Fetch through verified server proxy with standard browser headers
       const res = await fetch(proxyUrl);
       if (!res.ok) {
         let errMessage = `HTTP ${res.status}`;
@@ -83,13 +84,11 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
         throw new Error(errMessage);
       }
 
-      // Step 2: Convert to blob and verify size & integrity
       const blob = await res.blob();
       if (blob.size < 10000) {
         throw new Error("Downloaded file is unusually small or incomplete. To prevent playback errors, direct CDN link is recommended.");
       }
 
-      // Step 3: Trigger clean verified download via Object URL
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
@@ -98,16 +97,16 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
       a.click();
       document.body.removeChild(a);
       
-      // Cleanup object URL after a moment
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
-
       setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3500);
+      setTimeout(() => {
+        setDownloadSuccess(false);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 5000);
     } catch (err: any) {
-      console.warn("Direct proxy download blocked or failed, opening source link:", err);
-      setDownloadError(err.message || "Download failed");
+      console.warn("Proxy download failed, offering direct fallback:", err);
+      setDownloadError(err.message || "Failed to download asset");
       
-      // Fallback: Open direct download link in new tab so user can save directly without iframe restrictions
+      // Graceful fallback to direct CDN download in new tab
       window.open(item.downloadUrl, '_blank');
     } finally {
       setIsDownloading(false);
@@ -120,14 +119,16 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onSelect}
-      className={`group relative rounded-lg overflow-hidden border transition-all duration-200 cursor-pointer ${
+      className={`group relative rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer shadow-md ${
         isSelected
           ? "border-amber-500 ring-2 ring-amber-500/40 bg-stone-850"
           : "border-stone-750 bg-stone-850 hover:border-stone-600 hover:shadow-lg hover:shadow-black/40"
       }`}
     >
       {/* Media container */}
-      <div className="relative aspect-video w-full bg-stone-950 overflow-hidden">
+      <div className={`relative w-full bg-stone-950 overflow-hidden ${
+        videoFormat === 'portrait' ? 'aspect-[9/16] max-h-[380px]' : 'aspect-video'
+      }`}>
         {item.type === 'video' && !hasError ? (
           <video
             ref={videoRef}
@@ -159,6 +160,11 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
           >
             {item.source}
           </span>
+          {videoFormat === 'portrait' && (
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-stone-950 shadow-xs">
+              9:16 Shorts
+            </span>
+          )}
           {item.duration && (
             <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-black/70 text-stone-300 backdrop-blur-xs">
               {item.duration}s

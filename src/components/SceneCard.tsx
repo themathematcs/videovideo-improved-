@@ -10,6 +10,7 @@ interface SceneCardProps {
   searchResults?: StockMediaItem[];
   isLoadingResults?: boolean;
   searchError?: string;
+  videoFormat?: 'landscape' | 'portrait';
 }
 
 export const SceneCard: React.FC<SceneCardProps> = ({
@@ -19,6 +20,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
   searchResults = [],
   isLoadingResults = false,
   searchError,
+  videoFormat = 'landscape',
 }) => {
   const [isEditingKeywords, setIsEditingKeywords] = useState(false);
   const [keywordInput, setKeywordInput] = useState(scene.search_keywords);
@@ -235,7 +237,11 @@ export const SceneCard: React.FC<SceneCardProps> = ({
             <span>Click "Search" above to preview available footage from Pexels & Pixabay</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className={
+            videoFormat === 'portrait'
+              ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5"
+              : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+          }>
             {searchResults.map((item) => (
               <VideoPlayerPreview
                 key={item.id}
@@ -243,6 +249,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
                 sceneNumber={scene.scene_number}
                 isSelected={scene.selectedMedia?.id === item.id}
                 onSelect={() => handleSelectMedia(item)}
+                videoFormat={videoFormat}
               />
             ))}
           </div>

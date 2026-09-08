@@ -1,5 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
+import os from "os";
 import fs from "fs";
 import { exec, execSync } from "child_process";
 import { fileURLToPath } from "url";
@@ -12,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
@@ -62,6 +64,38 @@ function getGeminiClient(): GoogleGenAI | null {
   return aiClient;
 }
 
+// AI Models rotation chain: Gemini 2.5 Flash -> Flash Lite -> Gemma 4 31B -> Gemma 4 26B -> Built-in Rule Parser
+const AI_MODELS_ROTATION = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemma-4-31b-it",
+  "gemma-4-26b-a4b-it"
+];
+
+// Robust JSON extractor for Gemma and Gemini markdown responses
+function extractJsonFromText(text: string): any {
+  try {
+    return JSON.parse(text);
+  } catch {}
+
+  const jsonBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonBlockMatch && jsonBlockMatch[1]) {
+    try {
+      return JSON.parse(jsonBlockMatch[1].trim());
+    } catch {}
+  }
+
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    try {
+      return JSON.parse(text.slice(firstBrace, lastBrace + 1));
+    } catch {}
+  }
+
+  throw new Error("Unable to extract valid JSON from model output");
+}
+
 // -------------------------------------------------------------
 // SPEECH-AWARE DURATION CALCULATOR
 // -------------------------------------------------------------
@@ -96,29 +130,31 @@ function extractSemanticStockKeywords(
   const lowerWhole = (wholeText + " " + sentence).toLowerCase();
   const lowerSentence = sentence.toLowerCase();
 
-  // Detect Primary Domain
+  // Detect Primary Domain with strict topic prioritization
   let domain = "tech";
-  if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lowerWhole)) {
+  if (/(pyramid|giza|egypt|ancient|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization|historical)/.test(lowerWhole)) {
+    domain = "history";
+  } else if (/(code|coding|software|developer|programming|programmer|algorithm|ide|debugging|laptop|technology|computer|api|frontend|backend|cloud)/.test(lowerWhole)) {
+    domain = "tech";
+  } else if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lowerWhole)) {
     domain = "cyber";
-  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock|market|money|invest|wealth|economy|wall street|assets|launder|cash|dollars)/.test(lowerWhole)) {
+  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope|speed of light)/.test(lowerWhole)) {
+    domain = "space";
+  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock market|invest|wealth|economy|wall street|assets|cash|dollars)/.test(lowerWhole)) {
     domain = "crypto";
   } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lowerWhole)) {
     domain = "culinary";
-  } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lowerWhole)) {
+  } else if (/\b(safari|lion|elephant|forest wildlife|ocean reef|underwater|wild animals|savannah|jungle animals|wildlife)\b/.test(lowerWhole)) {
     domain = "wildlife";
-  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|sports|bodybuilding|football|basketball)/.test(lowerWhole)) {
+  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|bodybuilding)/.test(lowerWhole)) {
     domain = "sports";
-  } else if (/(travel|tokyo|paris|city|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore|europe|japan)/.test(lowerWhole)) {
+  } else if (/(travel|tokyo|paris|city tour|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore europe)/.test(lowerWhole)) {
     domain = "travel";
-  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope)/.test(lowerWhole)) {
-    domain = "space";
-  } else if (/(car|supercar|driving|race|racing|drift|drifting|speed|porsche|ferrari|lamborghini|motorcycle|track|engine|automotive)/.test(lowerWhole)) {
+  } else if (/\b(supercar|sportscar|driving car|ferrari|lamborghini|porsche|highway driving|automotive|racing car|drift car)\b/.test(lowerWhole)) {
     domain = "cars";
-  } else if (/(meditation|health|wellness|mindful|mental|spa|peace|calm|skincare|breathe|therapy|relax|doctor|hospital|medical)/.test(lowerWhole)) {
+  } else if (/(meditation|health|wellness|mindful|mental health|spa|calm breathing|therapy|doctor|hospital|medical)/.test(lowerWhole)) {
     domain = "health";
-  } else if (/(pyramid|giza|egypt|ancient|history|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization)/.test(lowerWhole)) {
-    domain = "history";
-  } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lowerWhole)) {
+  } else if (/(art|paint|painting|design|photography|music|guitar|piano|dj|fashion|aesthetic|dance studio)/.test(lowerWhole)) {
     domain = "art";
   }
 
@@ -451,22 +487,27 @@ OUTPUT FORMAT:
   }
 }`;
 
-  try {
-    const ai = getGeminiClient();
-    if (!ai) {
-      console.log("No GEMINI_API_KEY set; using high-accuracy fallback script parser.");
-      const fallbackResult = fallbackRuleBasedParser(script);
-      return res.json(fallbackResult);
-    }
+  const ai = getGeminiClient();
+  if (!ai) {
+    console.log("No GEMINI_API_KEY set; using high-accuracy fallback script parser.");
+    const fallbackResult = fallbackRuleBasedParser(script);
+    return res.json(fallbackResult);
+  }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: promptText,
-      config: {
+  // Model rotation chain: Gemini 2.5 Flash -> Flash Lite -> Gemma 2 27B -> Gemma 2 9B -> Built-in Rule Parser
+  for (const model of AI_MODELS_ROTATION) {
+    try {
+      console.log(`[AI Engine] Attempting script analysis with ${model}...`);
+      const isGemma = model.startsWith("gemma");
+
+      const config: any = {
         systemInstruction,
         temperature: 0.2,
-        responseMimeType: "application/json",
-        responseSchema: {
+      };
+
+      if (!isGemma) {
+        config.responseMimeType = "application/json";
+        config.responseSchema = {
           type: Type.OBJECT,
           properties: {
             project_name: { type: Type.STRING },
@@ -499,41 +540,53 @@ OUTPUT FORMAT:
             }
           },
           required: ["project_name", "scenes", "audio_suggestions"]
-        }
+        };
       }
-    });
 
-    const responseText = response.text || "{}";
-    const parsed = JSON.parse(responseText);
+      const response = await ai.models.generateContent({
+        model,
+        contents: promptText,
+        config
+      });
 
-    // Normalize media_type & structure
-    if (parsed.scenes && Array.isArray(parsed.scenes)) {
-      parsed.scenes = parsed.scenes.map((s: any, idx: number) => ({
-        scene_number: s.scene_number || (idx + 1),
-        script_line: s.script_line || "",
-        search_keywords: s.search_keywords || "stock footage b-roll",
-        media_type: (s.media_type && s.media_type.toLowerCase() === "image") ? "image" : "video"
-      }));
+      const responseText = response.text || "{}";
+      const parsed = extractJsonFromText(responseText);
+
+      // Normalize media_type & structure
+      if (parsed.scenes && Array.isArray(parsed.scenes)) {
+        parsed.scenes = parsed.scenes.map((s: any, idx: number) => ({
+          scene_number: s.scene_number || (idx + 1),
+          script_line: s.script_line || "",
+          search_keywords: s.search_keywords || "stock footage b-roll",
+          media_type: (s.media_type && s.media_type.toLowerCase() === "image") ? "image" : "video"
+        }));
+      }
+
+      if (!parsed.audio_suggestions) {
+        parsed.audio_suggestions = {
+          music_keywords: ["tech ambient synth", "cinematic inspirational"],
+          sfx_keywords: ["keyboard typing", "futuristic swoosh", "data server hum"]
+        };
+      }
+
+      console.log(`[AI Engine] Successfully analyzed script using ${model}!`);
+      return res.json({
+        ...parsed,
+        used_model: model
+      });
+
+    } catch (err: any) {
+      console.warn(`[AI Engine] Model ${model} rate-limited or error: ${err?.message || err}. Rotating to next model...`);
     }
-
-    if (!parsed.audio_suggestions) {
-      parsed.audio_suggestions = {
-        music_keywords: ["tech ambient synth", "cinematic inspirational"],
-        sfx_keywords: ["keyboard typing", "futuristic swoosh", "data server hum"]
-      };
-    }
-
-    return res.json(parsed);
-
-  } catch (error: any) {
-    console.info("Gemini analysis notice (using built-in semantic scene engine):", error?.message || error);
-    // Graceful fallback to avoid leaving user hanging
-    const fallbackResult = fallbackRuleBasedParser(script);
-    return res.json({
-      ...fallbackResult,
-      _notice: "Analyzed using built-in semantic scene engine"
-    });
   }
+
+  // If all models in rotation failed, fall back to built-in semantic parser
+  console.info("[AI Engine] All online models rate-limited; switching to built-in semantic parser.");
+  const fallbackResult = fallbackRuleBasedParser(script);
+  return res.json({
+    ...fallbackResult,
+    _notice: "Analyzed using built-in semantic scene engine"
+  });
 });
 
 // Dynamic Topic-Aware Autonomous Video Generator for any prompt or custom script
@@ -597,30 +650,30 @@ function generateTopicAwareVideoPlan(
   type DomainType = "cyber" | "culinary" | "wildlife" | "sports" | "travel" | "crypto" | "space" | "cars" | "health" | "art" | "tech" | "history" | "custom";
   let domain: DomainType = "custom";
 
-  if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lower)) {
-    domain = "cyber";
-  } else if (/(morning|routine|productivity|focus|minimalist|habit|lifestyle|relax|meditation|wellness|mindful|mental|calm)/.test(lower)) {
-    domain = "health";
-  } else if (/(pyramid|giza|egypt|ancient|history|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization)/.test(lower)) {
+  if (/(pyramid|giza|egypt|ancient|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization|historical)/.test(lower)) {
     domain = "history";
+  } else if (/(code|coding|software|developer|programming|programmer|algorithm|ide|debugging|laptop|technology|computer|api|frontend|backend|cloud)/.test(lower)) {
+    domain = "tech";
+  } else if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lower)) {
+    domain = "cyber";
+  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope|speed of light)/.test(lower)) {
+    domain = "space";
+  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock market|invest|wealth|economy|wall street|assets|cash|dollars)/.test(lower)) {
+    domain = "crypto";
   } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lower)) {
     domain = "culinary";
-  } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lower)) {
+  } else if (/\b(safari|lion|elephant|forest wildlife|ocean reef|underwater|wild animals|savannah|jungle animals|wildlife)\b/.test(lower)) {
     domain = "wildlife";
-  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|sports|bodybuilding|football|basketball)/.test(lower)) {
+  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|bodybuilding)/.test(lower)) {
     domain = "sports";
-  } else if (/(travel|tokyo|paris|city|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore|europe|japan)/.test(lower)) {
+  } else if (/(travel|tokyo|paris|city tour|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore europe)/.test(lower)) {
     domain = "travel";
-  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock|market|money|invest|wealth|economy|wall street|assets|launder|cash|dollars)/.test(lower)) {
-    domain = "crypto";
-  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope)/.test(lower)) {
-    domain = "space";
-  } else if (/(car|supercar|driving|race|racing|drift|drifting|speed|porsche|ferrari|lamborghini|motorcycle|track|engine|automotive)/.test(lower)) {
+  } else if (/\b(supercar|sportscar|driving car|ferrari|lamborghini|porsche|highway driving|automotive|racing car|drift car)\b/.test(lower)) {
     domain = "cars";
-  } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lower)) {
+  } else if (/(meditation|health|wellness|mindful|mental health|spa|calm breathing|therapy|doctor|hospital|medical)/.test(lower)) {
+    domain = "health";
+  } else if (/(art|paint|painting|design|photography|music|guitar|piano|dj|fashion|aesthetic|dance studio)/.test(lower)) {
     domain = "art";
-  } else if (/(tech|code|coding|software|ai|robot|computer|developer|laptop|matrix|algorithm|data)/.test(lower)) {
-    domain = "tech";
   }
 
   const title = inputTopic.length > 35 ? inputTopic.slice(0, 32) + "..." : inputTopic;
@@ -956,83 +1009,94 @@ RULES:
 Topic / Prompt: "${inputTopic}"
 Style: ${style}
 Aspect Ratio: ${aspectRatio} (${aspectRatio === "9:16" ? "9:16 Portrait / Vertical Short Form" : "16:9 Landscape Widescreen"})
-Target Pacing: ${pacing} (approx ${sceneDuration}s per scene)
-Target Total Video Duration: approx ${targetDuration} seconds (${targetNumScenes} total scenes)
-
 Include a catchy project title, cohesive full script, scene breakdowns with stock video keywords, secondary keywords for split screen, and the exact background music search keyword.`;
 
-  try {
-    const ai = getGeminiClient();
-    if (!ai) {
-      throw new Error("Gemini AI client not initialized");
-    }
+  const ai = getGeminiClient();
+  if (ai) {
+    for (const model of AI_MODELS_ROTATION) {
+      try {
+        console.log(`[Autonomous AI] Generating video plan using ${model}...`);
+        const isGemma = model.startsWith("gemma");
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: promptText,
-      config: {
-        systemInstruction,
-        temperature: 0.4,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            full_script: { type: Type.STRING },
-            music_keyword: { type: Type.STRING },
-            music_mood: { type: Type.STRING },
-            scenes: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  scene_number: { type: Type.INTEGER },
-                  narration: { type: Type.STRING },
-                  search_keywords: { type: Type.STRING },
-                  secondary_keywords: { type: Type.STRING },
-                  duration: { type: Type.NUMBER },
-                  subtitle: { type: Type.STRING },
-                  transition: { type: Type.STRING }
-                },
-                required: ["scene_number", "narration", "search_keywords", "duration", "subtitle"]
+        const config: any = {
+          systemInstruction,
+          temperature: 0.4,
+        };
+
+        if (!isGemma) {
+          config.responseMimeType = "application/json";
+          config.responseSchema = {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              full_script: { type: Type.STRING },
+              music_keyword: { type: Type.STRING },
+              music_mood: { type: Type.STRING },
+              scenes: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    scene_number: { type: Type.INTEGER },
+                    narration: { type: Type.STRING },
+                    search_keywords: { type: Type.STRING },
+                    secondary_keywords: { type: Type.STRING },
+                    duration: { type: Type.NUMBER },
+                    subtitle: { type: Type.STRING },
+                    transition: { type: Type.STRING }
+                  },
+                  required: ["scene_number", "narration", "search_keywords", "duration", "subtitle"]
+                }
               }
-            }
-          },
-          required: ["title", "full_script", "music_keyword", "scenes"]
+            },
+            required: ["title", "full_script", "music_keyword", "scenes"]
+          };
         }
+
+        const response = await ai.models.generateContent({
+          model,
+          contents: promptText,
+          config
+        });
+
+        const parsed = extractJsonFromText(response.text || "{}");
+        const scenes = (parsed.scenes || []).map((s: any, idx: number) => ({
+          scene_number: s.scene_number || (idx + 1),
+          narration: s.narration || "Visual sequence",
+          search_keywords: s.search_keywords || `${inputTopic} footage`,
+          secondary_keywords: s.secondary_keywords || `${inputTopic} detail`,
+          duration: Math.max(3, Math.min(10, Number(s.duration) || sceneDuration)),
+          subtitle: s.subtitle || s.narration?.slice(0, 40) || "",
+          transition: s.transition || (idx % 4 === 1 ? "splitscreen" : idx % 4 === 2 ? "zoom" : "fade"),
+          layout: s.transition === "splitscreen" ? "splitscreen" : "standard"
+        }));
+
+        const totalDuration = scenes.reduce((sum: number, sc: any) => sum + sc.duration, 0);
+
+        console.log(`[Autonomous AI] Successfully created plan with ${model}!`);
+        return res.json({
+          title: parsed.title || inputTopic,
+          prompt: inputTopic,
+          full_script: parsed.full_script || scenes.map((s: any) => s.narration).join(" "),
+          aspect_ratio: aspectRatio,
+          music_keyword: parsed.music_keyword || `${style} background music`,
+          scenes,
+          total_duration: Math.round(totalDuration * 10) / 10,
+          voiceover_enabled: true,
+          subtitles_style: "highlight",
+          used_model: model
+        });
+
+      } catch (err: any) {
+        console.warn(`[Autonomous AI] Model ${model} rate-limited or error: ${err?.message || err}. Rotating to next model...`);
       }
-    });
-
-    const parsed = JSON.parse(response.text || "{}");
-    const scenes = (parsed.scenes || []).map((s: any, idx: number) => ({
-      scene_number: s.scene_number || (idx + 1),
-      narration: s.narration || "Visual sequence",
-      search_keywords: s.search_keywords || `${inputTopic} footage`,
-      secondary_keywords: s.secondary_keywords || `${inputTopic} detail`,
-      duration: Math.max(3, Math.min(10, Number(s.duration) || sceneDuration)),
-      subtitle: s.subtitle || s.narration?.slice(0, 40) || "",
-      transition: s.transition || (idx % 4 === 1 ? "splitscreen" : idx % 4 === 2 ? "zoom" : "fade"),
-      layout: s.transition === "splitscreen" ? "splitscreen" : "standard"
-    }));
-
-    const totalDuration = scenes.reduce((sum: number, sc: any) => sum + sc.duration, 0);
-
-    return res.json({
-      title: parsed.title || inputTopic,
-      prompt: inputTopic,
-      full_script: parsed.full_script || scenes.map((s: any) => s.narration).join(" "),
-      aspect_ratio: aspectRatio,
-      music_keyword: parsed.music_keyword || "ambient modern",
-      music_mood: parsed.music_mood || "ambient modern",
-      scenes,
-      total_duration: totalDuration
-    });
-  } catch (err: any) {
-    console.log("Using smart dynamic topic-aware generator for prompt:", inputTopic);
-    // Intelligent, high-quality dynamic topic-aware generator
-    const dynamicPlan = generateTopicAwareVideoPlan(inputTopic, style, aspectRatio, pacing, Number(targetDuration) || 30);
-    return res.json(dynamicPlan);
+    }
   }
+
+  // Graceful offline topic-aware video generation fallback
+  console.info("[Autonomous AI] Generating high quality topic-aware video plan via local engine.");
+  const localPlan = generateTopicAwareVideoPlan(inputTopic, style, aspectRatio, pacing, Number(targetDuration) || 30);
+  return res.json(localPlan);
 });
 
 // 5. Studio-Grade Neural Text-To-Speech (Lifelike Human Voices)
@@ -1165,7 +1229,7 @@ app.post("/api/render-complete-video", async (req, res) => {
   const targetH = isPortrait ? 1920 : 1080;
 
   const renderId = "render_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
-  const tmpDir = path.join("/tmp", renderId);
+  const tmpDir = path.join(os.tmpdir(), renderId);
 
   try {
     await fs.promises.mkdir(tmpDir, { recursive: true });
@@ -1194,7 +1258,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           const voiceBuf = await synthesizeNeuralSpeechBuffer(sceneNarration, voice, voiceRate, voicePitch);
           await fs.promises.writeFile(rawVoicePath, voiceBuf);
           try {
-            const probeOut = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${rawVoicePath}"`).toString().trim();
+            const probeOut = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${rawVoicePath.replace(/\\/g, "/")}"`).toString().trim();
             exactVoiceDur = parseFloat(probeOut) || 0;
           } catch (pErr) {
             console.warn(`Duration probe notice:`, pErr);
@@ -1221,7 +1285,7 @@ app.post("/api/render-complete-video", async (req, res) => {
       if (exactVoiceDur > 0 && fs.existsSync(rawVoicePath)) {
         try {
           await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -i "${rawVoicePath}" -filter_complex "apad=whole_dur=${targetDur}" -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
+            const cmd = `ffmpeg -y -i "${rawVoicePath.replace(/\\/g, "/")}" -filter_complex "apad=whole_dur=${targetDur}" -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath.replace(/\\/g, "/")}"`;
             exec(cmd, (err) => err ? reject(err) : resolve(true));
           });
           voiceClips.push(voiceScenePath);
@@ -1231,7 +1295,7 @@ app.post("/api/render-complete-video", async (req, res) => {
         }
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
+          const cmd = `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath.replace(/\\/g, "/")}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         voiceClips.push(voiceScenePath);
@@ -1252,15 +1316,15 @@ app.post("/api/render-complete-video", async (req, res) => {
             await fs.promises.writeFile(secRawPath, Buffer.from(await secResp.arrayBuffer()));
             await new Promise((resolve, reject) => {
               const splitCmd = isPortrait
-                ? `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`
-                : `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+                ? `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -stream_loop -1 -i "${secRawPath.replace(/\\/g, "/")}" -t ${targetDur} -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`
+                : `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -stream_loop -1 -i "${secRawPath.replace(/\\/g, "/")}" -t ${targetDur} -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`;
               exec(splitCmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           } else {
             // Fallback to standard dimension if secondary fetch fails
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
@@ -1268,7 +1332,7 @@ app.post("/api/render-complete-video", async (req, res) => {
         } else {
           // Standard clip normalization with seamless stream_loop, exact framerate and SAR 1:1
           await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+            const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`;
             exec(cmd, (err) => err ? reject(err) : resolve(true));
           });
           downloadedClips.push(normClipPath);
@@ -1282,28 +1346,28 @@ app.post("/api/render-complete-video", async (req, res) => {
       throw new Error("Could not process video clips for rendering");
     }
 
-    // 1. Concatenate all video clips into single seamless video
+    // 1. Concatenate all video clips into single seamless video using relative filenames in concat.txt
     const concatPath = path.join(tmpDir, "concat.txt");
-    const concatContent = downloadedClips.map(p => `file '${p}'`).join("\n");
-    await fs.promises.writeFile(concatPath, concatContent);
+    const concatContent = downloadedClips.map(p => `file '${path.basename(p)}'`).join("\n");
+    await fs.promises.writeFile(concatPath, concatContent, "utf8");
 
     const stitchedPath = path.join(tmpDir, "stitched.mp4");
     await new Promise((resolve, reject) => {
-      const cmd = `ffmpeg -y -f concat -safe 0 -i "${concatPath}" -c copy "${stitchedPath}"`;
+      const cmd = `ffmpeg -y -f concat -safe 0 -i "${concatPath.replace(/\\/g, "/")}" -c copy "${stitchedPath.replace(/\\/g, "/")}"`;
       exec(cmd, (err) => err ? reject(err) : resolve(true));
     });
 
-    // 2. Concatenate all scene voiceovers into master voiceover track
+    // 2. Concatenate all scene voiceovers into master voiceover track using relative filenames
     let masterVoicePath: string | null = null;
     if (hasAnyVoiceover && voiceClips.length > 0) {
       try {
         const voiceConcatPath = path.join(tmpDir, "voice_concat.txt");
-        const voiceConcatContent = voiceClips.map(p => `file '${p}'`).join("\n");
-        await fs.promises.writeFile(voiceConcatPath, voiceConcatContent);
+        const voiceConcatContent = voiceClips.map(p => `file '${path.basename(p)}'`).join("\n");
+        await fs.promises.writeFile(voiceConcatPath, voiceConcatContent, "utf8");
 
         const fullVoicePath = path.join(tmpDir, "master_voice.mp3");
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -f concat -safe 0 -i "${voiceConcatPath}" -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${fullVoicePath}"`;
+          const cmd = `ffmpeg -y -f concat -safe 0 -i "${voiceConcatPath.replace(/\\/g, "/")}" -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${fullVoicePath.replace(/\\/g, "/")}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         masterVoicePath = fullVoicePath;
@@ -1344,59 +1408,64 @@ app.post("/api/render-complete-video", async (req, res) => {
     const finalMixedPath = path.join(tmpDir, "production_final.mp4");
     const vol = Math.max(0.05, Math.min(1, Number(musicVolume) || 0.25));
 
+    const safeStitched = stitchedPath.replace(/\\/g, "/");
+    const safeMixed = finalMixedPath.replace(/\\/g, "/");
+    const safeVoice = masterVoicePath ? masterVoicePath.replace(/\\/g, "/") : null;
+    const safeMusic = musicLocalPath ? musicLocalPath.replace(/\\/g, "/") : null;
+
     if (assLocalPath) {
-      // Escape path for ffmpeg filter
-      const escapedAssPath = assLocalPath.replace(/\\/g, "/").replace(/'/g, "'\\\\''");
+      // Escape path for ffmpeg filter: backslashes to forward slashes, colons (C\:) escaped, single quotes escaped
+      const escapedAssPath = assLocalPath.replace(/\\/g, "/").replace(/:/g, "\\:").replace(/'/g, "'\\\\''");
 
       // Burn subtitles using the ASS filter and mix audio
-      if (masterVoicePath && musicLocalPath) {
+      if (safeVoice && safeMusic) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (masterVoicePath) {
+      } else if (safeVoice) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (musicLocalPath) {
+      } else if (safeMusic) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       }
     } else {
       // Subtitles disabled -> mix audio and ensure faststart MP4 container
-      if (masterVoicePath && musicLocalPath) {
+      if (safeVoice && safeMusic) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (masterVoicePath) {
+      } else if (safeVoice) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -map 0:v -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -map 0:v -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (musicLocalPath) {
+      } else if (safeMusic) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
+          const cmd = `ffmpeg -y -i "${safeStitched}" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${safeMixed}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
@@ -1716,9 +1785,33 @@ app.get("/api/stock/audio", async (req, res) => {
   });
 });
 
-// 3. Search stock assets (Pexels & Pixabay) with rate-limit monitoring
+// Helper to clean, split, and sanitize stock search queries to prevent 400 errors and return relevant footage
+function extractCleanStockQueries(raw: string): string[] {
+  if (!raw || !raw.trim()) return ["cinematic"];
+  const rawSegments = raw.split(/[,;\n\(\)\[\]]+/).map(s => s.trim()).filter(Boolean);
+  const candidates: string[] = [];
+
+  for (const seg of rawSegments) {
+    const cleaned = seg.replace(/[^\w\s-]/g, " ").replace(/\s+/g, " ").trim();
+    if (cleaned.length >= 2) {
+      const words = cleaned.split(/\s+/).slice(0, 3).join(" ");
+      if (words && words.length <= 60 && !candidates.includes(words)) {
+        candidates.push(words);
+      }
+    }
+  }
+
+  const whole = raw.replace(/[^\w\s-]/g, " ").replace(/\s+/g, " ").trim().split(/\s+/).slice(0, 3).join(" ");
+  if (whole && whole.length <= 60 && !candidates.includes(whole)) {
+    candidates.unshift(whole);
+  }
+
+  return candidates.length > 0 ? candidates : [raw.slice(0, 40)];
+}
+
+// 3. Search stock assets (Pexels & Pixabay) with rate-limit monitoring and multi-query retry
 app.get("/api/stock/search", async (req, res) => {
-  const query = (req.query.query as string || "").trim();
+  const rawQuery = (req.query.query as string || "").trim();
   const mediaType = (req.query.mediaType as string || "video").toLowerCase();
   const source = (req.query.source as string || "all").toLowerCase();
   const orientationParam = (req.query.orientation as string || "").toLowerCase();
@@ -1726,219 +1819,193 @@ app.get("/api/stock/search", async (req, res) => {
   const isPortrait = orientationParam === "portrait" || aspectRatioParam === "9:16";
   const pexelsOrientation = isPortrait ? "portrait" : "landscape";
 
-  if (!query) {
+  if (!rawQuery) {
     return res.json({ results: [], rateLimits: rateLimitState });
   }
 
+  const cleanQueries = extractCleanStockQueries(rawQuery);
   const results: any[] = [];
   const errors: string[] = [];
 
-  // Pexels Search
+  // Pexels Search (Try primary clean query, then fallback sub-queries if 0 results)
   if (source === "all" || source === "pexels") {
-    try {
-      if (mediaType === "video") {
-        const pexUrl = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=6&orientation=${pexelsOrientation}`;
-        const pexRes = await fetch(pexUrl, {
-          headers: { Authorization: PEXELS_KEY }
-        });
+    for (const q of cleanQueries.slice(0, 2)) {
+      if (results.length > 0 && results.some(r => r.source === "pexels")) break;
+      try {
+        if (mediaType === "video") {
+          const pexUrl = `https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&per_page=6&orientation=${pexelsOrientation}`;
+          const pexRes = await fetch(pexUrl, {
+            headers: { Authorization: PEXELS_KEY }
+          });
 
-        // Track headers
-        const pexLimit = pexRes.headers.get("x-ratelimit-limit");
-        const pexRemaining = pexRes.headers.get("x-ratelimit-remaining");
-        const pexReset = pexRes.headers.get("x-ratelimit-reset");
+          // Track headers
+          const pexLimit = pexRes.headers.get("x-ratelimit-limit");
+          const pexRemaining = pexRes.headers.get("x-ratelimit-remaining");
+          const pexReset = pexRes.headers.get("x-ratelimit-reset");
 
-        if (pexLimit) rateLimitState.pexels.limit = parseInt(pexLimit, 10);
-        if (pexRemaining) {
-          const rem = parseInt(pexRemaining, 10);
-          rateLimitState.pexels.remaining = rem;
-          rateLimitState.pexels.status = rem < 5 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
-        }
-        if (pexReset) rateLimitState.pexels.reset = parseInt(pexReset, 10);
-        rateLimitState.pexels.lastUpdated = new Date().toISOString();
-
-        if (pexRes.ok) {
-          const data: any = await pexRes.json();
-          for (const v of (data.videos || [])) {
-            // Find HD video file and mobile preview
-            const sortedFiles = (v.video_files || []).sort((a: any, b: any) => (b.width || 0) - (a.width || 0));
-            const hdFile = sortedFiles[0] || {};
-            // Preview file (lighter weight for fast browser loading)
-            const previewFile = (v.video_files || []).find((f: any) => (f.width && f.width <= 960 && f.width >= 480)) || hdFile;
-
-            results.push({
-              id: `pexels-${v.id}`,
-              source: "pexels",
-              type: "video",
-              title: `Pexels Video #${v.id}`,
-              previewUrl: previewFile.link || hdFile.link,
-              thumbnailUrl: v.image,
-              downloadUrl: hdFile.link || previewFile.link,
-              width: v.width,
-              height: v.height,
-              duration: v.duration,
-              author: v.user?.name || "Pexels Creator",
-              authorUrl: v.user?.url,
-              quality: hdFile.quality ? `${hdFile.quality.toUpperCase()} (${hdFile.width}x${hdFile.height})` : `${v.width}x${v.height}`
-            });
+          if (pexLimit) rateLimitState.pexels.limit = parseInt(pexLimit, 10);
+          if (pexRemaining) {
+            const rem = parseInt(pexRemaining, 10);
+            rateLimitState.pexels.remaining = rem;
+            rateLimitState.pexels.status = rem < 5 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
           }
-        } else if (pexRes.status === 429) {
-          rateLimitState.pexels.status = 'throttled';
-          errors.push("Pexels rate limit reached (HTTP 429)");
-        }
-      } else {
-        // Pexels photo search
-        const pexUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=${pexelsOrientation}`;
-        const pexRes = await fetch(pexUrl, {
-          headers: { Authorization: PEXELS_KEY }
-        });
-        if (pexRes.ok) {
-          const data: any = await pexRes.json();
-          for (const p of (data.photos || [])) {
-            results.push({
-              id: `pexels-photo-${p.id}`,
-              source: "pexels",
-              type: "image",
-              title: p.alt || `Pexels Photo #${p.id}`,
-              previewUrl: p.src?.large || p.src?.medium,
-              thumbnailUrl: p.src?.tiny || p.src?.small,
-              downloadUrl: p.src?.original || p.src?.large2x,
-              width: p.width,
-              height: p.height,
-              author: p.photographer || "Pexels Creator",
-              authorUrl: p.photographer_url,
-              quality: `${p.width}x${p.height}`
-            });
-          }
-        }
-      }
-    } catch (err: any) {
-      console.error("Pexels fetch error:", err?.message);
-      errors.push(`Pexels: ${err?.message}`);
-    }
-  }
+          if (pexReset) rateLimitState.pexels.reset = parseInt(pexReset, 10);
+          rateLimitState.pexels.lastUpdated = new Date().toISOString();
 
-  // Pixabay Search
-  if (source === "all" || source === "pixabay") {
-    try {
-      if (mediaType === "video") {
-        const pixUrl = `https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&per_page=6`;
-        const pixRes = await fetch(pixUrl);
+          if (pexRes.ok) {
+            const data: any = await pexRes.json();
+            for (const v of (data.videos || [])) {
+              const sortedFiles = (v.video_files || []).sort((a: any, b: any) => (b.width || 0) - (a.width || 0));
+              const hdFile = sortedFiles[0] || {};
+              const previewFile = (v.video_files || []).find((f: any) => (f.width && f.width <= 960 && f.width >= 480)) || hdFile;
 
-        const pixLimit = pixRes.headers.get("x-ratelimit-limit");
-        const pixRemaining = pixRes.headers.get("x-ratelimit-remaining");
-        const pixReset = pixRes.headers.get("x-ratelimit-reset");
-
-        if (pixLimit) rateLimitState.pixabay.limit = parseInt(pixLimit, 10);
-        if (pixRemaining) {
-          const rem = parseInt(pixRemaining, 10);
-          rateLimitState.pixabay.remaining = rem;
-          rateLimitState.pixabay.status = rem < 10 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
-        }
-        if (pixReset) rateLimitState.pixabay.reset = parseInt(pixReset, 10);
-        rateLimitState.pixabay.lastUpdated = new Date().toISOString();
-
-        if (pixRes.ok) {
-          const data: any = await pixRes.json();
-          for (const hit of (data.hits || [])) {
-            const vids = hit.videos || {};
-            const large = vids.large;
-            const medium = vids.medium;
-            const small = vids.small;
-            const chosen = large?.url ? large : (medium?.url ? medium : small);
-            const preview = medium?.url ? medium : (small?.url ? small : chosen);
-            const thumb = medium?.thumbnail || chosen?.thumbnail || small?.thumbnail || hit.userImageURL;
-
-            if (chosen?.url) {
               results.push({
-                id: `pixabay-${hit.id}`,
-                source: "pixabay",
+                id: `pexels-${v.id}`,
+                source: "pexels",
                 type: "video",
-                title: hit.tags || `Pixabay Video #${hit.id}`,
-                previewUrl: preview?.url || chosen.url,
-                thumbnailUrl: thumb,
-                downloadUrl: chosen.url,
-                width: chosen.width || 1920,
-                height: chosen.height || 1080,
-                duration: hit.duration,
-                author: hit.user || "Pixabay Creator",
-                authorUrl: hit.pageURL,
-                quality: `${chosen.width || 1920}x${chosen.height || 1080}`
+                title: `Pexels Video #${v.id}`,
+                previewUrl: previewFile.link || hdFile.link,
+                thumbnailUrl: v.image,
+                downloadUrl: hdFile.link || previewFile.link,
+                width: v.width,
+                height: v.height,
+                duration: v.duration,
+                author: v.user?.name || "Pexels Creator",
+                authorUrl: v.user?.url,
+                quality: hdFile.quality ? `${hdFile.quality.toUpperCase()} (${hdFile.width}x${hdFile.height})` : `${v.width}x${v.height}`
+              });
+            }
+          } else if (pexRes.status === 429) {
+            rateLimitState.pexels.status = 'throttled';
+            errors.push("Pexels rate limit reached (HTTP 429)");
+            break;
+          }
+        } else {
+          // Pexels photo search
+          const pexUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=6&orientation=${pexelsOrientation}`;
+          const pexRes = await fetch(pexUrl, {
+            headers: { Authorization: PEXELS_KEY }
+          });
+          if (pexRes.ok) {
+            const data: any = await pexRes.json();
+            for (const p of (data.photos || [])) {
+              results.push({
+                id: `pexels-photo-${p.id}`,
+                source: "pexels",
+                type: "image",
+                title: p.alt || `Pexels Photo #${p.id}`,
+                previewUrl: p.src?.large || p.src?.medium,
+                thumbnailUrl: p.src?.tiny || p.src?.small,
+                downloadUrl: p.src?.original || p.src?.large2x,
+                width: p.width,
+                height: p.height,
+                author: p.photographer || "Pexels Creator",
+                authorUrl: p.photographer_url,
+                quality: `${p.width}x${p.height}`
               });
             }
           }
-        } else if (pixRes.status === 429) {
-          rateLimitState.pixabay.status = 'throttled';
-          errors.push("Pixabay rate limit reached (HTTP 429)");
         }
-      } else {
-        // Pixabay Photo search
-        const pixUrl = `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&image_type=photo&per_page=6`;
-        const pixRes = await fetch(pixUrl);
-        if (pixRes.ok) {
-          const data: any = await pixRes.json();
-          for (const hit of (data.hits || [])) {
-            results.push({
-              id: `pixabay-photo-${hit.id}`,
-              source: "pixabay",
-              type: "image",
-              title: hit.tags || `Pixabay Photo #${hit.id}`,
-              previewUrl: hit.webformatURL,
-              thumbnailUrl: hit.previewURL,
-              downloadUrl: hit.largeImageURL || hit.webformatURL,
-              width: hit.imageWidth,
-              height: hit.imageHeight,
-              author: hit.user || "Pixabay Creator",
-              authorUrl: hit.pageURL,
-              quality: `${hit.imageWidth}x${hit.imageHeight}`
-            });
-          }
-        }
+      } catch (err: any) {
+        console.error("Pexels fetch error:", err?.message);
+        errors.push(`Pexels: ${err?.message}`);
       }
-    } catch (err: any) {
-      console.error("Pixabay fetch error:", err?.message);
-      errors.push(`Pixabay: ${err?.message}`);
     }
   }
 
-  // Automatic query relaxation if no results were found for multi-word search
-  if (results.length === 0 && query.split(/\s+/).length > 1) {
-    const fallbackQuery = query.split(/\s+/).slice(0, 2).join(" ");
-    try {
-      const pexRes = await fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(fallbackQuery)}&per_page=6&orientation=${pexelsOrientation}`, {
-        headers: { Authorization: PEXELS_KEY }
-      });
-      if (pexRes.ok) {
-        const data: any = await pexRes.json();
-        for (const v of (data.videos || [])) {
-          const sortedFiles = (v.video_files || []).sort((a: any, b: any) => (b.width || 0) - (a.width || 0));
-          const hdFile = sortedFiles[0] || {};
-          const previewFile = (v.video_files || []).find((f: any) => (f.width && f.width <= 960 && f.width >= 480)) || hdFile;
-          results.push({
-            id: `pexels-${v.id}`,
-            source: "pexels",
-            type: "video",
-            title: `Pexels Video #${v.id}`,
-            previewUrl: previewFile.link || hdFile.link,
-            thumbnailUrl: v.image,
-            downloadUrl: hdFile.link || previewFile.link,
-            width: v.width,
-            height: v.height,
-            duration: v.duration,
-            author: v.user?.name || "Pexels Creator",
-            authorUrl: v.user?.url,
-            quality: hdFile.quality ? `${hdFile.quality.toUpperCase()} (${hdFile.width}x${hdFile.height})` : `${v.width}x${v.height}`
-          });
+  // Pixabay Search (Using clean query <= 60 chars to prevent 400 error)
+  if (source === "all" || source === "pixabay") {
+    for (const q of cleanQueries.slice(0, 2)) {
+      if (results.length > 0 && results.some(r => r.source === "pixabay")) break;
+      try {
+        if (mediaType === "video") {
+          const pixUrl = `https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(q.slice(0, 60))}&per_page=6`;
+          const pixRes = await fetch(pixUrl);
+
+          const pixLimit = pixRes.headers.get("x-ratelimit-limit");
+          const pixRemaining = pixRes.headers.get("x-ratelimit-remaining");
+          const pixReset = pixRes.headers.get("x-ratelimit-reset");
+
+          if (pixLimit) rateLimitState.pixabay.limit = parseInt(pixLimit, 10);
+          if (pixRemaining) {
+            const rem = parseInt(pixRemaining, 10);
+            rateLimitState.pixabay.remaining = rem;
+            rateLimitState.pixabay.status = rem < 10 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
+          }
+          if (pixReset) rateLimitState.pixabay.reset = parseInt(pixReset, 10);
+          rateLimitState.pixabay.lastUpdated = new Date().toISOString();
+
+          if (pixRes.ok) {
+            const data: any = await pixRes.json();
+            for (const hit of (data.hits || [])) {
+              const vids = hit.videos || {};
+              const large = vids.large;
+              const medium = vids.medium;
+              const small = vids.small;
+              const chosen = large?.url ? large : (medium?.url ? medium : small);
+              const preview = medium?.url ? medium : (small?.url ? small : chosen);
+              const thumb = medium?.thumbnail || chosen?.thumbnail || small?.thumbnail || hit.userImageURL;
+
+              if (chosen?.url) {
+                results.push({
+                  id: `pixabay-${hit.id}`,
+                  source: "pixabay",
+                  type: "video",
+                  title: hit.tags || `Pixabay Video #${hit.id}`,
+                  previewUrl: preview?.url || chosen.url,
+                  thumbnailUrl: thumb,
+                  downloadUrl: chosen.url,
+                  width: chosen.width || 1920,
+                  height: chosen.height || 1080,
+                  duration: hit.duration,
+                  author: hit.user || "Pixabay Creator",
+                  authorUrl: hit.pageURL,
+                  quality: `${chosen.width || 1920}x${chosen.height || 1080}`
+                });
+              }
+            }
+          } else if (pixRes.status === 429) {
+            rateLimitState.pixabay.status = 'throttled';
+            errors.push("Pixabay rate limit reached (HTTP 429)");
+            break;
+          }
+        } else {
+          // Pixabay Photo search
+          const pixUrl = `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(q.slice(0, 60))}&image_type=photo&per_page=6`;
+          const pixRes = await fetch(pixUrl);
+          if (pixRes.ok) {
+            const data: any = await pixRes.json();
+            for (const hit of (data.hits || [])) {
+              results.push({
+                id: `pixabay-photo-${hit.id}`,
+                source: "pixabay",
+                type: "image",
+                title: hit.tags || `Pixabay Photo #${hit.id}`,
+                previewUrl: hit.webformatURL || hit.largeImageURL,
+                thumbnailUrl: hit.previewURL,
+                downloadUrl: hit.largeImageURL || hit.webformatURL,
+                width: hit.imageWidth,
+                height: hit.imageHeight,
+                author: hit.user || "Pixabay Creator",
+                authorUrl: hit.pageURL,
+              });
+            }
+          }
         }
+      } catch (pixErr: any) {
+        errors.push(`Pixabay photo error: ${pixErr?.message}`);
       }
-    } catch {}
+    }
   }
 
   res.json({
-    query,
+    query: rawQuery,
+    cleanQueries,
     count: results.length,
+    mediaType,
     results,
-    rateLimits: rateLimitState,
-    errors: errors.length > 0 ? errors : undefined
+    errors: errors.length > 0 ? errors : undefined,
+    rateLimits: rateLimitState
   });
 });
 
@@ -2011,7 +2078,8 @@ app.get("/api/proxy-download", async (req, res) => {
 app.get("/api/download-python-script", (req, res) => {
   const pexKey = (req.query.pexelsKey as string) || PEXELS_KEY;
   const pixKey = (req.query.pixabayKey as string) || PIXABAY_KEY;
-  const scriptContent = generatePythonScript(pexKey, pixKey);
+  const format = (req.query.format as string) || "landscape";
+  const scriptContent = generatePythonScript(pexKey, pixKey, "./kdenlive_media_assets", format);
 
   res.setHeader("Content-Type", "text/x-python");
   res.setHeader("Content-Disposition", 'attachment; filename="download_assets.py"');

@@ -3,7 +3,8 @@ import {
   Sparkles, Play, Pause, RotateCcw, Download, Music, Volume2, VolumeX,
   Layers, Sliders, CheckCircle2, Loader2, ArrowRight, Video, FileText,
   Monitor, Smartphone, Maximize2, Minimize2, ExternalLink, RefreshCw,
-  Mic, User, Volume1, Settings2, ChevronDown, ChevronUp, Columns, Film, Check
+  Mic, User, Volume1, Settings2, ChevronDown, ChevronUp, Columns, Film, Check,
+  Bell, ThumbsUp, Share2
 } from "lucide-react";
 import { AutoVideoPlan, AutoVideoScene, StockMediaItem, AudioTrackItem } from "../types";
 
@@ -132,6 +133,53 @@ const FALLBACK_STOCK_VIDEOS: StockMediaItem[] = [
     author: "Pixabay Video",
   }
 ];
+
+// Curated high-impact Subscribe & Follow outro stock footage for Landscape and Shorts
+const CURATED_SUBSCRIBE_VIDEOS: Record<"16:9" | "9:16", StockMediaItem[]> = {
+  "16:9": [
+    {
+      id: "pixabay-sub-99350",
+      source: "pixabay",
+      type: "video",
+      title: "Subscribe Button & Bell Animation",
+      previewUrl: "https://cdn.pixabay.com/video/2021/11/30/99350-653447896_medium.mp4",
+      thumbnailUrl: "https://cdn.pixabay.com/photo/2021/11/30/14/06/button-6835439_640.png",
+      downloadUrl: "https://cdn.pixabay.com/video/2021/11/30/99350-653447896_medium.mp4",
+      width: 1920,
+      height: 1080,
+      duration: 6,
+      author: "Pixabay Studio"
+    },
+    {
+      id: "pixabay-sub-49076",
+      source: "pixabay",
+      type: "video",
+      title: "3D Subscribe Button Animation",
+      previewUrl: "https://cdn.pixabay.com/video/2020/09/05/49076-459223256_medium.mp4",
+      thumbnailUrl: "https://cdn.pixabay.com/photo/2020/09/05/18/16/youtube-5547146_640.png",
+      downloadUrl: "https://cdn.pixabay.com/video/2020/09/05/49076-459223256_medium.mp4",
+      width: 1920,
+      height: 1080,
+      duration: 6,
+      author: "Pixabay Studio"
+    }
+  ],
+  "9:16": [
+    {
+      id: "pexels-sub-4213655",
+      source: "pexels",
+      type: "video",
+      title: "Subscribe Social Media Outro",
+      previewUrl: "https://videos.pexels.com/video-files/4213655/4213655-sd_960_540_30fps.mp4",
+      thumbnailUrl: "https://images.pexels.com/videos/4213655/pictures/preview-0.jpg",
+      downloadUrl: "https://videos.pexels.com/video-files/4213655/4213655-sd_960_540_30fps.mp4",
+      width: 1080,
+      height: 1920,
+      duration: 5,
+      author: "Pexels Studio"
+    }
+  ]
+};
 
 export interface StudioNeuralVoice {
   id: string;
@@ -305,6 +353,10 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
   const [subtitlesStyle, setSubtitlesStyle] = useState<"highlight" | "classic" | "minimal" | "none">("highlight");
   const [musicVolume, setMusicVolume] = useState(0.4);
+
+  // Subscribe & Call-to-Action Outro Clip State
+  const [includeSubscribeOutro, setIncludeSubscribeOutro] = useState(true);
+  const [subscribeCtaStyle, setSubscribeCtaStyle] = useState<"like_subscribe_bell" | "follow_share" | "support_subscribe">("like_subscribe_bell");
 
   // Studio Neural Voice State (Ultra-realistic, human-sounding)
   const [voiceEngine, setVoiceEngine] = useState<"neural" | "browser">("neural");
@@ -688,8 +740,9 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const PIPELINE_STEPS = [
     "Analyzing prompt & directing screenplay with Gemini...",
     "Auto-fetching high-definition B-roll stock footage...",
+    "Curating subscribe call-to-action outro footage...",
     "Matching soundtrack & sound design...",
-    "Aligning voice narration and subtitles...",
+    "Aligning voice narration, subtitles & subscribe outro...",
     "Ready for playback!"
   ];
 
@@ -817,8 +870,65 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
         });
       }
 
-      setStepIndex(2);
-      setCurrentStep(PIPELINE_STEPS[2]);
+      // Step 2.5: Append Subscribe & Follow Outro Clip as final scene
+      if (includeSubscribeOutro) {
+        setStepIndex(2);
+        setCurrentStep(PIPELINE_STEPS[2]);
+
+        let outroNarration = "If you enjoyed this video, make sure to like, subscribe, and turn on notifications for more!";
+        let outroSubtitle = "🔔 Like & Subscribe for more!";
+        if (subscribeCtaStyle === "follow_share") {
+          outroNarration = "Don't forget to subscribe, share with friends, and leave a comment below!";
+          outroSubtitle = "💬 Share, Comment & Subscribe!";
+        } else if (subscribeCtaStyle === "support_subscribe") {
+          outroNarration = "Subscribe now to join our community and never miss another episode!";
+          outroSubtitle = "🚀 Join the Community — Subscribe!";
+        }
+
+        let outroMedia: StockMediaItem | undefined;
+        try {
+          const subSearchRes = await fetch(
+            `/api/stock/search?query=subscribe+button+bell&mediaType=video&source=all&aspectRatio=${aspectRatio}`
+          );
+          if (subSearchRes.ok) {
+            const subData = await subSearchRes.json();
+            const subVideos = (subData.results || []).filter(
+              (r: any) => r.type === "video" && (r.previewUrl || r.downloadUrl) && !usedVideoIds.has(r.id)
+            );
+            if (subVideos.length > 0) {
+              outroMedia = subVideos[0];
+            }
+          }
+        } catch (subErr) {
+          console.warn("Outro stock search notice:", subErr);
+        }
+
+        // Guaranteed curated fallback subscribe footage
+        if (!outroMedia) {
+          const pool = CURATED_SUBSCRIBE_VIDEOS[aspectRatio] || CURATED_SUBSCRIBE_VIDEOS["16:9"];
+          outroMedia = pool[0];
+        }
+
+        if (outroMedia) {
+          usedVideoIds.add(outroMedia.id);
+        }
+
+        const outroDur = estimateNarrationDuration(outroNarration, 4.5);
+        scenesWithMedia.push({
+          scene_number: scenesWithMedia.length + 1,
+          narration: outroNarration,
+          search_keywords: "subscribe button animation, youtube subscribe, bell icon",
+          duration: outroDur,
+          subtitle: outroSubtitle,
+          transition: "fade",
+          layout: "standard",
+          videoAsset: outroMedia,
+          is_outro: true,
+        });
+      }
+
+      setStepIndex(3);
+      setCurrentStep(PIPELINE_STEPS[3]);
 
       // Step 3: Fetch matching background music
       let musicTrack: AudioTrackItem | null = null;
@@ -839,8 +949,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
         musicTrack = DEFAULT_CURATED_MUSIC_LIST[0];
       }
 
-      setStepIndex(3);
-      setCurrentStep(PIPELINE_STEPS[3]);
+      setStepIndex(4);
+      setCurrentStep(PIPELINE_STEPS[4]);
 
       // Setup audio element
       if (musicTrack && musicTrack.download_url) {
@@ -853,8 +963,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
         audioElementRef.current.volume = musicVolume;
       }
 
-      setStepIndex(4);
-      setCurrentStep(PIPELINE_STEPS[4]);
+      setStepIndex(5);
+      setCurrentStep(PIPELINE_STEPS[5]);
 
       // Update state
       const totalDur = scenesWithMedia.reduce((sum, s) => sum + s.duration, 0);
@@ -1860,6 +1970,60 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
               )}
             </div>
 
+            {/* Subscribe & Follow Outro Clip Toggle */}
+            <div className="p-3.5 rounded-xl bg-stone-950 border border-red-950/80 ring-1 ring-red-500/25 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+                    <Bell className="w-3.5 h-3.5 text-red-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-stone-100">Subscribe Outro Clip</span>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-red-500/20 text-red-300 border border-red-500/30">
+                        Channel Growth
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIncludeSubscribeOutro(!includeSubscribeOutro)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    includeSubscribeOutro
+                      ? "bg-red-500/20 border-red-500/60 text-red-300"
+                      : "bg-stone-900 border-stone-800 text-stone-400"
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${includeSubscribeOutro ? "bg-red-400 animate-pulse" : "bg-stone-600"}`} />
+                  <span>{includeSubscribeOutro ? "Enabled" : "Off"}</span>
+                </button>
+              </div>
+
+              {includeSubscribeOutro && (
+                <div className="space-y-1.5 pt-1 border-t border-stone-800/80">
+                  <label className="block text-[10px] font-medium text-stone-400">
+                    Call-to-Action Audio Message & Subtitles:
+                  </label>
+                  <select
+                    value={subscribeCtaStyle}
+                    onChange={(e: any) => setSubscribeCtaStyle(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-stone-900 border border-stone-800 text-stone-200 text-xs focus:outline-none focus:border-red-500 cursor-pointer"
+                  >
+                    <option value="like_subscribe_bell">🔔 Like, Subscribe & Ring Bell</option>
+                    <option value="follow_share">💬 Subscribe, Share & Comment</option>
+                    <option value="support_subscribe">🚀 Join Community (Subscribe)</option>
+                  </select>
+                  <p className="text-[10px] text-stone-400 italic bg-stone-900/60 p-1.5 rounded-lg border border-stone-800/60">
+                    {subscribeCtaStyle === "like_subscribe_bell" && "“If you enjoyed this video, make sure to like, subscribe, and turn on notifications for more!”"}
+                    {subscribeCtaStyle === "follow_share" && "“Don't forget to subscribe, share with friends, and leave a comment below!”"}
+                    {subscribeCtaStyle === "support_subscribe" && "“Subscribe now to join our community and never miss another episode!”"}
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Autonomous Generation Trigger Button */}
             <button
               id="autonomous-generate-btn"
@@ -2091,6 +2255,29 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                       <span>{voiceEngine === "neural" ? `${STUDIO_NEURAL_VOICES.find(v => v.id === selectedNeuralVoice)?.name || "Jenny"} (Neural)` : "Browser Voice"}</span>
                     </span>
                   )}
+                </div>
+              )}
+
+              {/* Animated Subscribe & Follow Outro Callout Overlay */}
+              {activeScene?.is_outro && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-35 flex flex-col items-center gap-3 p-4 sm:p-5 rounded-2xl bg-black/85 border border-red-500/60 shadow-[0_0_50px_rgba(239,68,68,0.45)] backdrop-blur-md pointer-events-none transition-all animate-in fade-in zoom-in duration-300">
+                  <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-red-600 text-white font-black text-sm sm:text-base tracking-wider shadow-xl animate-pulse">
+                    <Bell className="w-5 h-5 fill-current" />
+                    <span>SUBSCRIBE</span>
+                  </div>
+                  <div className="text-xs font-semibold text-stone-200 tracking-wide flex items-center gap-2.5 bg-black/50 px-3 py-1.5 rounded-full border border-white/10">
+                    <span className="flex items-center gap-1 text-amber-400">
+                      <ThumbsUp className="w-3.5 h-3.5 fill-current" /> Like
+                    </span>
+                    <span className="text-stone-600">•</span>
+                    <span className="flex items-center gap-1 text-cyan-400">
+                      <Bell className="w-3.5 h-3.5" /> Notifications
+                    </span>
+                    <span className="text-stone-600">•</span>
+                    <span className="flex items-center gap-1 text-emerald-400">
+                      <Share2 className="w-3.5 h-3.5" /> Share
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -2330,17 +2517,26 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                         <div className="flex items-center justify-between gap-1">
                           <div className="flex items-center gap-1.5 truncate">
                             <span className={`font-semibold truncate ${isActive ? "text-amber-400" : "text-stone-300"}`}>
-                              Scene {scene.scene_number}
+                              {scene.is_outro ? "🔔 Subscribe Outro" : `Scene ${scene.scene_number}`}
                             </span>
-                            {scene.transition === "splitscreen" && (
-                              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-[9px] text-amber-300 font-mono">
-                                Split-Screen
+                            {scene.is_outro ? (
+                              <span className="px-1.5 py-0.2 rounded bg-red-500/20 text-[9px] text-red-300 font-mono font-bold flex items-center gap-0.5">
+                                <Bell className="w-2.5 h-2.5" />
+                                Final Outro
                               </span>
-                            )}
-                            {scene.transition === "zoom" && (
-                              <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-[9px] text-cyan-300 font-mono">
-                                Zoom
-                              </span>
+                            ) : (
+                              <>
+                                {scene.transition === "splitscreen" && (
+                                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-[9px] text-amber-300 font-mono">
+                                    Split-Screen
+                                  </span>
+                                )}
+                                {scene.transition === "zoom" && (
+                                  <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-[9px] text-cyan-300 font-mono">
+                                    Zoom
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
                           <span className="text-[10px] font-mono text-stone-500 shrink-0">

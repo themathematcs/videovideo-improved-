@@ -108,22 +108,36 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
       return;
     }
 
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.onended = () => setPlayingTrackId(null);
-      audioRef.current.onerror = () => {
-        console.warn("Audio stream playback failed, falling back to synthesizer preview");
-        setPlayingTrackId(null);
-        handleSynthesizeAudio(track.title || track.type);
-      };
+    // Pause any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
 
-    audioRef.current.src = track.preview_url || track.download_url;
-    audioRef.current.play()
-      .then(() => setPlayingTrackId(track.id))
+    const audio = new Audio();
+    audioRef.current = audio;
+
+    audio.onended = () => {
+      setPlayingTrackId(null);
+    };
+
+    audio.onerror = (e) => {
+      console.warn("Audio stream playback failed, falling back to synthesizer preview:", e);
+      setPlayingTrackId(null);
+      handleSynthesizeAudio(track.title || track.type);
+    };
+
+    audio.src = track.preview_url || track.download_url;
+    audio.play()
+      .then(() => {
+        setPlayingTrackId(track.id);
+      })
       .catch((err) => {
-        console.warn("Browser blocked autoplay or stream failed, synthesizing audio:", err);
-        handleSynthesizeAudio(track.title || track.type);
+        if (err.name !== "AbortError") {
+          console.warn("Audio playback interrupted or blocked:", err?.message || err);
+          setPlayingTrackId(null);
+          handleSynthesizeAudio(track.title || track.type);
+        }
       });
   };
 
@@ -247,7 +261,8 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const handleDownloadAudio = async (track: AudioTrackItem) => {
     setDownloadingId(track.id);
-    const filename = `${track.type}_${track.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase().slice(0, 30)}.mp3`;
+    const ext = (track.download_url && track.download_url.endsWith(".wav")) ? "wav" : "mp3";
+    const filename = `${track.type}_${track.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase().slice(0, 30)}.${ext}`;
     const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(track.download_url)}&filename=${encodeURIComponent(filename)}`;
 
     try {
@@ -263,8 +278,14 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
       document.body.removeChild(a);
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 15000);
     } catch (err) {
-      console.warn("Direct download proxy fallback, opening CDN link:", err);
-      window.open(track.download_url, "_blank");
+      console.warn("Direct download proxy fallback:", err);
+      // Fallback: direct anchor download
+      const a = document.createElement("a");
+      a.href = track.download_url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } finally {
       setDownloadingId(null);
     }
