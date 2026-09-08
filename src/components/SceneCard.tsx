@@ -6,7 +6,7 @@ import { VideoPlayerPreview } from "./VideoPlayerPreview";
 interface SceneCardProps {
   scene: Scene;
   onUpdateScene: (updated: Scene) => void;
-  onSearchAssets: (sceneNumber: number, query: string, mediaType: 'video' | 'image', source: 'all' | 'pexels' | 'pixabay') => void;
+  onSearchAssets: (sceneNumber: number, query: string, mediaType: 'video' | 'image', source: 'all' | 'pexels' | 'pixabay' | 'giphy' | 'archive' | 'nasa') => void;
   searchResults?: StockMediaItem[];
   isLoadingResults?: boolean;
   searchError?: string;
@@ -22,7 +22,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
 }) => {
   const [isEditingKeywords, setIsEditingKeywords] = useState(false);
   const [keywordInput, setKeywordInput] = useState(scene.search_keywords);
-  const [selectedSource, setSelectedSource] = useState<'all' | 'pexels' | 'pixabay'>('all');
+  const [selectedSource, setSelectedSource] = useState<'all' | 'pexels' | 'pixabay' | 'giphy' | 'archive' | 'nasa'>('all');
 
   const handleSaveKeywords = () => {
     setIsEditingKeywords(false);
@@ -41,7 +41,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
     }
   };
 
-  const handleSourceChange = (source: 'all' | 'pexels' | 'pixabay') => {
+  const handleSourceChange = (source: 'all' | 'pexels' | 'pixabay' | 'giphy' | 'archive' | 'nasa') => {
     setSelectedSource(source);
     onSearchAssets(scene.scene_number, scene.search_keywords, scene.media_type, source);
   };
@@ -52,7 +52,8 @@ export const SceneCard: React.FC<SceneCardProps> = ({
 
   const handleDownloadSelected = () => {
     if (!scene.selectedMedia) return;
-    const ext = scene.selectedMedia.type === 'video' ? 'mp4' : 'jpg';
+    const isGif = scene.selectedMedia.source === 'giphy' && scene.selectedMedia.type !== 'video';
+    const ext = isGif ? 'gif' : scene.selectedMedia.type === 'video' ? 'mp4' : 'jpg';
     const filename = `scene_${String(scene.scene_number).padStart(2, '0')}_${scene.selectedMedia.source}.${ext}`;
     const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(scene.selectedMedia.downloadUrl)}&filename=${encodeURIComponent(filename)}`;
     
@@ -183,9 +184,9 @@ export const SceneCard: React.FC<SceneCardProps> = ({
         </div>
 
         {/* Source Provider Filter and Re-search */}
-        <div className="flex items-center gap-1.5 self-end">
-          <div className="inline-flex p-0.5 rounded-md bg-stone-950 border border-stone-800 text-[11px]">
-            {(['all', 'pexels', 'pixabay'] as const).map((src) => (
+        <div className="flex items-center gap-1.5 self-end flex-wrap justify-end">
+          <div className="inline-flex p-0.5 rounded-md bg-stone-950 border border-stone-800 text-[11px] flex-wrap">
+            {(['all', 'pexels', 'pixabay', 'giphy', 'archive', 'nasa'] as const).map((src) => (
               <button
                 key={src}
                 onClick={() => handleSourceChange(src)}
@@ -195,7 +196,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
                     : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
-                {src}
+                {src === 'giphy' ? 'GIPHY' : src === 'archive' ? 'Archive' : src === 'nasa' ? 'NASA' : src}
               </button>
             ))}
           </div>
@@ -230,9 +231,9 @@ export const SceneCard: React.FC<SceneCardProps> = ({
             </button>
           </div>
         ) : searchResults.length === 0 ? (
-          <div className="p-6 rounded-lg bg-stone-950/30 border border-stone-800/40 flex flex-col items-center justify-center gap-2 text-stone-500 text-xs">
+          <div className="p-6 rounded-lg bg-stone-950/30 border border-stone-800/40 flex flex-col items-center justify-center gap-2 text-stone-500 text-xs text-center">
             <Sparkles className="w-4 h-4 text-stone-600" />
-            <span>Click "Search" above to preview available footage from Pexels & Pixabay</span>
+            <span>Click "Search" above to preview available footage from Pexels, Pixabay, GIPHY, Internet Archive & NASA</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

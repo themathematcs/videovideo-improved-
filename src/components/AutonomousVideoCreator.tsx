@@ -3,7 +3,8 @@ import {
   Sparkles, Play, Pause, RotateCcw, Download, Music, Volume2, VolumeX,
   Layers, Sliders, CheckCircle2, Loader2, ArrowRight, Video, FileText,
   Monitor, Smartphone, Maximize2, Minimize2, ExternalLink, RefreshCw,
-  Mic, User, Volume1, Settings2, ChevronDown, ChevronUp, Columns, Film, Check
+  Mic, User, Volume1, Settings2, ChevronDown, ChevronUp, Columns, Film, Check,
+  Search, X
 } from "lucide-react";
 import { AutoVideoPlan, AutoVideoScene, StockMediaItem, AudioTrackItem } from "../types";
 
@@ -301,10 +302,19 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
   const [pacing, setPacing] = useState<"fast" | "balanced" | "cinematic">("balanced");
   const [targetDuration, setTargetDuration] = useState<number>(30);
+  const [mediaSource, setMediaSource] = useState<"all" | "pexels" | "pixabay" | "giphy" | "archive" | "nasa">("all");
   const [vibeStyle, setVibeStyle] = useState<string>("tech");
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
   const [subtitlesStyle, setSubtitlesStyle] = useState<"highlight" | "classic" | "minimal" | "none">("highlight");
   const [musicVolume, setMusicVolume] = useState(0.4);
+
+  // Scene Footage Swapping State (supports Pexels, Pixabay, GIPHY, Internet Archive, and NASA)
+  const [swappingSceneIdx, setSwappingSceneIdx] = useState<number | null>(null);
+  const [swapKeywords, setSwapKeywords] = useState<string>("");
+  const [swapProvider, setSwapProvider] = useState<"all" | "pexels" | "pixabay" | "giphy" | "archive" | "nasa">("all");
+  const [swapResults, setSwapResults] = useState<StockMediaItem[]>([]);
+  const [isSearchingSwap, setIsSearchingSwap] = useState(false);
+  const [swapError, setSwapError] = useState<string | null>(null);
 
   // Studio Neural Voice State (Ultra-realistic, human-sounding)
   const [voiceEngine, setVoiceEngine] = useState<"neural" | "browser">("neural");
@@ -661,6 +671,57 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const [isRenderingCompleteVideo, setIsRenderingCompleteVideo] = useState(false);
   const [renderProgressMsg, setRenderProgressMsg] = useState<string>("");
 
+  // Footage Swapping Handlers
+  const openSwapModal = (idx: number) => {
+    const scene = loadedScenes[idx];
+    if (!scene) return;
+    setSwappingSceneIdx(idx);
+    const kw = scene.search_keywords || "";
+    setSwapKeywords(kw);
+    setSwapProvider(mediaSource);
+    setSwapResults([]);
+    setSwapError(null);
+    performSwapSearch(kw, mediaSource);
+  };
+
+  const performSwapSearch = async (query: string, source: "all" | "pexels" | "pixabay" | "giphy" | "archive" | "nasa") => {
+    if (!query.trim()) return;
+    setIsSearchingSwap(true);
+    setSwapError(null);
+    try {
+      const res = await fetch(
+        `/api/stock/search?query=${encodeURIComponent(query)}&mediaType=video&source=${source}&aspectRatio=${aspectRatio}`
+      );
+      if (!res.ok) throw new Error(`Search failed: HTTP ${res.status}`);
+      const data = await res.json();
+      setSwapResults(data.results || []);
+    } catch (err: any) {
+      setSwapError(err.message || "Failed to find media items");
+    } finally {
+      setIsSearchingSwap(false);
+    }
+  };
+
+  const handleSelectSwapMedia = (item: StockMediaItem) => {
+    if (swappingSceneIdx === null) return;
+    setLoadedScenes((prev) =>
+      prev.map((sc, i) => (i === swappingSceneIdx ? { ...sc, videoAsset: item } : sc))
+    );
+    if (videoPlan) {
+      setVideoPlan((prevPlan) =>
+        prevPlan
+          ? {
+              ...prevPlan,
+              scenes: prevPlan.scenes.map((sc, i) =>
+                i === swappingSceneIdx ? { ...sc, videoAsset: item } : sc
+              ),
+            }
+          : null
+      );
+    }
+    setSwappingSceneIdx(null);
+  };
+
   // Presets
   const PRESET_PROMPTS = [
     {
@@ -737,12 +798,14 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
 
         try {
           const searchRes = await fetch(
-            `/api/stock/search?query=${encodeURIComponent(scene.search_keywords)}&mediaType=video&source=all&aspectRatio=${aspectRatio}`
+            `/api/stock/search?query=${encodeURIComponent(scene.search_keywords)}&mediaType=video&source=${mediaSource}&aspectRatio=${aspectRatio}`
           );
           if (searchRes.ok) {
             const data = await searchRes.json();
-            const videos = (data.results || []).filter((r: any) => r.type === "video" && (r.previewUrl || r.downloadUrl));
-            for (const v of videos) {
+            const mediaItems = (data.results || []).filter(
+              (r: any) => (r.type === "video" || r.source === "giphy") && (r.previewUrl || r.downloadUrl)
+            );
+            for (const v of mediaItems) {
               if (!usedVideoIds.has(v.id)) {
                 chosenMedia = v;
                 break;
@@ -777,12 +840,12 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           const secQuery = scene.secondary_keywords || `${scene.search_keywords} detail`;
           try {
             const secRes = await fetch(
-              `/api/stock/search?query=${encodeURIComponent(secQuery)}&mediaType=video&source=all&aspectRatio=${aspectRatio}`
+              `/api/stock/search?query=${encodeURIComponent(secQuery)}&mediaType=video&source=${mediaSource}&aspectRatio=${aspectRatio}`
             );
             if (secRes.ok) {
               const sData = await secRes.json();
               const sVideos = (sData.results || []).filter(
-                (r: any) => r.type === "video" && (r.previewUrl || r.downloadUrl) && !usedVideoIds.has(r.id)
+                (r: any) => (r.type === "video" || r.source === "giphy") && (r.previewUrl || r.downloadUrl) && !usedVideoIds.has(r.id)
               );
               if (sVideos.length > 0) {
                 secondaryMedia = sVideos[0];
@@ -1394,7 +1457,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             )}
 
             {/* Video Configuration Options */}
-            <div className="grid grid-cols-3 gap-2.5 pt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
               {/* Aspect Ratio */}
               <div>
                 <label className="block text-[11px] font-medium text-stone-400 mb-1">
@@ -1459,6 +1522,25 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                   <option value="fast">⚡ Fast (3.5s)</option>
                   <option value="balanced">⏱️ Balanced (5s)</option>
                   <option value="cinematic">🎥 Cinematic (7s)</option>
+                </select>
+              </div>
+
+              {/* Footage Provider */}
+              <div>
+                <label className="block text-[11px] font-medium text-stone-400 mb-1">
+                  Footage Provider
+                </label>
+                <select
+                  value={mediaSource}
+                  onChange={(e: any) => setMediaSource(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-200 text-xs focus:outline-none focus:border-amber-500 h-[38px] cursor-pointer"
+                >
+                  <option value="all">🌟 All (Pexels, Pixabay, GIPHY, Archive, NASA)</option>
+                  <option value="pexels">🎬 Pexels Videos</option>
+                  <option value="pixabay">🎥 Pixabay Videos</option>
+                  <option value="giphy">✨ GIPHY GIFs & Clips</option>
+                  <option value="archive">🏛️ Internet Library (Archive.org)</option>
+                  <option value="nasa">🚀 NASA Space Archive</option>
                 </select>
               </div>
             </div>
@@ -2350,6 +2432,35 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                         <p className="text-[11px] line-clamp-2 mt-0.5 text-stone-400">
                           {scene.narration}
                         </p>
+                        <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-stone-800/60">
+                          <span
+                            className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold ${
+                              scene.videoAsset?.source === "giphy"
+                                ? "bg-purple-900/70 text-purple-200 border border-purple-700/50"
+                                : scene.videoAsset?.source === "pexels"
+                                ? "bg-emerald-900/70 text-emerald-200 border border-emerald-700/50"
+                                : scene.videoAsset?.source === "nasa"
+                                ? "bg-blue-900/70 text-blue-200 border border-blue-700/50"
+                                : scene.videoAsset?.source === "archive"
+                                ? "bg-amber-900/70 text-amber-200 border border-amber-700/50"
+                                : "bg-sky-900/70 text-sky-200 border border-sky-700/50"
+                            }`}
+                          >
+                            {scene.videoAsset?.source || "stock"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openSwapModal(idx);
+                            }}
+                            className="px-2 py-0.5 rounded bg-stone-800 hover:bg-amber-500 hover:text-stone-950 text-stone-300 text-[10px] font-medium flex items-center gap-1 transition-colors border border-stone-700/50"
+                            title="Replace footage with custom Pexels, Pixabay, GIPHY, Archive, or NASA clip"
+                          >
+                            <RefreshCw className="w-2.5 h-2.5" />
+                            <span>Swap / Providers</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -2359,6 +2470,214 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           )}
         </div>
       </div>
+
+      {/* Interactive Footage & GIPHY Replacement Modal */}
+      {swappingSceneIdx !== null && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-stone-800 flex items-center justify-between bg-stone-950">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-xs font-bold">
+                    Scene {swappingSceneIdx + 1}
+                  </span>
+                  <h3 className="text-sm font-semibold text-stone-100">
+                    Replace Footage with Pexels, Pixabay, or GIPHY
+                  </h3>
+                </div>
+                <p className="text-xs text-stone-400 truncate max-w-md mt-0.5">
+                  "{loadedScenes[swappingSceneIdx]?.narration}"
+                </p>
+              </div>
+              <button
+                onClick={() => setSwappingSceneIdx(null)}
+                className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Search Bar */}
+            <div className="p-4 border-b border-stone-800/80 bg-stone-900/60 space-y-2.5">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={swapKeywords}
+                    onChange={(e) => setSwapKeywords(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") performSwapSearch(swapKeywords, swapProvider);
+                    }}
+                    placeholder="Search keywords or vibe (e.g. pyramids egypt, coding computer, excited meme)..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-stone-100 text-xs focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+                <button
+                  onClick={() => performSwapSearch(swapKeywords, swapProvider)}
+                  disabled={isSearchingSwap}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSearchingSwap ? "animate-spin" : ""}`} />
+                  <span>Search</span>
+                </button>
+              </div>
+
+              {/* Provider Tabs */}
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="inline-flex p-0.5 rounded-lg bg-stone-950 border border-stone-800 text-[11px] flex-wrap">
+                  {(["all", "pexels", "pixabay", "giphy", "archive", "nasa"] as const).map((src) => (
+                    <button
+                      key={src}
+                      onClick={() => {
+                        setSwapProvider(src);
+                        performSwapSearch(swapKeywords, src);
+                      }}
+                      className={`px-2.5 py-1 rounded-md transition-colors capitalize ${
+                        swapProvider === src
+                          ? "bg-amber-500 text-stone-950 font-bold"
+                          : "text-stone-400 hover:text-stone-200"
+                      }`}
+                    >
+                      {src === "giphy"
+                        ? "✨ GIPHY"
+                        : src === "pexels"
+                        ? "🎬 Pexels"
+                        : src === "pixabay"
+                        ? "🎥 Pixabay"
+                        : src === "archive"
+                        ? "🏛️ Archive"
+                        : src === "nasa"
+                        ? "🚀 NASA"
+                        : "🌟 All"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Quick Trending / Space Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSwapKeywords("space galaxy earth nebula");
+                      setSwapProvider("nasa");
+                      performSwapSearch("space galaxy earth nebula", "nasa");
+                    }}
+                    className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[11px] font-medium flex items-center gap-1 transition-colors"
+                  >
+                    <span>🚀 NASA Space</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSwapProvider("giphy");
+                      setIsSearchingSwap(true);
+                      setSwapError(null);
+                      try {
+                        const res = await fetch("/api/giphy/trending?limit=15");
+                        if (!res.ok) throw new Error("GIPHY trending request failed");
+                        const data = await res.json();
+                        setSwapResults(data.results || []);
+                      } catch (e: any) {
+                        setSwapError(e.message);
+                      } finally {
+                        setIsSearchingSwap(false);
+                      }
+                    }}
+                    className="px-2 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[11px] font-medium flex items-center gap-1 transition-colors"
+                  >
+                    <span>🔥 Trending GIPHY</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Results Grid */}
+            <div className="p-4 overflow-y-auto flex-1 min-h-[280px]">
+              {isSearchingSwap ? (
+                <div className="flex flex-col items-center justify-center py-16 text-stone-400 gap-2">
+                  <RefreshCw className="w-6 h-6 animate-spin text-amber-400" />
+                  <span className="text-xs">Searching {swapProvider.toUpperCase()} for "{swapKeywords}"...</span>
+                </div>
+              ) : swapError ? (
+                <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-800/40 text-rose-300 text-xs flex items-center justify-between">
+                  <span>{swapError}</span>
+                  <button
+                    onClick={() => performSwapSearch(swapKeywords, swapProvider)}
+                    className="underline hover:text-rose-100"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : swapResults.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-stone-500 gap-2 text-center">
+                  <Film className="w-8 h-8 text-stone-600" />
+                  <p className="text-xs">Type a search term, or click "NASA Space" / "Trending GIPHY" to find clips for this scene.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {swapResults.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleSelectSwapMedia(item)}
+                      className="group relative rounded-xl overflow-hidden border border-stone-800 bg-stone-950 hover:border-amber-500 cursor-pointer transition-all hover:scale-[1.02] shadow-sm flex flex-col"
+                    >
+                      <div className="aspect-video relative bg-stone-900 overflow-hidden">
+                        {item.type === "video" && item.previewUrl ? (
+                          <video
+                            src={item.previewUrl}
+                            muted
+                            loop
+                            playsInline
+                            onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+                            onMouseLeave={(e) => (e.target as HTMLVideoElement).pause()}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <img
+                            src={item.thumbnailUrl || item.previewUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        <span
+                          className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                            item.source === "giphy"
+                              ? "bg-purple-900/90 text-purple-200 border border-purple-700/50"
+                              : item.source === "pexels"
+                              ? "bg-emerald-900/90 text-emerald-200 border border-emerald-700/50"
+                              : item.source === "nasa"
+                              ? "bg-blue-900/90 text-blue-200 border border-blue-700/50"
+                              : item.source === "archive"
+                              ? "bg-amber-900/90 text-amber-200 border border-amber-700/50"
+                              : "bg-sky-900/90 text-sky-200 border border-sky-700/50"
+                          }`}
+                        >
+                          {item.source}
+                        </span>
+                        {item.duration && (
+                          <span className="absolute bottom-1.5 right-1.5 px-1 py-0.2 rounded bg-black/80 text-stone-200 font-mono text-[9px]">
+                            {item.duration}s
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-2 flex items-center justify-between gap-1">
+                        <span className="text-[11px] text-stone-300 truncate font-medium">
+                          {item.title || item.id}
+                        </span>
+                        <span className="text-[10px] text-amber-400 font-semibold shrink-0 group-hover:underline">
+                          Select
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

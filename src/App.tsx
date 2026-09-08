@@ -53,6 +53,9 @@ export default function App() {
   const [rateLimits, setRateLimits] = useState<SystemRateLimits>({
     pexels: { limit: null, remaining: null, reset: null, lastUpdated: null, status: "unknown" },
     pixabay: { limit: null, remaining: null, reset: null, lastUpdated: null, status: "unknown" },
+    giphy: { limit: null, remaining: null, reset: null, lastUpdated: null, status: "unknown" },
+    nasa: { limit: null, remaining: null, reset: null, lastUpdated: null, status: "unknown" },
+    archive: { limit: 999999, remaining: 999999, reset: null, lastUpdated: null, status: "healthy" },
   });
   const [isRefreshingLimits, setIsRefreshingLimits] = useState(false);
 
@@ -82,7 +85,7 @@ export default function App() {
       sceneNumber: number,
       query: string,
       mediaType: "video" | "image",
-      source: "all" | "pexels" | "pixabay" = "all"
+      source: "all" | "pexels" | "pixabay" | "giphy" | "archive" | "nasa" = "all"
     ) => {
       if (!query.trim()) return;
 

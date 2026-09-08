@@ -19,6 +19,8 @@ app.use(express.json());
 // API Keys with defaults from user configuration
 const PEXELS_KEY = process.env.PEXELS_API_KEY || "h1r1DWw3EyuEcP8pFXl6e9jo76I0RfxUoG3d18kvEliS6pH6eEyHbmNo";
 const PIXABAY_KEY = process.env.PIXABAY_API_KEY || "35348186-369453ead8e33f2eec3ada4ec";
+const GIPHY_KEY = process.env.GIPHY_API_KEY || "glVs44nST7draZncBpDT52GYz89IF5IA";
+const NASA_KEY = process.env.NASA_API_KEY || "DEMO_KEY";
 
 // Rate limit in-memory telemetry
 const rateLimitState = {
@@ -32,6 +34,27 @@ const rateLimitState = {
   pixabay: {
     limit: null as number | null,
     remaining: null as number | null,
+    reset: null as number | null,
+    lastUpdated: null as string | null,
+    status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
+  },
+  giphy: {
+    limit: null as number | null,
+    remaining: null as number | null,
+    reset: null as number | null,
+    lastUpdated: null as string | null,
+    status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
+  },
+  nasa: {
+    limit: null as number | null,
+    remaining: null as number | null,
+    reset: null as number | null,
+    lastUpdated: null as string | null,
+    status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
+  },
+  archive: {
+    limit: 999999 as number | null,
+    remaining: 999999 as number | null,
     reset: null as number | null,
     lastUpdated: null as string | null,
     status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
@@ -1716,7 +1739,30 @@ app.get("/api/stock/audio", async (req, res) => {
   });
 });
 
-// 3. Search stock assets (Pexels & Pixabay) with rate-limit monitoring
+// Rate limit telemetry endpoint
+app.get("/api/stock/rate-limits", async (_req, res) => {
+  // Check NASA official API rate limits if available
+  try {
+    const nasaCheckUrl = `https://api.nasa.gov/planetary/apod?api_key=${encodeURIComponent(NASA_KEY)}`;
+    const nRes = await fetch(nasaCheckUrl, { signal: AbortSignal.timeout(3000) });
+    const limit = nRes.headers.get("x-ratelimit-limit");
+    const remaining = nRes.headers.get("x-ratelimit-remaining");
+    if (limit) rateLimitState.nasa.limit = parseInt(limit, 10);
+    if (remaining) rateLimitState.nasa.remaining = parseInt(remaining, 10);
+    rateLimitState.nasa.lastUpdated = new Date().toISOString();
+    rateLimitState.nasa.status = (rateLimitState.nasa.remaining ?? 10) > 0 ? 'healthy' : 'throttled';
+  } catch {}
+
+  // Internet Archive is completely open and public domain
+  rateLimitState.archive.status = 'healthy';
+  rateLimitState.archive.limit = 999999;
+  rateLimitState.archive.remaining = 999999;
+  rateLimitState.archive.lastUpdated = new Date().toISOString();
+
+  res.json(rateLimitState);
+});
+
+// 3. Search stock assets (Pexels, Pixabay, and Giphy) with rate-limit monitoring
 app.get("/api/stock/search", async (req, res) => {
   const query = (req.query.query as string || "").trim();
   const mediaType = (req.query.mediaType as string || "video").toLowerCase();
@@ -1730,8 +1776,12 @@ app.get("/api/stock/search", async (req, res) => {
     return res.json({ results: [], rateLimits: rateLimitState });
   }
 
-  const results: any[] = [];
   const errors: string[] = [];
+  const pexResults: any[] = [];
+  const pixResults: any[] = [];
+  const giphResults: any[] = [];
+  const iaResults: any[] = [];
+  const nasaResults: any[] = [];
 
   // Pexels Search
   if (source === "all" || source === "pexels") {
@@ -1765,7 +1815,7 @@ app.get("/api/stock/search", async (req, res) => {
             // Preview file (lighter weight for fast browser loading)
             const previewFile = (v.video_files || []).find((f: any) => (f.width && f.width <= 960 && f.width >= 480)) || hdFile;
 
-            results.push({
+            pexResults.push({
               id: `pexels-${v.id}`,
               source: "pexels",
               type: "video",
@@ -1794,7 +1844,7 @@ app.get("/api/stock/search", async (req, res) => {
         if (pexRes.ok) {
           const data: any = await pexRes.json();
           for (const p of (data.photos || [])) {
-            results.push({
+            pexResults.push({
               id: `pexels-photo-${p.id}`,
               source: "pexels",
               type: "image",
@@ -1849,7 +1899,7 @@ app.get("/api/stock/search", async (req, res) => {
             const thumb = medium?.thumbnail || chosen?.thumbnail || small?.thumbnail || hit.userImageURL;
 
             if (chosen?.url) {
-              results.push({
+              pixResults.push({
                 id: `pixabay-${hit.id}`,
                 source: "pixabay",
                 type: "video",
@@ -1877,7 +1927,7 @@ app.get("/api/stock/search", async (req, res) => {
         if (pixRes.ok) {
           const data: any = await pixRes.json();
           for (const hit of (data.hits || [])) {
-            results.push({
+            pixResults.push({
               id: `pixabay-photo-${hit.id}`,
               source: "pixabay",
               type: "image",
@@ -1897,6 +1947,299 @@ app.get("/api/stock/search", async (req, res) => {
     } catch (err: any) {
       console.error("Pixabay fetch error:", err?.message);
       errors.push(`Pixabay: ${err?.message}`);
+    }
+  }
+
+  // GIPHY Search (Animated GIFs & short MP4 looping clips)
+  if (source === "all" || source === "giphy") {
+    try {
+      const giphyApiKey = (req.query.giphyKey as string) || GIPHY_KEY;
+      if (giphyApiKey) {
+        const limit = source === "giphy" ? 16 : 6;
+        const giphyUrl = `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(giphyApiKey)}&q=${encodeURIComponent(query)}&limit=${limit}&rating=g`;
+        const gRes = await fetch(giphyUrl, {
+          headers: {
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          }
+        });
+
+        const gLimit = gRes.headers.get("x-ratelimit-limit");
+        const gRemaining = gRes.headers.get("x-ratelimit-remaining");
+        const gReset = gRes.headers.get("x-ratelimit-reset");
+
+        if (gLimit) rateLimitState.giphy.limit = parseInt(gLimit, 10);
+        if (gRemaining) {
+          const rem = parseInt(gRemaining, 10);
+          rateLimitState.giphy.remaining = rem;
+          rateLimitState.giphy.status = rem < 50 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
+        }
+        if (gReset) rateLimitState.giphy.reset = parseInt(gReset, 10);
+        rateLimitState.giphy.lastUpdated = new Date().toISOString();
+
+        if (gRes.ok) {
+          const gData: any = await gRes.json();
+          for (const item of (gData.data || [])) {
+            // Giphy original or fixed_height MP4 clip
+            const mp4Url = item.images?.original?.mp4 || item.images?.fixed_height?.mp4 || item.images?.looping?.mp4;
+            const gifUrl = item.images?.original?.url || item.images?.fixed_height?.url;
+            const previewUrl = (mediaType === "video" && mp4Url) ? (item.images?.fixed_height?.mp4 || mp4Url) : (gifUrl || item.images?.fixed_height?.url);
+            const thumbUrl = item.images?.fixed_height_small?.url || item.images?.fixed_height?.url || item.images?.preview_gif?.url || gifUrl;
+            const downloadUrl = (mediaType === "video" && mp4Url) ? mp4Url : (gifUrl || mp4Url);
+
+            if (downloadUrl) {
+              giphResults.push({
+                id: `giphy-${item.id}`,
+                source: "giphy",
+                type: (mediaType === "video" && mp4Url) ? "video" : "image",
+                title: item.title ? item.title.trim() : `GIPHY #${item.id}`,
+                previewUrl: previewUrl || downloadUrl,
+                thumbnailUrl: thumbUrl || previewUrl,
+                downloadUrl: downloadUrl,
+                width: parseInt(item.images?.original?.width || "480", 10),
+                height: parseInt(item.images?.original?.height || "270", 10),
+                duration: 4,
+                author: item.user?.display_name || item.username || "GIPHY Creator",
+                authorUrl: item.user?.profile_url || item.url,
+                quality: mp4Url ? "MP4 Video / Animated GIF (GIPHY)" : "Animated GIF (GIPHY)"
+              });
+            }
+          }
+        } else if (gRes.status === 429) {
+          rateLimitState.giphy.status = 'throttled';
+          errors.push("GIPHY rate limit reached (HTTP 429)");
+        } else if (gRes.status === 401 || gRes.status === 403) {
+          errors.push(`GIPHY unauthorized: Verify GIPHY API key in Settings/environment`);
+        }
+      }
+    } catch (gErr: any) {
+      console.error("GIPHY search error:", gErr?.message);
+      errors.push(`GIPHY: ${gErr?.message}`);
+    }
+  }
+
+  // Internet Archive (archive.org / Internet Library - completely open API, no key required)
+  if (source === "all" || source === "archive") {
+    try {
+      const iaLimit = source === "archive" ? 16 : 6;
+      const mediaFilter = mediaType === "image" ? "mediatype:image" : "mediatype:movies";
+      const iaSearchUrl = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}+AND+${mediaFilter}&fl[]=identifier,title,description,duration,downloads&sort[]=downloads+desc&rows=${iaLimit}&page=1&output=json`;
+      const iaRes = await fetch(iaSearchUrl, { signal: AbortSignal.timeout(4000) });
+      
+      if (iaRes.ok) {
+        const iaData: any = await iaRes.json();
+        const docs = (iaData.response?.docs || []).slice(0, iaLimit);
+
+        const iaPromises = docs.map(async (doc: any) => {
+          try {
+            let mp4Name: string | null = null;
+            let durationSec = doc.duration ? Math.round(parseFloat(doc.duration)) : undefined;
+
+            if (mediaType !== "image") {
+              const filesRes = await fetch(`https://archive.org/metadata/${encodeURIComponent(doc.identifier)}/files`, { signal: AbortSignal.timeout(2500) });
+              if (filesRes.ok) {
+                const filesData: any = await filesRes.json();
+                const filesList: any[] = filesData.result || [];
+                const mp4File = filesList.find(
+                  (f: any) => f.format === "512Kb MPEG4" || f.format === "h.264" || (f.name && f.name.toLowerCase().endsWith(".mp4") && !f.name.includes("thumb"))
+                );
+                if (mp4File?.name) {
+                  mp4Name = mp4File.name;
+                  if (!durationSec && mp4File.length) {
+                    durationSec = Math.round(parseFloat(mp4File.length));
+                  }
+                }
+              }
+            }
+
+            const videoUrl = mp4Name
+              ? `https://archive.org/download/${encodeURIComponent(doc.identifier)}/${encodeURIComponent(mp4Name)}`
+              : `https://archive.org/download/${encodeURIComponent(doc.identifier)}/${encodeURIComponent(doc.identifier)}.mp4`;
+            const thumbUrl = `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`;
+
+            return {
+              id: `archive-${doc.identifier}`,
+              source: "archive",
+              type: mediaType === "image" ? "image" : "video",
+              title: doc.title || doc.identifier,
+              previewUrl: mediaType === "image" ? thumbUrl : videoUrl,
+              thumbnailUrl: thumbUrl,
+              downloadUrl: mediaType === "image" ? thumbUrl : videoUrl,
+              width: 1280,
+              height: 720,
+              duration: durationSec || (mediaType === "video" ? 15 : undefined),
+              author: "Internet Archive",
+              authorUrl: `https://archive.org/details/${encodeURIComponent(doc.identifier)}`,
+              quality: "Public Domain / HD"
+            };
+          } catch {
+            const fallbackUrl = `https://archive.org/download/${encodeURIComponent(doc.identifier)}/${encodeURIComponent(doc.identifier)}.mp4`;
+            const thumbUrl = `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`;
+            return {
+              id: `archive-${doc.identifier}`,
+              source: "archive",
+              type: mediaType === "image" ? "image" : "video",
+              title: doc.title || doc.identifier,
+              previewUrl: mediaType === "image" ? thumbUrl : fallbackUrl,
+              thumbnailUrl: thumbUrl,
+              downloadUrl: mediaType === "image" ? thumbUrl : fallbackUrl,
+              width: 1280,
+              height: 720,
+              duration: mediaType === "video" ? 15 : undefined,
+              author: "Internet Archive",
+              authorUrl: `https://archive.org/details/${encodeURIComponent(doc.identifier)}`,
+              quality: "Public Domain"
+            };
+          }
+        });
+
+        const resolvedIa = await Promise.all(iaPromises);
+        iaResults.push(...resolvedIa);
+        rateLimitState.archive.status = 'healthy';
+        rateLimitState.archive.lastUpdated = new Date().toISOString();
+      }
+    } catch (iaErr: any) {
+      console.error("Internet Archive search error:", iaErr?.message);
+      errors.push(`Internet Archive: ${iaErr?.message}`);
+    }
+  }
+
+  // NASA Video & Image Search (Open Access + NASA API key defined)
+  if (source === "all" || source === "nasa") {
+    try {
+      const nasaLimit = source === "nasa" ? 16 : 6;
+      const mediaTypes = mediaType === "video" ? "video" : "video,image";
+      const nasaSearchUrl = `https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=${mediaTypes}&page_size=${nasaLimit}`;
+      const nasaRes = await fetch(nasaSearchUrl, { signal: AbortSignal.timeout(4500) });
+
+      if (nasaRes.ok) {
+        const nasaData: any = await nasaRes.json();
+        let items = (nasaData.collection?.items || []).slice(0, nasaLimit);
+
+        // If 0 items for multi-word query on NASA, try relaxing query
+        if (items.length === 0 && query.split(/\s+/).length > 1) {
+          const firstWord = query.split(/\s+/)[0];
+          try {
+            const relaxRes = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(firstWord)}&media_type=${mediaTypes}&page_size=${nasaLimit}`, { signal: AbortSignal.timeout(3000) });
+            if (relaxRes.ok) {
+              const relaxData: any = await relaxRes.json();
+              items = (relaxData.collection?.items || []).slice(0, nasaLimit);
+            }
+          } catch {}
+        }
+
+        const nasaPromises = items.map(async (item: any) => {
+          const meta = item.data?.[0] || {};
+          const isVideo = meta.media_type === "video";
+          const rawThumb = item.links?.find((l: any) => l.rel === "preview" || l.render === "image")?.href || "";
+          const thumbLink = rawThumb ? rawThumb.replace(/^http:\/\//i, "https://") : "";
+          let previewUrl = thumbLink;
+          let downloadUrl = thumbLink;
+
+          if (isVideo && item.href) {
+            try {
+              const assetRes = await fetch(item.href, { signal: AbortSignal.timeout(3000) });
+              if (assetRes.ok) {
+                const assetList: string[] = await assetRes.json();
+                const mp4s = assetList.filter((u: string) => typeof u === "string" && u.toLowerCase().endsWith(".mp4"));
+                const mediumMp4 = mp4s.find((u) => u.includes("~medium.mp4") || u.includes("~preview.mp4") || u.includes("~large.mp4")) || mp4s[0];
+                const origMp4 = mp4s.find((u) => u.includes("~orig.mp4")) || mediumMp4;
+                if (mediumMp4) {
+                  previewUrl = mediumMp4.replace(/^http:\/\//i, "https://");
+                  downloadUrl = (origMp4 || mediumMp4).replace(/^http:\/\//i, "https://");
+                }
+              }
+            } catch {}
+          }
+
+          return {
+            id: `nasa-${meta.nasa_id || Math.random().toString(36).slice(2, 8)}`,
+            source: "nasa",
+            type: isVideo ? "video" : "image",
+            title: meta.title || "NASA Mission Media",
+            previewUrl: previewUrl || thumbLink,
+            thumbnailUrl: thumbLink,
+            downloadUrl: downloadUrl || previewUrl,
+            width: 1920,
+            height: 1080,
+            duration: isVideo ? 12 : undefined,
+            author: meta.center ? `NASA (${meta.center})` : "NASA Space Center",
+            authorUrl: "https://images.nasa.gov/",
+            quality: isVideo ? "NASA Space 1080p FHD" : "NASA High-Res"
+          };
+        });
+
+        const resolvedNasa = await Promise.all(nasaPromises);
+        nasaResults.push(...resolvedNasa);
+        rateLimitState.nasa.status = 'healthy';
+        rateLimitState.nasa.lastUpdated = new Date().toISOString();
+      }
+    } catch (nasaErr: any) {
+      console.error("NASA search error:", nasaErr?.message);
+      errors.push(`NASA: ${nasaErr?.message}`);
+    }
+  }
+
+  // Smart Contextual Merging & Round-Robin Interleaving
+  const results: any[] = [];
+  const isSpaceQuery = /rocket|space|nasa|mars|moon|galaxy|astronomy|star|satellite|astronaut|earth|orbit|cosmos|nebula|planet|shuttle|iss|apollo|artemis|webb|hubble|universe/i.test(query);
+  const isHistoricalQuery = /history|vintage|classic|archive|retro|19\d\d|documentary|antique|library/i.test(query);
+  const isGifQuery = /meme|reaction|funny|anime|sticker|cartoon|dance|lol|loop/i.test(query);
+
+  if (source === "nasa") {
+    results.push(...nasaResults);
+  } else if (source === "archive") {
+    results.push(...iaResults);
+  } else if (source === "giphy") {
+    results.push(...giphResults);
+  } else if (source === "pexels") {
+    results.push(...pexResults);
+  } else if (source === "pixabay") {
+    results.push(...pixResults);
+  } else {
+    // source === "all"
+    if (isSpaceQuery && nasaResults.length > 0) {
+      // Space/astronomy/rocket query: prioritize NASA clips right at the top
+      results.push(...nasaResults.slice(0, 3));
+    } else if (isHistoricalQuery && iaResults.length > 0) {
+      // Historical/archive query: prioritize Internet Library clips right at the top
+      results.push(...iaResults.slice(0, 3));
+    } else if (isGifQuery && giphResults.length > 0) {
+      // GIF/meme query: prioritize GIPHY clips right at the top
+      results.push(...giphResults.slice(0, 3));
+    }
+
+    // Interleave all 5 providers fairly in round-robin fashion
+    const maxLen = Math.max(
+      pexResults.length,
+      pixResults.length,
+      nasaResults.length,
+      iaResults.length,
+      giphResults.length
+    );
+
+    const existingIds = new Set(results.map((r) => r.id));
+    for (let i = 0; i < maxLen; i++) {
+      if (nasaResults[i] && !existingIds.has(nasaResults[i].id)) {
+        results.push(nasaResults[i]);
+        existingIds.add(nasaResults[i].id);
+      }
+      if (pexResults[i] && !existingIds.has(pexResults[i].id)) {
+        results.push(pexResults[i]);
+        existingIds.add(pexResults[i].id);
+      }
+      if (pixResults[i] && !existingIds.has(pixResults[i].id)) {
+        results.push(pixResults[i]);
+        existingIds.add(pixResults[i].id);
+      }
+      if (iaResults[i] && !existingIds.has(iaResults[i].id)) {
+        results.push(iaResults[i]);
+        existingIds.add(iaResults[i].id);
+      }
+      if (giphResults[i] && !existingIds.has(giphResults[i].id)) {
+        results.push(giphResults[i]);
+        existingIds.add(giphResults[i].id);
+      }
     }
   }
 
@@ -1956,7 +2299,7 @@ app.get("/api/proxy-download", async (req, res) => {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
-        "Referer": fileUrl.includes("pexels.com") ? "https://www.pexels.com/" : "https://pixabay.com/"
+        "Referer": fileUrl.includes("pexels.com") ? "https://www.pexels.com/" : fileUrl.includes("giphy.com") ? "https://giphy.com/" : "https://pixabay.com/"
       }
     });
 
@@ -2004,6 +2347,42 @@ app.get("/api/proxy-download", async (req, res) => {
     } else {
       res.end();
     }
+  }
+});
+
+// GIPHY trending endpoint for fast GIF previews
+app.get("/api/giphy/trending", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt((req.query.limit as string) || "12", 10), 30);
+    const giphyApiKey = (req.query.giphyKey as string) || GIPHY_KEY;
+    const giphyUrl = `https://api.giphy.com/v1/gifs/trending?api_key=${encodeURIComponent(giphyApiKey)}&limit=${limit}&rating=g`;
+    const gRes = await fetch(giphyUrl);
+    if (!gRes.ok) {
+      return res.status(gRes.status).json({ error: `GIPHY trending request failed: HTTP ${gRes.status}` });
+    }
+    const data: any = await gRes.json();
+    const results = (data.data || []).map((item: any) => {
+      const mp4Url = item.images?.original?.mp4 || item.images?.fixed_height?.mp4;
+      const gifUrl = item.images?.original?.url || item.images?.fixed_height?.url;
+      return {
+        id: `giphy-${item.id}`,
+        source: "giphy",
+        type: mp4Url ? "video" : "image",
+        title: item.title || `Trending GIF #${item.id}`,
+        previewUrl: item.images?.fixed_height?.mp4 || item.images?.fixed_height?.url || gifUrl,
+        thumbnailUrl: item.images?.fixed_height_small?.url || item.images?.fixed_height?.url || gifUrl,
+        downloadUrl: mp4Url || gifUrl,
+        width: parseInt(item.images?.original?.width || "480", 10),
+        height: parseInt(item.images?.original?.height || "270", 10),
+        duration: 4,
+        author: item.user?.display_name || item.username || "GIPHY",
+        authorUrl: item.user?.profile_url || item.url,
+        quality: mp4Url ? "MP4 Video / Animated GIF (GIPHY)" : "Animated GIF (GIPHY)"
+      };
+    });
+    res.json({ count: results.length, results });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch trending GIFs" });
   }
 });
 
