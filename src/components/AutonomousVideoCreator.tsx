@@ -4,9 +4,10 @@ import {
   Layers, Sliders, CheckCircle2, Loader2, ArrowRight, Video, FileText,
   Monitor, Smartphone, Maximize2, Minimize2, ExternalLink, RefreshCw,
   Mic, User, Volume1, Settings2, ChevronDown, ChevronUp, Columns, Film, Check,
-  Search, X
+  Search, X, Upload, Disc, Radio, Filter, FolderOpen
 } from "lucide-react";
 import { AutoVideoPlan, AutoVideoScene, StockMediaItem, AudioTrackItem } from "../types";
+import { EXPANDED_CURATED_MUSIC_LIBRARY, MUSIC_GENRES, MusicGenre } from "../data/musicCatalog";
 
 // Keywords to accurately distinguish female and male synthesizer voices across OS and browsers
 const FEMALE_VOICE_KEYWORDS = [
@@ -156,140 +157,7 @@ export const STUDIO_NEURAL_VOICES: StudioNeuralVoice[] = [
   { id: "en-GB-RyanNeural", name: "Ryan", gender: "male", tag: "Smooth British", description: "Articulate, stylish British male narrator", popular: false },
 ];
 
-export const DEFAULT_CURATED_MUSIC_LIST: AudioTrackItem[] = [
-  {
-    id: "curated-music-tech-01",
-    type: "music",
-    title: "Syntheticity (Cyber Ambient & Electronic)",
-    genre: "Electronic / Cyber",
-    duration: 184,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-tech-02",
-    type: "music",
-    title: "Deeper (Cosmic Deep Tech & Future Ambient)",
-    genre: "Ambient / Sci-Fi",
-    duration: 162,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deeper.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deeper.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-inspire-01",
-    type: "music",
-    title: "Daybreak (Inspirational & Uplifting Horizon)",
-    genre: "Cinematic / Inspirational",
-    duration: 195,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Daybreak.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Daybreak.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-inspire-02",
-    type: "music",
-    title: "From Here (Modern Momentum & Progress)",
-    genre: "Orchestral / Modern",
-    duration: 148,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/From%20Here.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/From%20Here.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-epic-01",
-    type: "music",
-    title: "Crossroads (Cinematic Drama & Narrative)",
-    genre: "Cinematic Drama",
-    duration: 210,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Crossroads.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Crossroads.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-epic-02",
-    type: "music",
-    title: "Destiny (Epic Orchestral Trailer)",
-    genre: "Epic Orchestral",
-    duration: 175,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Destiny.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Destiny.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-nature-01",
-    type: "music",
-    title: "The Forest Awakes (Nature & Organic Harmony)",
-    genre: "Nature / Acoustic",
-    duration: 190,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Forest%20Awakes.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Forest%20Awakes.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-nature-02",
-    type: "music",
-    title: "Wild Waters (Ocean & Flowing Currents)",
-    genre: "Atmospheric",
-    duration: 180,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Wild%20Waters.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Wild%20Waters.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-travel-01",
-    type: "music",
-    title: "The Journey (Travel, Exploration & Discovery)",
-    genre: "Adventure / Travel",
-    duration: 204,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Journey%20(Kroc's%20Theme).mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Journey%20(Kroc's%20Theme).mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-action-01",
-    type: "music",
-    title: "Now or Never (Fast High Stakes Action)",
-    genre: "Action / Fast Beat",
-    duration: 154,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Now%20or%20Never.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Now%20or%20Never.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-story-01",
-    type: "music",
-    title: "A Memory Away (Emotional Storytelling & Reflection)",
-    genre: "Piano / Emotional",
-    duration: 188,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  },
-  {
-    id: "curated-music-story-02",
-    type: "music",
-    title: "Home (Warm Acoustic & Peaceful)",
-    genre: "Acoustic / Warm",
-    duration: 160,
-    download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
-    preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
-    artist: "Tanner Helland",
-    license: "Royalty Free (Creative Commons 4.0)"
-  }
-];
+export const DEFAULT_CURATED_MUSIC_LIST: AudioTrackItem[] = EXPANDED_CURATED_MUSIC_LIBRARY;
 
 export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   onExportToStoryboard,
@@ -652,11 +520,15 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const currentSceneIndexRef = useRef<number>(0);
   const currentTimeRef = useRef<number>(0);
 
-  // Music Selection & Audition State
+  // Music Selection, Filtering & Audition State
   const [availableMusicTracks, setAvailableMusicTracks] = useState<AudioTrackItem[]>(DEFAULT_CURATED_MUSIC_LIST);
+  const [musicSearchQuery, setMusicSearchQuery] = useState<string>("");
+  const [selectedMusicGenre, setSelectedMusicGenre] = useState<string>("all");
+  const [isSearchingMusic, setIsSearchingMusic] = useState<boolean>(false);
   const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
   const [previewingMusicId, setPreviewingMusicId] = useState<string | null>(null);
   const musicPreviewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const musicFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Video Element Refs for instant seamless transitions and split screen
   const videoRefA = useRef<HTMLVideoElement | null>(null);
@@ -886,8 +758,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       // Step 3: Fetch matching background music
       let musicTrack: AudioTrackItem | null = null;
       try {
-        const musicQuery = planData.music_keyword || customPrompt || "tech ambient";
-        const audioRes = await fetch(`/api/stock/audio?query=${encodeURIComponent(musicQuery)}&type=music&per_page=6`);
+        const musicQuery = planData.music_keyword || customPrompt || "ambient cinematic";
+        const audioRes = await fetch(`/api/stock/audio?query=${encodeURIComponent(musicQuery)}&type=music&per_page=30`);
         if (audioRes.ok) {
           const aData = await audioRes.json();
           if (aData.results && aData.results.length > 0) {
@@ -906,12 +778,12 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       setCurrentStep(PIPELINE_STEPS[3]);
 
       // Setup audio element
-      if (musicTrack && musicTrack.download_url) {
+      if (musicTrack && (musicTrack.download_url || musicTrack.preview_url)) {
         if (!audioElementRef.current) {
           audioElementRef.current = new Audio();
         }
         audioElementRef.current.crossOrigin = "anonymous";
-        audioElementRef.current.src = musicTrack.download_url;
+        audioElementRef.current.src = musicTrack.download_url || musicTrack.preview_url;
         audioElementRef.current.loop = true;
         audioElementRef.current.volume = musicVolume;
       }
@@ -954,7 +826,73 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     }
   };
 
-  // Music track preview handler
+  // Perform dynamic search or genre filter across the multi-source music library
+  const handleFilterMusic = async (query: string = musicSearchQuery, genre: string = selectedMusicGenre) => {
+    setIsSearchingMusic(true);
+    try {
+      const q = query.trim();
+      const params = new URLSearchParams();
+      if (q) params.set("query", q);
+      if (genre && genre !== "all") params.set("genre", genre);
+      params.set("per_page", "40");
+      params.set("type", "music");
+
+      const res = await fetch(`/api/stock/audio?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results && data.results.length > 0) {
+          setAvailableMusicTracks(data.results);
+          return;
+        }
+      }
+      // Fallback local search if network search returned 0
+      let localFiltered = EXPANDED_CURATED_MUSIC_LIBRARY;
+      if (genre && genre !== "all") {
+        localFiltered = localFiltered.filter((t) => t.genre?.toLowerCase().includes(genre.toLowerCase()));
+      }
+      if (q) {
+        const lowerQ = q.toLowerCase();
+        localFiltered = localFiltered.filter((t) => 
+          t.title.toLowerCase().includes(lowerQ) ||
+          (t.genre && t.genre.toLowerCase().includes(lowerQ)) ||
+          (t.artist && t.artist.toLowerCase().includes(lowerQ))
+        );
+      }
+      setAvailableMusicTracks(localFiltered.length > 0 ? localFiltered : EXPANDED_CURATED_MUSIC_LIBRARY);
+    } catch (e) {
+      console.warn("Music search error:", e);
+    } finally {
+      setIsSearchingMusic(false);
+    }
+  };
+
+  // Upload custom local audio file (MP3, WAV, AAC, OGG)
+  const handleCustomAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileUrl = URL.createObjectURL(file);
+    const cleanTitle = file.name.replace(/\.[^/.]+$/, "");
+    const customTrack: AudioTrackItem = {
+      id: `custom-upload-${Date.now()}`,
+      type: "music",
+      title: cleanTitle,
+      genre: "Custom Audio Upload",
+      artist: "Local User Audio",
+      duration: 0,
+      download_url: fileUrl,
+      preview_url: fileUrl,
+      license: "User Supplied Soundtrack"
+    };
+
+    setAvailableMusicTracks((prev) => [customTrack, ...prev]);
+    handleSelectMusicTrack(customTrack);
+    if (musicFileInputRef.current) {
+      musicFileInputRef.current.value = "";
+    }
+  };
+
+  // Music track audition preview handler with proxy streaming fallback
   const handlePreviewMusicTrack = (track: AudioTrackItem) => {
     if (previewingMusicId === track.id) {
       if (musicPreviewAudioRef.current) {
@@ -970,10 +908,19 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       musicPreviewAudioRef.current = null;
     }
 
-    const audio = new Audio(track.download_url);
+    const audioUrl = track.preview_url || track.download_url;
+    const audio = new Audio(audioUrl);
     audio.volume = 0.5;
-    audio.play().catch(() => {});
+    
+    audio.play().catch(() => {
+      // If direct CDN access fails (e.g. CORS), fallback to proxy
+      const proxied = `/api/audio/proxy?url=${encodeURIComponent(audioUrl)}`;
+      audio.src = proxied;
+      audio.play().catch((e) => console.warn("Audition preview notice:", e));
+    });
+
     audio.onended = () => setPreviewingMusicId(null);
+    audio.onerror = () => setPreviewingMusicId(null);
     musicPreviewAudioRef.current = audio;
     setPreviewingMusicId(track.id);
   };
@@ -987,18 +934,27 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     setPreviewingMusicId(null);
     setSelectedMusic(track);
 
+    const trackUrl = track.download_url || track.preview_url;
     if (audioElementRef.current) {
-      audioElementRef.current.src = track.download_url;
+      audioElementRef.current.src = trackUrl;
       audioElementRef.current.volume = isMuted ? 0 : musicVolume;
       if (isPlaying) {
-        audioElementRef.current.play().catch(() => {});
+        audioElementRef.current.play().catch(() => {
+          if (audioElementRef.current) {
+            audioElementRef.current.src = `/api/audio/proxy?url=${encodeURIComponent(trackUrl)}`;
+            audioElementRef.current.play().catch(() => {});
+          }
+        });
       }
     } else {
-      const a = new Audio(track.download_url);
+      const a = new Audio(trackUrl);
       a.loop = true;
       a.volume = isMuted ? 0 : musicVolume;
       if (isPlaying) {
-        a.play().catch(() => {});
+        a.play().catch(() => {
+          a.src = `/api/audio/proxy?url=${encodeURIComponent(trackUrl)}`;
+          a.play().catch(() => {});
+        });
       }
       audioElementRef.current = a;
     }
@@ -1874,69 +1830,174 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
 
               {/* Music Selection Drawer */}
               {showMusicPicker && (
-                <div className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 space-y-2 max-h-56 overflow-y-auto">
-                  <div className="flex items-center justify-between text-[10px] text-stone-400 pb-1 border-b border-stone-800">
-                    <span>Curated Royalty-Free Soundtracks ({availableMusicTracks.length})</span>
-                    <span>Audition & Select</span>
+                <div className="p-3 rounded-xl bg-stone-900 border border-stone-800 space-y-3 max-h-96 overflow-y-auto">
+                  {/* Top Bar: Title + Upload Audio Button */}
+                  <div className="flex items-center justify-between pb-2 border-b border-stone-800 text-xs">
+                    <div className="flex items-center gap-1.5 text-stone-300 font-semibold">
+                      <Music className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Soundtrack Library ({availableMusicTracks.length})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={musicFileInputRef}
+                        type="file"
+                        accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac"
+                        onChange={handleCustomAudioUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => musicFileInputRef.current?.click()}
+                        className="px-2 py-1 rounded-lg text-[11px] font-medium text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer"
+                        title="Upload local MP3, WAV, or AAC audio file"
+                      >
+                        <Upload className="w-3 h-3" />
+                        <span>Upload Audio</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    {(availableMusicTracks.length > 0 ? availableMusicTracks : DEFAULT_CURATED_MUSIC_LIST).map((track) => {
-                      const isSelected = selectedMusic?.download_url === track.download_url;
-                      const isPreviewing = previewingMusicId === track.id;
+                  {/* Search Bar */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative flex-1">
+                      <Search className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={musicSearchQuery}
+                        onChange={(e) => {
+                          setMusicSearchQuery(e.target.value);
+                          handleFilterMusic(e.target.value, selectedMusicGenre);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleFilterMusic(musicSearchQuery, selectedMusicGenre);
+                          }
+                        }}
+                        placeholder="Search tracks, moods, NASA audio, artists..."
+                        className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-stone-950 border border-stone-800 focus:border-amber-500 text-xs text-stone-200 placeholder-stone-500 focus:outline-none"
+                      />
+                      {musicSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMusicSearchQuery("");
+                            handleFilterMusic("", selectedMusicGenre);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300 p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isSearchingMusic}
+                      onClick={() => handleFilterMusic(musicSearchQuery, selectedMusicGenre)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                    >
+                      {isSearchingMusic ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Search"}
+                    </button>
+                  </div>
 
+                  {/* Genre Filter Pills */}
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+                    {MUSIC_GENRES.map((g) => {
+                      const isSelected = selectedMusicGenre === g.id;
                       return (
-                        <div
-                          key={track.id}
-                          className={`p-2 rounded-lg border text-xs flex items-center justify-between gap-2 transition-all ${
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedMusicGenre(g.id);
+                            handleFilterMusic(musicSearchQuery, g.id);
+                          }}
+                          className={`px-2 py-0.8 rounded-full border whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 ${
                             isSelected
-                              ? "bg-amber-500/15 border-amber-500 text-stone-100"
-                              : "bg-stone-950/70 border-stone-800/80 text-stone-300 hover:border-stone-700"
+                              ? "bg-amber-500 text-stone-950 font-bold border-amber-400 shadow-sm"
+                              : "bg-stone-950/80 text-stone-400 border-stone-800 hover:border-stone-700 hover:text-stone-300"
                           }`}
                         >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium truncate text-[11px]">{track.title}</span>
-                              {track.genre && (
-                                <span className="px-1.5 py-0.2 rounded bg-stone-800 text-[9px] text-amber-400/80 shrink-0 font-mono">
-                                  {track.genre}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-stone-500">
-                              {track.artist} • {track.duration ? `${track.duration}s` : "Full track"}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => handlePreviewMusicTrack(track)}
-                              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                                isPreviewing
-                                  ? "bg-amber-500 text-stone-950 border-amber-400"
-                                  : "bg-stone-800 hover:bg-stone-700 text-stone-300 border-stone-700"
-                              }`}
-                              title={isPreviewing ? "Stop Audition" : "Audition Track"}
-                            >
-                              {isPreviewing ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleSelectMusicTrack(track)}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
-                                isSelected
-                                  ? "bg-amber-500 text-stone-950 border-amber-500"
-                                  : "bg-stone-800 hover:bg-stone-700 text-amber-300 border-stone-700"
-                              }`}
-                            >
-                              {isSelected ? "Active" : "Use"}
-                            </button>
-                          </div>
-                        </div>
+                          <span>{g.name}</span>
+                        </button>
                       );
                     })}
+                  </div>
+
+                  {/* Track Cards List */}
+                  <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
+                    {availableMusicTracks.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-stone-500 space-y-1">
+                        <p>No audio tracks found matching "{musicSearchQuery}".</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMusicSearchQuery("");
+                            setSelectedMusicGenre("all");
+                            handleFilterMusic("", "all");
+                          }}
+                          className="text-amber-400 hover:underline text-[11px]"
+                        >
+                          Reset filters & show all tracks
+                        </button>
+                      </div>
+                    ) : (
+                      availableMusicTracks.map((track) => {
+                        const isSelected = selectedMusic?.download_url === track.download_url;
+                        const isPreviewing = previewingMusicId === track.id;
+
+                        return (
+                          <div
+                            key={track.id}
+                            className={`p-2 rounded-lg border text-xs flex items-center justify-between gap-2 transition-all ${
+                              isSelected
+                                ? "bg-amber-500/15 border-amber-500 text-stone-100"
+                                : "bg-stone-950/70 border-stone-800/80 text-stone-300 hover:border-stone-700"
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold truncate text-[11px]">{track.title}</span>
+                                {track.genre && (
+                                  <span className="px-1.5 py-0.2 rounded bg-stone-800 text-[9px] text-amber-400/90 shrink-0 font-mono">
+                                    {track.genre}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-stone-500">
+                                {track.artist} • {track.duration ? `${track.duration}s` : "Full track"} {track.license ? `• ${track.license}` : ""}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handlePreviewMusicTrack(track)}
+                                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                                  isPreviewing
+                                    ? "bg-amber-500 text-stone-950 border-amber-400 animate-pulse"
+                                    : "bg-stone-800 hover:bg-stone-700 text-stone-300 border-stone-700"
+                                }`}
+                                title={isPreviewing ? "Stop Audition" : "Audition Track"}
+                              >
+                                {isPreviewing ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleSelectMusicTrack(track)}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                                  isSelected
+                                    ? "bg-amber-500 text-stone-950 border-amber-500 shadow-sm"
+                                    : "bg-stone-800 hover:bg-stone-700 text-amber-300 border-stone-700"
+                                }`}
+                              >
+                                {isSelected ? "Active" : "Use"}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               )}

@@ -52,7 +52,7 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
     let isCancelled = false;
     setLoadingMusic(true);
 
-    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedMusicKeyword)}&type=music&per_page=4`)
+    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedMusicKeyword)}&type=music&per_page=8`)
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled) {
@@ -78,7 +78,7 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
     let isCancelled = false;
     setLoadingSfx(true);
 
-    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedSfxKeyword)}&type=sfx&per_page=4`)
+    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedSfxKeyword)}&type=sfx&per_page=8`)
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled) {
@@ -108,35 +108,28 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
       return;
     }
 
-    // Pause any currently playing audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.onended = () => setPlayingTrackId(null);
+      audioRef.current.onerror = () => {
+        setPlayingTrackId(null);
+        handleSynthesizeAudio(track.title || track.type);
+      };
     }
 
-    const audio = new Audio();
-    audioRef.current = audio;
-
-    audio.onended = () => {
-      setPlayingTrackId(null);
-    };
-
-    audio.onerror = (e) => {
-      console.warn("Audio stream playback failed, falling back to synthesizer preview:", e);
-      setPlayingTrackId(null);
-      handleSynthesizeAudio(track.title || track.type);
-    };
-
-    audio.src = track.preview_url || track.download_url;
-    audio.play()
-      .then(() => {
-        setPlayingTrackId(track.id);
-      })
-      .catch((err) => {
-        if (err.name !== "AbortError") {
-          console.warn("Audio playback interrupted or blocked:", err?.message || err);
-          setPlayingTrackId(null);
-          handleSynthesizeAudio(track.title || track.type);
+    const audioUrl = track.preview_url || track.download_url;
+    audioRef.current.src = audioUrl;
+    audioRef.current.play()
+      .then(() => setPlayingTrackId(track.id))
+      .catch(() => {
+        if (audioRef.current) {
+          audioRef.current.src = `/api/audio/proxy?url=${encodeURIComponent(audioUrl)}`;
+          audioRef.current.play()
+            .then(() => setPlayingTrackId(track.id))
+            .catch(() => {
+              setPlayingTrackId(null);
+              handleSynthesizeAudio(track.title || track.type);
+            });
         }
       });
   };
@@ -261,8 +254,7 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const handleDownloadAudio = async (track: AudioTrackItem) => {
     setDownloadingId(track.id);
-    const ext = (track.download_url && track.download_url.endsWith(".wav")) ? "wav" : "mp3";
-    const filename = `${track.type}_${track.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase().slice(0, 30)}.${ext}`;
+    const filename = `${track.type}_${track.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase().slice(0, 30)}.mp3`;
     const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(track.download_url)}&filename=${encodeURIComponent(filename)}`;
 
     try {
@@ -278,14 +270,8 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
       document.body.removeChild(a);
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 15000);
     } catch (err) {
-      console.warn("Direct download proxy fallback:", err);
-      // Fallback: direct anchor download
-      const a = document.createElement("a");
-      a.href = track.download_url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      console.warn("Direct download proxy fallback, opening CDN link:", err);
+      window.open(track.download_url, "_blank");
     } finally {
       setDownloadingId(null);
     }
