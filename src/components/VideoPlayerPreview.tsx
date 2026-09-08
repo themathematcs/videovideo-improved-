@@ -67,7 +67,8 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
     setDownloadError(null);
     setDownloadSuccess(false);
 
-    const ext = item.type === 'video' ? 'mp4' : 'jpg';
+    const isGif = item.source === 'giphy' && item.type !== 'video';
+    const ext = isGif ? 'gif' : item.type === 'video' ? 'mp4' : 'jpg';
     const filename = `scene_${String(sceneNumber).padStart(2, '0')}_${item.source}.${ext}`;
     const proxyUrl = `/api/proxy-download?url=${encodeURIComponent(item.downloadUrl)}&filename=${encodeURIComponent(filename)}`;
 
@@ -155,10 +156,16 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
             className={`px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider ${
               item.source === 'pexels'
                 ? "bg-emerald-900/90 text-emerald-200 border border-emerald-700/50"
+                : item.source === 'giphy'
+                ? "bg-purple-900/90 text-purple-200 border border-purple-700/50"
+                : item.source === 'nasa'
+                ? "bg-blue-900/90 text-blue-200 border border-blue-700/50"
+                : item.source === 'archive'
+                ? "bg-amber-900/90 text-amber-200 border border-amber-700/50"
                 : "bg-sky-900/90 text-sky-200 border border-sky-700/50"
             }`}
           >
-            {item.source}
+            {item.source === 'giphy' ? 'GIPHY' : item.source === 'nasa' ? 'NASA' : item.source === 'archive' ? 'Archive' : item.source}
           </span>
           {videoFormat === 'portrait' && (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-stone-950 shadow-xs">
@@ -176,7 +183,13 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
         <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
           {item.quality && (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/70 text-stone-300 border border-stone-700/40">
-              {item.width >= 3840 ? "4K UHD" : item.width >= 1920 ? "1080p FHD" : "HD"}
+              {item.source === 'giphy'
+                ? item.type === 'video' ? 'MP4 / GIF' : 'GIF'
+                : item.source === 'nasa'
+                ? 'NASA 1080p'
+                : item.source === 'archive'
+                ? 'Archive HD'
+                : item.width >= 3840 ? "4K UHD" : item.width >= 1920 ? "1080p FHD" : "HD"}
             </span>
           )}
           {/* Direct CDN Link */}

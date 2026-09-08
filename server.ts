@@ -1,7 +1,5 @@
-import "dotenv/config";
 import express from "express";
 import path from "path";
-import os from "os";
 import fs from "fs";
 import { exec, execSync } from "child_process";
 import { fileURLToPath } from "url";
@@ -14,13 +12,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 app.use(express.json());
 
 // API Keys with defaults from user configuration
 const PEXELS_KEY = process.env.PEXELS_API_KEY || "h1r1DWw3EyuEcP8pFXl6e9jo76I0RfxUoG3d18kvEliS6pH6eEyHbmNo";
 const PIXABAY_KEY = process.env.PIXABAY_API_KEY || "35348186-369453ead8e33f2eec3ada4ec";
+const GIPHY_KEY = process.env.GIPHY_API_KEY || "glVs44nST7draZncBpDT52GYz89IF5IA";
+const NASA_KEY = process.env.NASA_API_KEY || "DEMO_KEY";
 
 // Rate limit in-memory telemetry
 const rateLimitState = {
@@ -34,6 +34,27 @@ const rateLimitState = {
   pixabay: {
     limit: null as number | null,
     remaining: null as number | null,
+    reset: null as number | null,
+    lastUpdated: null as string | null,
+    status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
+  },
+  giphy: {
+    limit: null as number | null,
+    remaining: null as number | null,
+    reset: null as number | null,
+    lastUpdated: null as string | null,
+    status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
+  },
+  nasa: {
+    limit: null as number | null,
+    remaining: null as number | null,
+    reset: null as number | null,
+    lastUpdated: null as string | null,
+    status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
+  },
+  archive: {
+    limit: 999999 as number | null,
+    remaining: 999999 as number | null,
     reset: null as number | null,
     lastUpdated: null as string | null,
     status: 'healthy' as 'healthy' | 'warning' | 'throttled' | 'unknown',
@@ -62,38 +83,6 @@ function getGeminiClient(): GoogleGenAI | null {
     }
   }
   return aiClient;
-}
-
-// AI Models rotation chain: Gemini 2.5 Flash -> Flash Lite -> Gemma 4 31B -> Gemma 4 26B -> Built-in Rule Parser
-const AI_MODELS_ROTATION = [
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemma-4-31b-it",
-  "gemma-4-26b-a4b-it"
-];
-
-// Robust JSON extractor for Gemma and Gemini markdown responses
-function extractJsonFromText(text: string): any {
-  try {
-    return JSON.parse(text);
-  } catch {}
-
-  const jsonBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (jsonBlockMatch && jsonBlockMatch[1]) {
-    try {
-      return JSON.parse(jsonBlockMatch[1].trim());
-    } catch {}
-  }
-
-  const firstBrace = text.indexOf("{");
-  const lastBrace = text.lastIndexOf("}");
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    try {
-      return JSON.parse(text.slice(firstBrace, lastBrace + 1));
-    } catch {}
-  }
-
-  throw new Error("Unable to extract valid JSON from model output");
 }
 
 // -------------------------------------------------------------
@@ -130,31 +119,29 @@ function extractSemanticStockKeywords(
   const lowerWhole = (wholeText + " " + sentence).toLowerCase();
   const lowerSentence = sentence.toLowerCase();
 
-  // Detect Primary Domain with strict topic prioritization
+  // Detect Primary Domain
   let domain = "tech";
-  if (/(pyramid|giza|egypt|ancient|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization|historical)/.test(lowerWhole)) {
-    domain = "history";
-  } else if (/(code|coding|software|developer|programming|programmer|algorithm|ide|debugging|laptop|technology|computer|api|frontend|backend|cloud)/.test(lowerWhole)) {
-    domain = "tech";
-  } else if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lowerWhole)) {
+  if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lowerWhole)) {
     domain = "cyber";
-  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope|speed of light)/.test(lowerWhole)) {
-    domain = "space";
-  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock market|invest|wealth|economy|wall street|assets|cash|dollars)/.test(lowerWhole)) {
+  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock|market|money|invest|wealth|economy|wall street|assets|launder|cash|dollars)/.test(lowerWhole)) {
     domain = "crypto";
   } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lowerWhole)) {
     domain = "culinary";
-  } else if (/\b(safari|lion|elephant|forest wildlife|ocean reef|underwater|wild animals|savannah|jungle animals|wildlife)\b/.test(lowerWhole)) {
+  } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lowerWhole)) {
     domain = "wildlife";
-  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|bodybuilding)/.test(lowerWhole)) {
+  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|sports|bodybuilding|football|basketball)/.test(lowerWhole)) {
     domain = "sports";
-  } else if (/(travel|tokyo|paris|city tour|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore europe)/.test(lowerWhole)) {
+  } else if (/(travel|tokyo|paris|city|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore|europe|japan)/.test(lowerWhole)) {
     domain = "travel";
-  } else if (/\b(supercar|sportscar|driving car|ferrari|lamborghini|porsche|highway driving|automotive|racing car|drift car)\b/.test(lowerWhole)) {
+  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope)/.test(lowerWhole)) {
+    domain = "space";
+  } else if (/(car|supercar|driving|race|racing|drift|drifting|speed|porsche|ferrari|lamborghini|motorcycle|track|engine|automotive)/.test(lowerWhole)) {
     domain = "cars";
-  } else if (/(meditation|health|wellness|mindful|mental health|spa|calm breathing|therapy|doctor|hospital|medical)/.test(lowerWhole)) {
+  } else if (/(meditation|health|wellness|mindful|mental|spa|peace|calm|skincare|breathe|therapy|relax|doctor|hospital|medical)/.test(lowerWhole)) {
     domain = "health";
-  } else if (/(art|paint|painting|design|photography|music|guitar|piano|dj|fashion|aesthetic|dance studio)/.test(lowerWhole)) {
+  } else if (/(pyramid|giza|egypt|ancient|history|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization)/.test(lowerWhole)) {
+    domain = "history";
+  } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lowerWhole)) {
     domain = "art";
   }
 
@@ -487,27 +474,22 @@ OUTPUT FORMAT:
   }
 }`;
 
-  const ai = getGeminiClient();
-  if (!ai) {
-    console.log("No GEMINI_API_KEY set; using high-accuracy fallback script parser.");
-    const fallbackResult = fallbackRuleBasedParser(script);
-    return res.json(fallbackResult);
-  }
+  try {
+    const ai = getGeminiClient();
+    if (!ai) {
+      console.log("No GEMINI_API_KEY set; using high-accuracy fallback script parser.");
+      const fallbackResult = fallbackRuleBasedParser(script);
+      return res.json(fallbackResult);
+    }
 
-  // Model rotation chain: Gemini 2.5 Flash -> Flash Lite -> Gemma 2 27B -> Gemma 2 9B -> Built-in Rule Parser
-  for (const model of AI_MODELS_ROTATION) {
-    try {
-      console.log(`[AI Engine] Attempting script analysis with ${model}...`);
-      const isGemma = model.startsWith("gemma");
-
-      const config: any = {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: promptText,
+      config: {
         systemInstruction,
         temperature: 0.2,
-      };
-
-      if (!isGemma) {
-        config.responseMimeType = "application/json";
-        config.responseSchema = {
+        responseMimeType: "application/json",
+        responseSchema: {
           type: Type.OBJECT,
           properties: {
             project_name: { type: Type.STRING },
@@ -540,53 +522,41 @@ OUTPUT FORMAT:
             }
           },
           required: ["project_name", "scenes", "audio_suggestions"]
-        };
+        }
       }
+    });
 
-      const response = await ai.models.generateContent({
-        model,
-        contents: promptText,
-        config
-      });
+    const responseText = response.text || "{}";
+    const parsed = JSON.parse(responseText);
 
-      const responseText = response.text || "{}";
-      const parsed = extractJsonFromText(responseText);
-
-      // Normalize media_type & structure
-      if (parsed.scenes && Array.isArray(parsed.scenes)) {
-        parsed.scenes = parsed.scenes.map((s: any, idx: number) => ({
-          scene_number: s.scene_number || (idx + 1),
-          script_line: s.script_line || "",
-          search_keywords: s.search_keywords || "stock footage b-roll",
-          media_type: (s.media_type && s.media_type.toLowerCase() === "image") ? "image" : "video"
-        }));
-      }
-
-      if (!parsed.audio_suggestions) {
-        parsed.audio_suggestions = {
-          music_keywords: ["tech ambient synth", "cinematic inspirational"],
-          sfx_keywords: ["keyboard typing", "futuristic swoosh", "data server hum"]
-        };
-      }
-
-      console.log(`[AI Engine] Successfully analyzed script using ${model}!`);
-      return res.json({
-        ...parsed,
-        used_model: model
-      });
-
-    } catch (err: any) {
-      console.warn(`[AI Engine] Model ${model} rate-limited or error: ${err?.message || err}. Rotating to next model...`);
+    // Normalize media_type & structure
+    if (parsed.scenes && Array.isArray(parsed.scenes)) {
+      parsed.scenes = parsed.scenes.map((s: any, idx: number) => ({
+        scene_number: s.scene_number || (idx + 1),
+        script_line: s.script_line || "",
+        search_keywords: s.search_keywords || "stock footage b-roll",
+        media_type: (s.media_type && s.media_type.toLowerCase() === "image") ? "image" : "video"
+      }));
     }
-  }
 
-  // If all models in rotation failed, fall back to built-in semantic parser
-  console.info("[AI Engine] All online models rate-limited; switching to built-in semantic parser.");
-  const fallbackResult = fallbackRuleBasedParser(script);
-  return res.json({
-    ...fallbackResult,
-    _notice: "Analyzed using built-in semantic scene engine"
-  });
+    if (!parsed.audio_suggestions) {
+      parsed.audio_suggestions = {
+        music_keywords: ["tech ambient synth", "cinematic inspirational"],
+        sfx_keywords: ["keyboard typing", "futuristic swoosh", "data server hum"]
+      };
+    }
+
+    return res.json(parsed);
+
+  } catch (error: any) {
+    console.info("Gemini analysis notice (using built-in semantic scene engine):", error?.message || error);
+    // Graceful fallback to avoid leaving user hanging
+    const fallbackResult = fallbackRuleBasedParser(script);
+    return res.json({
+      ...fallbackResult,
+      _notice: "Analyzed using built-in semantic scene engine"
+    });
+  }
 });
 
 // Dynamic Topic-Aware Autonomous Video Generator for any prompt or custom script
@@ -650,30 +620,30 @@ function generateTopicAwareVideoPlan(
   type DomainType = "cyber" | "culinary" | "wildlife" | "sports" | "travel" | "crypto" | "space" | "cars" | "health" | "art" | "tech" | "history" | "custom";
   let domain: DomainType = "custom";
 
-  if (/(pyramid|giza|egypt|ancient|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization|historical)/.test(lower)) {
-    domain = "history";
-  } else if (/(code|coding|software|developer|programming|programmer|algorithm|ide|debugging|laptop|technology|computer|api|frontend|backend|cloud)/.test(lower)) {
-    domain = "tech";
-  } else if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lower)) {
+  if (/(hack|lazarus|cyber|pyongyang|malware|trojan|backdoor|exploit|phishing|ransomware|firewall|breach|state-sponsored)/.test(lower)) {
     domain = "cyber";
-  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope|speed of light)/.test(lower)) {
-    domain = "space";
-  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock market|invest|wealth|economy|wall street|assets|cash|dollars)/.test(lower)) {
-    domain = "crypto";
+  } else if (/(morning|routine|productivity|focus|minimalist|habit|lifestyle|relax|meditation|wellness|mindful|mental|calm)/.test(lower)) {
+    domain = "health";
+  } else if (/(pyramid|giza|egypt|ancient|history|pharaoh|sphinx|archaeology|monument|mummy|temple|ruins|mystery|civilization)/.test(lower)) {
+    domain = "history";
   } else if (/(pasta|pizza|cook|kitchen|chef|food|bake|bakery|recipe|dinner|delicious|culinary|italian|restaurant|steak|dessert|burger|coffee|cafe|eating)/.test(lower)) {
     domain = "culinary";
-  } else if (/\b(safari|lion|elephant|forest wildlife|ocean reef|underwater|wild animals|savannah|jungle animals|wildlife)\b/.test(lower)) {
+  } else if (/(wildlife|savannah|safari|animal|lion|elephant|forest|nature|ocean|underwater|whale|reef|mountain|jungle|river|bird|eagle|sunset|island)/.test(lower)) {
     domain = "wildlife";
-  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|bodybuilding)/.test(lower)) {
+  } else if (/(gym|workout|fitness|muscle|athlete|running|marathon|boxing|crossfit|yoga|weightlifting|sports|bodybuilding|football|basketball)/.test(lower)) {
     domain = "sports";
-  } else if (/(travel|tokyo|paris|city tour|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore europe)/.test(lower)) {
+  } else if (/(travel|tokyo|paris|city|wanderlust|streets|vacation|tourism|hotel|skyline|urban|flight|airport|explore|europe|japan)/.test(lower)) {
     domain = "travel";
-  } else if (/\b(supercar|sportscar|driving car|ferrari|lamborghini|porsche|highway driving|automotive|racing car|drift car)\b/.test(lower)) {
+  } else if (/(crypto|bitcoin|ethereum|blockchain|finance|trading|stock|market|money|invest|wealth|economy|wall street|assets|launder|cash|dollars)/.test(lower)) {
+    domain = "crypto";
+  } else if (/(space|mars|galaxy|cosmos|star|astronaut|nasa|orbit|rocket|planet|universe|nebula|telescope)/.test(lower)) {
+    domain = "space";
+  } else if (/(car|supercar|driving|race|racing|drift|drifting|speed|porsche|ferrari|lamborghini|motorcycle|track|engine|automotive)/.test(lower)) {
     domain = "cars";
-  } else if (/(meditation|health|wellness|mindful|mental health|spa|calm breathing|therapy|doctor|hospital|medical)/.test(lower)) {
-    domain = "health";
-  } else if (/(art|paint|painting|design|photography|music|guitar|piano|dj|fashion|aesthetic|dance studio)/.test(lower)) {
+  } else if (/(art|paint|painting|design|photo|photography|music|guitar|piano|dj|fashion|aesthetic|dance|studio)/.test(lower)) {
     domain = "art";
+  } else if (/(tech|code|coding|software|ai|robot|computer|developer|laptop|matrix|algorithm|data)/.test(lower)) {
+    domain = "tech";
   }
 
   const title = inputTopic.length > 35 ? inputTopic.slice(0, 32) + "..." : inputTopic;
@@ -1009,94 +979,83 @@ RULES:
 Topic / Prompt: "${inputTopic}"
 Style: ${style}
 Aspect Ratio: ${aspectRatio} (${aspectRatio === "9:16" ? "9:16 Portrait / Vertical Short Form" : "16:9 Landscape Widescreen"})
+Target Pacing: ${pacing} (approx ${sceneDuration}s per scene)
+Target Total Video Duration: approx ${targetDuration} seconds (${targetNumScenes} total scenes)
+
 Include a catchy project title, cohesive full script, scene breakdowns with stock video keywords, secondary keywords for split screen, and the exact background music search keyword.`;
 
-  const ai = getGeminiClient();
-  if (ai) {
-    for (const model of AI_MODELS_ROTATION) {
-      try {
-        console.log(`[Autonomous AI] Generating video plan using ${model}...`);
-        const isGemma = model.startsWith("gemma");
-
-        const config: any = {
-          systemInstruction,
-          temperature: 0.4,
-        };
-
-        if (!isGemma) {
-          config.responseMimeType = "application/json";
-          config.responseSchema = {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              full_script: { type: Type.STRING },
-              music_keyword: { type: Type.STRING },
-              music_mood: { type: Type.STRING },
-              scenes: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    scene_number: { type: Type.INTEGER },
-                    narration: { type: Type.STRING },
-                    search_keywords: { type: Type.STRING },
-                    secondary_keywords: { type: Type.STRING },
-                    duration: { type: Type.NUMBER },
-                    subtitle: { type: Type.STRING },
-                    transition: { type: Type.STRING }
-                  },
-                  required: ["scene_number", "narration", "search_keywords", "duration", "subtitle"]
-                }
-              }
-            },
-            required: ["title", "full_script", "music_keyword", "scenes"]
-          };
-        }
-
-        const response = await ai.models.generateContent({
-          model,
-          contents: promptText,
-          config
-        });
-
-        const parsed = extractJsonFromText(response.text || "{}");
-        const scenes = (parsed.scenes || []).map((s: any, idx: number) => ({
-          scene_number: s.scene_number || (idx + 1),
-          narration: s.narration || "Visual sequence",
-          search_keywords: s.search_keywords || `${inputTopic} footage`,
-          secondary_keywords: s.secondary_keywords || `${inputTopic} detail`,
-          duration: Math.max(3, Math.min(10, Number(s.duration) || sceneDuration)),
-          subtitle: s.subtitle || s.narration?.slice(0, 40) || "",
-          transition: s.transition || (idx % 4 === 1 ? "splitscreen" : idx % 4 === 2 ? "zoom" : "fade"),
-          layout: s.transition === "splitscreen" ? "splitscreen" : "standard"
-        }));
-
-        const totalDuration = scenes.reduce((sum: number, sc: any) => sum + sc.duration, 0);
-
-        console.log(`[Autonomous AI] Successfully created plan with ${model}!`);
-        return res.json({
-          title: parsed.title || inputTopic,
-          prompt: inputTopic,
-          full_script: parsed.full_script || scenes.map((s: any) => s.narration).join(" "),
-          aspect_ratio: aspectRatio,
-          music_keyword: parsed.music_keyword || `${style} background music`,
-          scenes,
-          total_duration: Math.round(totalDuration * 10) / 10,
-          voiceover_enabled: true,
-          subtitles_style: "highlight",
-          used_model: model
-        });
-
-      } catch (err: any) {
-        console.warn(`[Autonomous AI] Model ${model} rate-limited or error: ${err?.message || err}. Rotating to next model...`);
-      }
+  try {
+    const ai = getGeminiClient();
+    if (!ai) {
+      throw new Error("Gemini AI client not initialized");
     }
-  }
 
-  // Graceful offline topic-aware video generation fallback
-  console.info("[Autonomous AI] Generating high quality topic-aware video plan via local engine.");
-  const localPlan = generateTopicAwareVideoPlan(inputTopic, style, aspectRatio, pacing, Number(targetDuration) || 30);
-  return res.json(localPlan);
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: promptText,
+      config: {
+        systemInstruction,
+        temperature: 0.4,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            full_script: { type: Type.STRING },
+            music_keyword: { type: Type.STRING },
+            music_mood: { type: Type.STRING },
+            scenes: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  scene_number: { type: Type.INTEGER },
+                  narration: { type: Type.STRING },
+                  search_keywords: { type: Type.STRING },
+                  secondary_keywords: { type: Type.STRING },
+                  duration: { type: Type.NUMBER },
+                  subtitle: { type: Type.STRING },
+                  transition: { type: Type.STRING }
+                },
+                required: ["scene_number", "narration", "search_keywords", "duration", "subtitle"]
+              }
+            }
+          },
+          required: ["title", "full_script", "music_keyword", "scenes"]
+        }
+      }
+    });
+
+    const parsed = JSON.parse(response.text || "{}");
+    const scenes = (parsed.scenes || []).map((s: any, idx: number) => ({
+      scene_number: s.scene_number || (idx + 1),
+      narration: s.narration || "Visual sequence",
+      search_keywords: s.search_keywords || `${inputTopic} footage`,
+      secondary_keywords: s.secondary_keywords || `${inputTopic} detail`,
+      duration: Math.max(3, Math.min(10, Number(s.duration) || sceneDuration)),
+      subtitle: s.subtitle || s.narration?.slice(0, 40) || "",
+      transition: s.transition || (idx % 4 === 1 ? "splitscreen" : idx % 4 === 2 ? "zoom" : "fade"),
+      layout: s.transition === "splitscreen" ? "splitscreen" : "standard"
+    }));
+
+    const totalDuration = scenes.reduce((sum: number, sc: any) => sum + sc.duration, 0);
+
+    return res.json({
+      title: parsed.title || inputTopic,
+      prompt: inputTopic,
+      full_script: parsed.full_script || scenes.map((s: any) => s.narration).join(" "),
+      aspect_ratio: aspectRatio,
+      music_keyword: parsed.music_keyword || "ambient modern",
+      music_mood: parsed.music_mood || "ambient modern",
+      scenes,
+      total_duration: totalDuration
+    });
+  } catch (err: any) {
+    console.log("Using smart dynamic topic-aware generator for prompt:", inputTopic);
+    // Intelligent, high-quality dynamic topic-aware generator
+    const dynamicPlan = generateTopicAwareVideoPlan(inputTopic, style, aspectRatio, pacing, Number(targetDuration) || 30);
+    return res.json(dynamicPlan);
+  }
 });
 
 // 5. Studio-Grade Neural Text-To-Speech (Lifelike Human Voices)
@@ -1229,7 +1188,7 @@ app.post("/api/render-complete-video", async (req, res) => {
   const targetH = isPortrait ? 1920 : 1080;
 
   const renderId = "render_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
-  const tmpDir = path.join(os.tmpdir(), renderId);
+  const tmpDir = path.join("/tmp", renderId);
 
   try {
     await fs.promises.mkdir(tmpDir, { recursive: true });
@@ -1258,7 +1217,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           const voiceBuf = await synthesizeNeuralSpeechBuffer(sceneNarration, voice, voiceRate, voicePitch);
           await fs.promises.writeFile(rawVoicePath, voiceBuf);
           try {
-            const probeOut = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${rawVoicePath.replace(/\\/g, "/")}"`).toString().trim();
+            const probeOut = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${rawVoicePath}"`).toString().trim();
             exactVoiceDur = parseFloat(probeOut) || 0;
           } catch (pErr) {
             console.warn(`Duration probe notice:`, pErr);
@@ -1285,7 +1244,7 @@ app.post("/api/render-complete-video", async (req, res) => {
       if (exactVoiceDur > 0 && fs.existsSync(rawVoicePath)) {
         try {
           await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -i "${rawVoicePath.replace(/\\/g, "/")}" -filter_complex "apad=whole_dur=${targetDur}" -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath.replace(/\\/g, "/")}"`;
+            const cmd = `ffmpeg -y -i "${rawVoicePath}" -filter_complex "apad=whole_dur=${targetDur}" -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
             exec(cmd, (err) => err ? reject(err) : resolve(true));
           });
           voiceClips.push(voiceScenePath);
@@ -1295,7 +1254,7 @@ app.post("/api/render-complete-video", async (req, res) => {
         }
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath.replace(/\\/g, "/")}"`;
+          const cmd = `ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t ${targetDur} -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${voiceScenePath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         voiceClips.push(voiceScenePath);
@@ -1316,15 +1275,15 @@ app.post("/api/render-complete-video", async (req, res) => {
             await fs.promises.writeFile(secRawPath, Buffer.from(await secResp.arrayBuffer()));
             await new Promise((resolve, reject) => {
               const splitCmd = isPortrait
-                ? `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -stream_loop -1 -i "${secRawPath.replace(/\\/g, "/")}" -t ${targetDur} -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`
-                : `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -stream_loop -1 -i "${secRawPath.replace(/\\/g, "/")}" -t ${targetDur} -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`;
+                ? `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`
+                : `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
               exec(splitCmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           } else {
             // Fallback to standard dimension if secondary fetch fails
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`;
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
@@ -1332,7 +1291,7 @@ app.post("/api/render-complete-video", async (req, res) => {
         } else {
           // Standard clip normalization with seamless stream_loop, exact framerate and SAR 1:1
           await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath.replace(/\\/g, "/")}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath.replace(/\\/g, "/")}"`;
+            const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
             exec(cmd, (err) => err ? reject(err) : resolve(true));
           });
           downloadedClips.push(normClipPath);
@@ -1346,28 +1305,28 @@ app.post("/api/render-complete-video", async (req, res) => {
       throw new Error("Could not process video clips for rendering");
     }
 
-    // 1. Concatenate all video clips into single seamless video using relative filenames in concat.txt
+    // 1. Concatenate all video clips into single seamless video
     const concatPath = path.join(tmpDir, "concat.txt");
-    const concatContent = downloadedClips.map(p => `file '${path.basename(p)}'`).join("\n");
-    await fs.promises.writeFile(concatPath, concatContent, "utf8");
+    const concatContent = downloadedClips.map(p => `file '${p}'`).join("\n");
+    await fs.promises.writeFile(concatPath, concatContent);
 
     const stitchedPath = path.join(tmpDir, "stitched.mp4");
     await new Promise((resolve, reject) => {
-      const cmd = `ffmpeg -y -f concat -safe 0 -i "${concatPath.replace(/\\/g, "/")}" -c copy "${stitchedPath.replace(/\\/g, "/")}"`;
+      const cmd = `ffmpeg -y -f concat -safe 0 -i "${concatPath}" -c copy "${stitchedPath}"`;
       exec(cmd, (err) => err ? reject(err) : resolve(true));
     });
 
-    // 2. Concatenate all scene voiceovers into master voiceover track using relative filenames
+    // 2. Concatenate all scene voiceovers into master voiceover track
     let masterVoicePath: string | null = null;
     if (hasAnyVoiceover && voiceClips.length > 0) {
       try {
         const voiceConcatPath = path.join(tmpDir, "voice_concat.txt");
-        const voiceConcatContent = voiceClips.map(p => `file '${path.basename(p)}'`).join("\n");
-        await fs.promises.writeFile(voiceConcatPath, voiceConcatContent, "utf8");
+        const voiceConcatContent = voiceClips.map(p => `file '${p}'`).join("\n");
+        await fs.promises.writeFile(voiceConcatPath, voiceConcatContent);
 
         const fullVoicePath = path.join(tmpDir, "master_voice.mp3");
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -f concat -safe 0 -i "${voiceConcatPath.replace(/\\/g, "/")}" -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${fullVoicePath.replace(/\\/g, "/")}"`;
+          const cmd = `ffmpeg -y -f concat -safe 0 -i "${voiceConcatPath}" -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${fullVoicePath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         masterVoicePath = fullVoicePath;
@@ -1408,64 +1367,59 @@ app.post("/api/render-complete-video", async (req, res) => {
     const finalMixedPath = path.join(tmpDir, "production_final.mp4");
     const vol = Math.max(0.05, Math.min(1, Number(musicVolume) || 0.25));
 
-    const safeStitched = stitchedPath.replace(/\\/g, "/");
-    const safeMixed = finalMixedPath.replace(/\\/g, "/");
-    const safeVoice = masterVoicePath ? masterVoicePath.replace(/\\/g, "/") : null;
-    const safeMusic = musicLocalPath ? musicLocalPath.replace(/\\/g, "/") : null;
-
     if (assLocalPath) {
-      // Escape path for ffmpeg filter: backslashes to forward slashes, colons (C\:) escaped, single quotes escaped
-      const escapedAssPath = assLocalPath.replace(/\\/g, "/").replace(/:/g, "\\:").replace(/'/g, "'\\\\''");
+      // Escape path for ffmpeg filter
+      const escapedAssPath = assLocalPath.replace(/\\/g, "/").replace(/'/g, "'\\\\''");
 
       // Burn subtitles using the ASS filter and mix audio
-      if (safeVoice && safeMusic) {
+      if (masterVoicePath && musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (safeVoice) {
+      } else if (masterVoicePath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (safeMusic) {
+      } else if (musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       }
     } else {
       // Subtitles disabled -> mix audio and ensure faststart MP4 container
-      if (safeVoice && safeMusic) {
+      if (masterVoicePath && musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (safeVoice) {
+      } else if (masterVoicePath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -i "${safeVoice}" -map 0:v -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -map 0:v -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
-      } else if (safeMusic) {
+      } else if (musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -stream_loop -1 -i "${safeMusic}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[1:a]volume=${vol}[a]" -map 0:v -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${safeStitched}" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${safeMixed}"`;
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
           exec(cmd, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
@@ -1785,33 +1739,32 @@ app.get("/api/stock/audio", async (req, res) => {
   });
 });
 
-// Helper to clean, split, and sanitize stock search queries to prevent 400 errors and return relevant footage
-function extractCleanStockQueries(raw: string): string[] {
-  if (!raw || !raw.trim()) return ["cinematic"];
-  const rawSegments = raw.split(/[,;\n\(\)\[\]]+/).map(s => s.trim()).filter(Boolean);
-  const candidates: string[] = [];
+// Rate limit telemetry endpoint
+app.get("/api/stock/rate-limits", async (_req, res) => {
+  // Check NASA official API rate limits if available
+  try {
+    const nasaCheckUrl = `https://api.nasa.gov/planetary/apod?api_key=${encodeURIComponent(NASA_KEY)}`;
+    const nRes = await fetch(nasaCheckUrl, { signal: AbortSignal.timeout(3000) });
+    const limit = nRes.headers.get("x-ratelimit-limit");
+    const remaining = nRes.headers.get("x-ratelimit-remaining");
+    if (limit) rateLimitState.nasa.limit = parseInt(limit, 10);
+    if (remaining) rateLimitState.nasa.remaining = parseInt(remaining, 10);
+    rateLimitState.nasa.lastUpdated = new Date().toISOString();
+    rateLimitState.nasa.status = (rateLimitState.nasa.remaining ?? 10) > 0 ? 'healthy' : 'throttled';
+  } catch {}
 
-  for (const seg of rawSegments) {
-    const cleaned = seg.replace(/[^\w\s-]/g, " ").replace(/\s+/g, " ").trim();
-    if (cleaned.length >= 2) {
-      const words = cleaned.split(/\s+/).slice(0, 3).join(" ");
-      if (words && words.length <= 60 && !candidates.includes(words)) {
-        candidates.push(words);
-      }
-    }
-  }
+  // Internet Archive is completely open and public domain
+  rateLimitState.archive.status = 'healthy';
+  rateLimitState.archive.limit = 999999;
+  rateLimitState.archive.remaining = 999999;
+  rateLimitState.archive.lastUpdated = new Date().toISOString();
 
-  const whole = raw.replace(/[^\w\s-]/g, " ").replace(/\s+/g, " ").trim().split(/\s+/).slice(0, 3).join(" ");
-  if (whole && whole.length <= 60 && !candidates.includes(whole)) {
-    candidates.unshift(whole);
-  }
+  res.json(rateLimitState);
+});
 
-  return candidates.length > 0 ? candidates : [raw.slice(0, 40)];
-}
-
-// 3. Search stock assets (Pexels & Pixabay) with rate-limit monitoring and multi-query retry
+// 3. Search stock assets (Pexels, Pixabay, and Giphy) with rate-limit monitoring
 app.get("/api/stock/search", async (req, res) => {
-  const rawQuery = (req.query.query as string || "").trim();
+  const query = (req.query.query as string || "").trim();
   const mediaType = (req.query.mediaType as string || "video").toLowerCase();
   const source = (req.query.source as string || "all").toLowerCase();
   const orientationParam = (req.query.orientation as string || "").toLowerCase();
@@ -1819,193 +1772,516 @@ app.get("/api/stock/search", async (req, res) => {
   const isPortrait = orientationParam === "portrait" || aspectRatioParam === "9:16";
   const pexelsOrientation = isPortrait ? "portrait" : "landscape";
 
-  if (!rawQuery) {
+  if (!query) {
     return res.json({ results: [], rateLimits: rateLimitState });
   }
 
-  const cleanQueries = extractCleanStockQueries(rawQuery);
-  const results: any[] = [];
   const errors: string[] = [];
+  const pexResults: any[] = [];
+  const pixResults: any[] = [];
+  const giphResults: any[] = [];
+  const iaResults: any[] = [];
+  const nasaResults: any[] = [];
 
-  // Pexels Search (Try primary clean query, then fallback sub-queries if 0 results)
+  // Pexels Search
   if (source === "all" || source === "pexels") {
-    for (const q of cleanQueries.slice(0, 2)) {
-      if (results.length > 0 && results.some(r => r.source === "pexels")) break;
-      try {
-        if (mediaType === "video") {
-          const pexUrl = `https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&per_page=6&orientation=${pexelsOrientation}`;
-          const pexRes = await fetch(pexUrl, {
-            headers: { Authorization: PEXELS_KEY }
-          });
+    try {
+      if (mediaType === "video") {
+        const pexUrl = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=6&orientation=${pexelsOrientation}`;
+        const pexRes = await fetch(pexUrl, {
+          headers: { Authorization: PEXELS_KEY }
+        });
 
-          // Track headers
-          const pexLimit = pexRes.headers.get("x-ratelimit-limit");
-          const pexRemaining = pexRes.headers.get("x-ratelimit-remaining");
-          const pexReset = pexRes.headers.get("x-ratelimit-reset");
+        // Track headers
+        const pexLimit = pexRes.headers.get("x-ratelimit-limit");
+        const pexRemaining = pexRes.headers.get("x-ratelimit-remaining");
+        const pexReset = pexRes.headers.get("x-ratelimit-reset");
 
-          if (pexLimit) rateLimitState.pexels.limit = parseInt(pexLimit, 10);
-          if (pexRemaining) {
-            const rem = parseInt(pexRemaining, 10);
-            rateLimitState.pexels.remaining = rem;
-            rateLimitState.pexels.status = rem < 5 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
+        if (pexLimit) rateLimitState.pexels.limit = parseInt(pexLimit, 10);
+        if (pexRemaining) {
+          const rem = parseInt(pexRemaining, 10);
+          rateLimitState.pexels.remaining = rem;
+          rateLimitState.pexels.status = rem < 5 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
+        }
+        if (pexReset) rateLimitState.pexels.reset = parseInt(pexReset, 10);
+        rateLimitState.pexels.lastUpdated = new Date().toISOString();
+
+        if (pexRes.ok) {
+          const data: any = await pexRes.json();
+          for (const v of (data.videos || [])) {
+            // Find HD video file and mobile preview
+            const sortedFiles = (v.video_files || []).sort((a: any, b: any) => (b.width || 0) - (a.width || 0));
+            const hdFile = sortedFiles[0] || {};
+            // Preview file (lighter weight for fast browser loading)
+            const previewFile = (v.video_files || []).find((f: any) => (f.width && f.width <= 960 && f.width >= 480)) || hdFile;
+
+            pexResults.push({
+              id: `pexels-${v.id}`,
+              source: "pexels",
+              type: "video",
+              title: `Pexels Video #${v.id}`,
+              previewUrl: previewFile.link || hdFile.link,
+              thumbnailUrl: v.image,
+              downloadUrl: hdFile.link || previewFile.link,
+              width: v.width,
+              height: v.height,
+              duration: v.duration,
+              author: v.user?.name || "Pexels Creator",
+              authorUrl: v.user?.url,
+              quality: hdFile.quality ? `${hdFile.quality.toUpperCase()} (${hdFile.width}x${hdFile.height})` : `${v.width}x${v.height}`
+            });
           }
-          if (pexReset) rateLimitState.pexels.reset = parseInt(pexReset, 10);
-          rateLimitState.pexels.lastUpdated = new Date().toISOString();
-
-          if (pexRes.ok) {
-            const data: any = await pexRes.json();
-            for (const v of (data.videos || [])) {
-              const sortedFiles = (v.video_files || []).sort((a: any, b: any) => (b.width || 0) - (a.width || 0));
-              const hdFile = sortedFiles[0] || {};
-              const previewFile = (v.video_files || []).find((f: any) => (f.width && f.width <= 960 && f.width >= 480)) || hdFile;
-
-              results.push({
-                id: `pexels-${v.id}`,
-                source: "pexels",
-                type: "video",
-                title: `Pexels Video #${v.id}`,
-                previewUrl: previewFile.link || hdFile.link,
-                thumbnailUrl: v.image,
-                downloadUrl: hdFile.link || previewFile.link,
-                width: v.width,
-                height: v.height,
-                duration: v.duration,
-                author: v.user?.name || "Pexels Creator",
-                authorUrl: v.user?.url,
-                quality: hdFile.quality ? `${hdFile.quality.toUpperCase()} (${hdFile.width}x${hdFile.height})` : `${v.width}x${v.height}`
-              });
-            }
-          } else if (pexRes.status === 429) {
-            rateLimitState.pexels.status = 'throttled';
-            errors.push("Pexels rate limit reached (HTTP 429)");
-            break;
-          }
-        } else {
-          // Pexels photo search
-          const pexUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=6&orientation=${pexelsOrientation}`;
-          const pexRes = await fetch(pexUrl, {
-            headers: { Authorization: PEXELS_KEY }
-          });
-          if (pexRes.ok) {
-            const data: any = await pexRes.json();
-            for (const p of (data.photos || [])) {
-              results.push({
-                id: `pexels-photo-${p.id}`,
-                source: "pexels",
-                type: "image",
-                title: p.alt || `Pexels Photo #${p.id}`,
-                previewUrl: p.src?.large || p.src?.medium,
-                thumbnailUrl: p.src?.tiny || p.src?.small,
-                downloadUrl: p.src?.original || p.src?.large2x,
-                width: p.width,
-                height: p.height,
-                author: p.photographer || "Pexels Creator",
-                authorUrl: p.photographer_url,
-                quality: `${p.width}x${p.height}`
-              });
-            }
+        } else if (pexRes.status === 429) {
+          rateLimitState.pexels.status = 'throttled';
+          errors.push("Pexels rate limit reached (HTTP 429)");
+        }
+      } else {
+        // Pexels photo search
+        const pexUrl = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=${pexelsOrientation}`;
+        const pexRes = await fetch(pexUrl, {
+          headers: { Authorization: PEXELS_KEY }
+        });
+        if (pexRes.ok) {
+          const data: any = await pexRes.json();
+          for (const p of (data.photos || [])) {
+            pexResults.push({
+              id: `pexels-photo-${p.id}`,
+              source: "pexels",
+              type: "image",
+              title: p.alt || `Pexels Photo #${p.id}`,
+              previewUrl: p.src?.large || p.src?.medium,
+              thumbnailUrl: p.src?.tiny || p.src?.small,
+              downloadUrl: p.src?.original || p.src?.large2x,
+              width: p.width,
+              height: p.height,
+              author: p.photographer || "Pexels Creator",
+              authorUrl: p.photographer_url,
+              quality: `${p.width}x${p.height}`
+            });
           }
         }
-      } catch (err: any) {
-        console.error("Pexels fetch error:", err?.message);
-        errors.push(`Pexels: ${err?.message}`);
+      }
+    } catch (err: any) {
+      console.error("Pexels fetch error:", err?.message);
+      errors.push(`Pexels: ${err?.message}`);
+    }
+  }
+
+  // Pixabay Search
+  if (source === "all" || source === "pixabay") {
+    try {
+      if (mediaType === "video") {
+        const pixUrl = `https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&per_page=6`;
+        const pixRes = await fetch(pixUrl);
+
+        const pixLimit = pixRes.headers.get("x-ratelimit-limit");
+        const pixRemaining = pixRes.headers.get("x-ratelimit-remaining");
+        const pixReset = pixRes.headers.get("x-ratelimit-reset");
+
+        if (pixLimit) rateLimitState.pixabay.limit = parseInt(pixLimit, 10);
+        if (pixRemaining) {
+          const rem = parseInt(pixRemaining, 10);
+          rateLimitState.pixabay.remaining = rem;
+          rateLimitState.pixabay.status = rem < 10 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
+        }
+        if (pixReset) rateLimitState.pixabay.reset = parseInt(pixReset, 10);
+        rateLimitState.pixabay.lastUpdated = new Date().toISOString();
+
+        if (pixRes.ok) {
+          const data: any = await pixRes.json();
+          for (const hit of (data.hits || [])) {
+            const vids = hit.videos || {};
+            const large = vids.large;
+            const medium = vids.medium;
+            const small = vids.small;
+            const chosen = large?.url ? large : (medium?.url ? medium : small);
+            const preview = medium?.url ? medium : (small?.url ? small : chosen);
+            const thumb = medium?.thumbnail || chosen?.thumbnail || small?.thumbnail || hit.userImageURL;
+
+            if (chosen?.url) {
+              pixResults.push({
+                id: `pixabay-${hit.id}`,
+                source: "pixabay",
+                type: "video",
+                title: hit.tags || `Pixabay Video #${hit.id}`,
+                previewUrl: preview?.url || chosen.url,
+                thumbnailUrl: thumb,
+                downloadUrl: chosen.url,
+                width: chosen.width || 1920,
+                height: chosen.height || 1080,
+                duration: hit.duration,
+                author: hit.user || "Pixabay Creator",
+                authorUrl: hit.pageURL,
+                quality: `${chosen.width || 1920}x${chosen.height || 1080}`
+              });
+            }
+          }
+        } else if (pixRes.status === 429) {
+          rateLimitState.pixabay.status = 'throttled';
+          errors.push("Pixabay rate limit reached (HTTP 429)");
+        }
+      } else {
+        // Pixabay Photo search
+        const pixUrl = `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&image_type=photo&per_page=6`;
+        const pixRes = await fetch(pixUrl);
+        if (pixRes.ok) {
+          const data: any = await pixRes.json();
+          for (const hit of (data.hits || [])) {
+            pixResults.push({
+              id: `pixabay-photo-${hit.id}`,
+              source: "pixabay",
+              type: "image",
+              title: hit.tags || `Pixabay Photo #${hit.id}`,
+              previewUrl: hit.webformatURL,
+              thumbnailUrl: hit.previewURL,
+              downloadUrl: hit.largeImageURL || hit.webformatURL,
+              width: hit.imageWidth,
+              height: hit.imageHeight,
+              author: hit.user || "Pixabay Creator",
+              authorUrl: hit.pageURL,
+              quality: `${hit.imageWidth}x${hit.imageHeight}`
+            });
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Pixabay fetch error:", err?.message);
+      errors.push(`Pixabay: ${err?.message}`);
+    }
+  }
+
+  // GIPHY Search (Animated GIFs & short MP4 looping clips)
+  if (source === "all" || source === "giphy") {
+    try {
+      const giphyApiKey = (req.query.giphyKey as string) || GIPHY_KEY;
+      if (giphyApiKey) {
+        const limit = source === "giphy" ? 16 : 6;
+        const giphyUrl = `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(giphyApiKey)}&q=${encodeURIComponent(query)}&limit=${limit}&rating=g`;
+        const gRes = await fetch(giphyUrl, {
+          headers: {
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          }
+        });
+
+        const gLimit = gRes.headers.get("x-ratelimit-limit");
+        const gRemaining = gRes.headers.get("x-ratelimit-remaining");
+        const gReset = gRes.headers.get("x-ratelimit-reset");
+
+        if (gLimit) rateLimitState.giphy.limit = parseInt(gLimit, 10);
+        if (gRemaining) {
+          const rem = parseInt(gRemaining, 10);
+          rateLimitState.giphy.remaining = rem;
+          rateLimitState.giphy.status = rem < 50 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
+        }
+        if (gReset) rateLimitState.giphy.reset = parseInt(gReset, 10);
+        rateLimitState.giphy.lastUpdated = new Date().toISOString();
+
+        if (gRes.ok) {
+          const gData: any = await gRes.json();
+          for (const item of (gData.data || [])) {
+            // Giphy original or fixed_height MP4 clip
+            const mp4Url = item.images?.original?.mp4 || item.images?.fixed_height?.mp4 || item.images?.looping?.mp4;
+            const gifUrl = item.images?.original?.url || item.images?.fixed_height?.url;
+            const previewUrl = (mediaType === "video" && mp4Url) ? (item.images?.fixed_height?.mp4 || mp4Url) : (gifUrl || item.images?.fixed_height?.url);
+            const thumbUrl = item.images?.fixed_height_small?.url || item.images?.fixed_height?.url || item.images?.preview_gif?.url || gifUrl;
+            const downloadUrl = (mediaType === "video" && mp4Url) ? mp4Url : (gifUrl || mp4Url);
+
+            if (downloadUrl) {
+              giphResults.push({
+                id: `giphy-${item.id}`,
+                source: "giphy",
+                type: (mediaType === "video" && mp4Url) ? "video" : "image",
+                title: item.title ? item.title.trim() : `GIPHY #${item.id}`,
+                previewUrl: previewUrl || downloadUrl,
+                thumbnailUrl: thumbUrl || previewUrl,
+                downloadUrl: downloadUrl,
+                width: parseInt(item.images?.original?.width || "480", 10),
+                height: parseInt(item.images?.original?.height || "270", 10),
+                duration: 4,
+                author: item.user?.display_name || item.username || "GIPHY Creator",
+                authorUrl: item.user?.profile_url || item.url,
+                quality: mp4Url ? "MP4 Video / Animated GIF (GIPHY)" : "Animated GIF (GIPHY)"
+              });
+            }
+          }
+        } else if (gRes.status === 429) {
+          rateLimitState.giphy.status = 'throttled';
+          errors.push("GIPHY rate limit reached (HTTP 429)");
+        } else if (gRes.status === 401 || gRes.status === 403) {
+          errors.push(`GIPHY unauthorized: Verify GIPHY API key in Settings/environment`);
+        }
+      }
+    } catch (gErr: any) {
+      console.error("GIPHY search error:", gErr?.message);
+      errors.push(`GIPHY: ${gErr?.message}`);
+    }
+  }
+
+  // Internet Archive (archive.org / Internet Library - completely open API, no key required)
+  if (source === "all" || source === "archive") {
+    try {
+      const iaLimit = source === "archive" ? 16 : 6;
+      const mediaFilter = mediaType === "image" ? "mediatype:image" : "mediatype:movies";
+      const iaSearchUrl = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}+AND+${mediaFilter}&fl[]=identifier,title,description,duration,downloads&sort[]=downloads+desc&rows=${iaLimit}&page=1&output=json`;
+      const iaRes = await fetch(iaSearchUrl, { signal: AbortSignal.timeout(4000) });
+      
+      if (iaRes.ok) {
+        const iaData: any = await iaRes.json();
+        const docs = (iaData.response?.docs || []).slice(0, iaLimit);
+
+        const iaPromises = docs.map(async (doc: any) => {
+          try {
+            let mp4Name: string | null = null;
+            let durationSec = doc.duration ? Math.round(parseFloat(doc.duration)) : undefined;
+
+            if (mediaType !== "image") {
+              const filesRes = await fetch(`https://archive.org/metadata/${encodeURIComponent(doc.identifier)}/files`, { signal: AbortSignal.timeout(2500) });
+              if (filesRes.ok) {
+                const filesData: any = await filesRes.json();
+                const filesList: any[] = filesData.result || [];
+                const mp4File = filesList.find(
+                  (f: any) => f.format === "512Kb MPEG4" || f.format === "h.264" || (f.name && f.name.toLowerCase().endsWith(".mp4") && !f.name.includes("thumb"))
+                );
+                if (mp4File?.name) {
+                  mp4Name = mp4File.name;
+                  if (!durationSec && mp4File.length) {
+                    durationSec = Math.round(parseFloat(mp4File.length));
+                  }
+                }
+              }
+            }
+
+            const videoUrl = mp4Name
+              ? `https://archive.org/download/${encodeURIComponent(doc.identifier)}/${encodeURIComponent(mp4Name)}`
+              : `https://archive.org/download/${encodeURIComponent(doc.identifier)}/${encodeURIComponent(doc.identifier)}.mp4`;
+            const thumbUrl = `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`;
+
+            return {
+              id: `archive-${doc.identifier}`,
+              source: "archive",
+              type: mediaType === "image" ? "image" : "video",
+              title: doc.title || doc.identifier,
+              previewUrl: mediaType === "image" ? thumbUrl : videoUrl,
+              thumbnailUrl: thumbUrl,
+              downloadUrl: mediaType === "image" ? thumbUrl : videoUrl,
+              width: 1280,
+              height: 720,
+              duration: durationSec || (mediaType === "video" ? 15 : undefined),
+              author: "Internet Archive",
+              authorUrl: `https://archive.org/details/${encodeURIComponent(doc.identifier)}`,
+              quality: "Public Domain / HD"
+            };
+          } catch {
+            const fallbackUrl = `https://archive.org/download/${encodeURIComponent(doc.identifier)}/${encodeURIComponent(doc.identifier)}.mp4`;
+            const thumbUrl = `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`;
+            return {
+              id: `archive-${doc.identifier}`,
+              source: "archive",
+              type: mediaType === "image" ? "image" : "video",
+              title: doc.title || doc.identifier,
+              previewUrl: mediaType === "image" ? thumbUrl : fallbackUrl,
+              thumbnailUrl: thumbUrl,
+              downloadUrl: mediaType === "image" ? thumbUrl : fallbackUrl,
+              width: 1280,
+              height: 720,
+              duration: mediaType === "video" ? 15 : undefined,
+              author: "Internet Archive",
+              authorUrl: `https://archive.org/details/${encodeURIComponent(doc.identifier)}`,
+              quality: "Public Domain"
+            };
+          }
+        });
+
+        const resolvedIa = await Promise.all(iaPromises);
+        iaResults.push(...resolvedIa);
+        rateLimitState.archive.status = 'healthy';
+        rateLimitState.archive.lastUpdated = new Date().toISOString();
+      }
+    } catch (iaErr: any) {
+      console.error("Internet Archive search error:", iaErr?.message);
+      errors.push(`Internet Archive: ${iaErr?.message}`);
+    }
+  }
+
+  // NASA Video & Image Search (Open Access + NASA API key defined)
+  if (source === "all" || source === "nasa") {
+    try {
+      const nasaLimit = source === "nasa" ? 16 : 6;
+      const mediaTypes = mediaType === "video" ? "video" : "video,image";
+      const nasaSearchUrl = `https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=${mediaTypes}&page_size=${nasaLimit}`;
+      const nasaRes = await fetch(nasaSearchUrl, { signal: AbortSignal.timeout(4500) });
+
+      if (nasaRes.ok) {
+        const nasaData: any = await nasaRes.json();
+        let items = (nasaData.collection?.items || []).slice(0, nasaLimit);
+
+        // If 0 items for multi-word query on NASA, try relaxing query
+        if (items.length === 0 && query.split(/\s+/).length > 1) {
+          const firstWord = query.split(/\s+/)[0];
+          try {
+            const relaxRes = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(firstWord)}&media_type=${mediaTypes}&page_size=${nasaLimit}`, { signal: AbortSignal.timeout(3000) });
+            if (relaxRes.ok) {
+              const relaxData: any = await relaxRes.json();
+              items = (relaxData.collection?.items || []).slice(0, nasaLimit);
+            }
+          } catch {}
+        }
+
+        const nasaPromises = items.map(async (item: any) => {
+          const meta = item.data?.[0] || {};
+          const isVideo = meta.media_type === "video";
+          const rawThumb = item.links?.find((l: any) => l.rel === "preview" || l.render === "image")?.href || "";
+          const thumbLink = rawThumb ? rawThumb.replace(/^http:\/\//i, "https://") : "";
+          let previewUrl = thumbLink;
+          let downloadUrl = thumbLink;
+
+          if (isVideo && item.href) {
+            try {
+              const assetRes = await fetch(item.href, { signal: AbortSignal.timeout(3000) });
+              if (assetRes.ok) {
+                const assetList: string[] = await assetRes.json();
+                const mp4s = assetList.filter((u: string) => typeof u === "string" && u.toLowerCase().endsWith(".mp4"));
+                const mediumMp4 = mp4s.find((u) => u.includes("~medium.mp4") || u.includes("~preview.mp4") || u.includes("~large.mp4")) || mp4s[0];
+                const origMp4 = mp4s.find((u) => u.includes("~orig.mp4")) || mediumMp4;
+                if (mediumMp4) {
+                  previewUrl = mediumMp4.replace(/^http:\/\//i, "https://");
+                  downloadUrl = (origMp4 || mediumMp4).replace(/^http:\/\//i, "https://");
+                }
+              }
+            } catch {}
+          }
+
+          return {
+            id: `nasa-${meta.nasa_id || Math.random().toString(36).slice(2, 8)}`,
+            source: "nasa",
+            type: isVideo ? "video" : "image",
+            title: meta.title || "NASA Mission Media",
+            previewUrl: previewUrl || thumbLink,
+            thumbnailUrl: thumbLink,
+            downloadUrl: downloadUrl || previewUrl,
+            width: 1920,
+            height: 1080,
+            duration: isVideo ? 12 : undefined,
+            author: meta.center ? `NASA (${meta.center})` : "NASA Space Center",
+            authorUrl: "https://images.nasa.gov/",
+            quality: isVideo ? "NASA Space 1080p FHD" : "NASA High-Res"
+          };
+        });
+
+        const resolvedNasa = await Promise.all(nasaPromises);
+        nasaResults.push(...resolvedNasa);
+        rateLimitState.nasa.status = 'healthy';
+        rateLimitState.nasa.lastUpdated = new Date().toISOString();
+      }
+    } catch (nasaErr: any) {
+      console.error("NASA search error:", nasaErr?.message);
+      errors.push(`NASA: ${nasaErr?.message}`);
+    }
+  }
+
+  // Smart Contextual Merging & Round-Robin Interleaving
+  const results: any[] = [];
+  const isSpaceQuery = /rocket|space|nasa|mars|moon|galaxy|astronomy|star|satellite|astronaut|earth|orbit|cosmos|nebula|planet|shuttle|iss|apollo|artemis|webb|hubble|universe/i.test(query);
+  const isHistoricalQuery = /history|vintage|classic|archive|retro|19\d\d|documentary|antique|library/i.test(query);
+  const isGifQuery = /meme|reaction|funny|anime|sticker|cartoon|dance|lol|loop/i.test(query);
+
+  if (source === "nasa") {
+    results.push(...nasaResults);
+  } else if (source === "archive") {
+    results.push(...iaResults);
+  } else if (source === "giphy") {
+    results.push(...giphResults);
+  } else if (source === "pexels") {
+    results.push(...pexResults);
+  } else if (source === "pixabay") {
+    results.push(...pixResults);
+  } else {
+    // source === "all"
+    if (isSpaceQuery && nasaResults.length > 0) {
+      // Space/astronomy/rocket query: prioritize NASA clips right at the top
+      results.push(...nasaResults.slice(0, 3));
+    } else if (isHistoricalQuery && iaResults.length > 0) {
+      // Historical/archive query: prioritize Internet Library clips right at the top
+      results.push(...iaResults.slice(0, 3));
+    } else if (isGifQuery && giphResults.length > 0) {
+      // GIF/meme query: prioritize GIPHY clips right at the top
+      results.push(...giphResults.slice(0, 3));
+    }
+
+    // Interleave all 5 providers fairly in round-robin fashion
+    const maxLen = Math.max(
+      pexResults.length,
+      pixResults.length,
+      nasaResults.length,
+      iaResults.length,
+      giphResults.length
+    );
+
+    const existingIds = new Set(results.map((r) => r.id));
+    for (let i = 0; i < maxLen; i++) {
+      if (nasaResults[i] && !existingIds.has(nasaResults[i].id)) {
+        results.push(nasaResults[i]);
+        existingIds.add(nasaResults[i].id);
+      }
+      if (pexResults[i] && !existingIds.has(pexResults[i].id)) {
+        results.push(pexResults[i]);
+        existingIds.add(pexResults[i].id);
+      }
+      if (pixResults[i] && !existingIds.has(pixResults[i].id)) {
+        results.push(pixResults[i]);
+        existingIds.add(pixResults[i].id);
+      }
+      if (iaResults[i] && !existingIds.has(iaResults[i].id)) {
+        results.push(iaResults[i]);
+        existingIds.add(iaResults[i].id);
+      }
+      if (giphResults[i] && !existingIds.has(giphResults[i].id)) {
+        results.push(giphResults[i]);
+        existingIds.add(giphResults[i].id);
       }
     }
   }
 
-  // Pixabay Search (Using clean query <= 60 chars to prevent 400 error)
-  if (source === "all" || source === "pixabay") {
-    for (const q of cleanQueries.slice(0, 2)) {
-      if (results.length > 0 && results.some(r => r.source === "pixabay")) break;
-      try {
-        if (mediaType === "video") {
-          const pixUrl = `https://pixabay.com/api/videos/?key=${PIXABAY_KEY}&q=${encodeURIComponent(q.slice(0, 60))}&per_page=6`;
-          const pixRes = await fetch(pixUrl);
-
-          const pixLimit = pixRes.headers.get("x-ratelimit-limit");
-          const pixRemaining = pixRes.headers.get("x-ratelimit-remaining");
-          const pixReset = pixRes.headers.get("x-ratelimit-reset");
-
-          if (pixLimit) rateLimitState.pixabay.limit = parseInt(pixLimit, 10);
-          if (pixRemaining) {
-            const rem = parseInt(pixRemaining, 10);
-            rateLimitState.pixabay.remaining = rem;
-            rateLimitState.pixabay.status = rem < 10 ? (rem === 0 ? 'throttled' : 'warning') : 'healthy';
-          }
-          if (pixReset) rateLimitState.pixabay.reset = parseInt(pixReset, 10);
-          rateLimitState.pixabay.lastUpdated = new Date().toISOString();
-
-          if (pixRes.ok) {
-            const data: any = await pixRes.json();
-            for (const hit of (data.hits || [])) {
-              const vids = hit.videos || {};
-              const large = vids.large;
-              const medium = vids.medium;
-              const small = vids.small;
-              const chosen = large?.url ? large : (medium?.url ? medium : small);
-              const preview = medium?.url ? medium : (small?.url ? small : chosen);
-              const thumb = medium?.thumbnail || chosen?.thumbnail || small?.thumbnail || hit.userImageURL;
-
-              if (chosen?.url) {
-                results.push({
-                  id: `pixabay-${hit.id}`,
-                  source: "pixabay",
-                  type: "video",
-                  title: hit.tags || `Pixabay Video #${hit.id}`,
-                  previewUrl: preview?.url || chosen.url,
-                  thumbnailUrl: thumb,
-                  downloadUrl: chosen.url,
-                  width: chosen.width || 1920,
-                  height: chosen.height || 1080,
-                  duration: hit.duration,
-                  author: hit.user || "Pixabay Creator",
-                  authorUrl: hit.pageURL,
-                  quality: `${chosen.width || 1920}x${chosen.height || 1080}`
-                });
-              }
-            }
-          } else if (pixRes.status === 429) {
-            rateLimitState.pixabay.status = 'throttled';
-            errors.push("Pixabay rate limit reached (HTTP 429)");
-            break;
-          }
-        } else {
-          // Pixabay Photo search
-          const pixUrl = `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(q.slice(0, 60))}&image_type=photo&per_page=6`;
-          const pixRes = await fetch(pixUrl);
-          if (pixRes.ok) {
-            const data: any = await pixRes.json();
-            for (const hit of (data.hits || [])) {
-              results.push({
-                id: `pixabay-photo-${hit.id}`,
-                source: "pixabay",
-                type: "image",
-                title: hit.tags || `Pixabay Photo #${hit.id}`,
-                previewUrl: hit.webformatURL || hit.largeImageURL,
-                thumbnailUrl: hit.previewURL,
-                downloadUrl: hit.largeImageURL || hit.webformatURL,
-                width: hit.imageWidth,
-                height: hit.imageHeight,
-                author: hit.user || "Pixabay Creator",
-                authorUrl: hit.pageURL,
-              });
-            }
-          }
+  // Automatic query relaxation if no results were found for multi-word search
+  if (results.length === 0 && query.split(/\s+/).length > 1) {
+    const fallbackQuery = query.split(/\s+/).slice(0, 2).join(" ");
+    try {
+      const pexRes = await fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(fallbackQuery)}&per_page=6&orientation=${pexelsOrientation}`, {
+        headers: { Authorization: PEXELS_KEY }
+      });
+      if (pexRes.ok) {
+        const data: any = await pexRes.json();
+        for (const v of (data.videos || [])) {
+          const sortedFiles = (v.video_files || []).sort((a: any, b: any) => (b.width || 0) - (a.width || 0));
+          const hdFile = sortedFiles[0] || {};
+          const previewFile = (v.video_files || []).find((f: any) => (f.width && f.width <= 960 && f.width >= 480)) || hdFile;
+          results.push({
+            id: `pexels-${v.id}`,
+            source: "pexels",
+            type: "video",
+            title: `Pexels Video #${v.id}`,
+            previewUrl: previewFile.link || hdFile.link,
+            thumbnailUrl: v.image,
+            downloadUrl: hdFile.link || previewFile.link,
+            width: v.width,
+            height: v.height,
+            duration: v.duration,
+            author: v.user?.name || "Pexels Creator",
+            authorUrl: v.user?.url,
+            quality: hdFile.quality ? `${hdFile.quality.toUpperCase()} (${hdFile.width}x${hdFile.height})` : `${v.width}x${v.height}`
+          });
         }
-      } catch (pixErr: any) {
-        errors.push(`Pixabay photo error: ${pixErr?.message}`);
       }
-    }
+    } catch {}
   }
 
   res.json({
-    query: rawQuery,
-    cleanQueries,
+    query,
     count: results.length,
-    mediaType,
     results,
-    errors: errors.length > 0 ? errors : undefined,
-    rateLimits: rateLimitState
+    rateLimits: rateLimitState,
+    errors: errors.length > 0 ? errors : undefined
   });
 });
 
@@ -2023,7 +2299,7 @@ app.get("/api/proxy-download", async (req, res) => {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
-        "Referer": fileUrl.includes("pexels.com") ? "https://www.pexels.com/" : "https://pixabay.com/"
+        "Referer": fileUrl.includes("pexels.com") ? "https://www.pexels.com/" : fileUrl.includes("giphy.com") ? "https://giphy.com/" : "https://pixabay.com/"
       }
     });
 
@@ -2074,12 +2350,47 @@ app.get("/api/proxy-download", async (req, res) => {
   }
 });
 
+// GIPHY trending endpoint for fast GIF previews
+app.get("/api/giphy/trending", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt((req.query.limit as string) || "12", 10), 30);
+    const giphyApiKey = (req.query.giphyKey as string) || GIPHY_KEY;
+    const giphyUrl = `https://api.giphy.com/v1/gifs/trending?api_key=${encodeURIComponent(giphyApiKey)}&limit=${limit}&rating=g`;
+    const gRes = await fetch(giphyUrl);
+    if (!gRes.ok) {
+      return res.status(gRes.status).json({ error: `GIPHY trending request failed: HTTP ${gRes.status}` });
+    }
+    const data: any = await gRes.json();
+    const results = (data.data || []).map((item: any) => {
+      const mp4Url = item.images?.original?.mp4 || item.images?.fixed_height?.mp4;
+      const gifUrl = item.images?.original?.url || item.images?.fixed_height?.url;
+      return {
+        id: `giphy-${item.id}`,
+        source: "giphy",
+        type: mp4Url ? "video" : "image",
+        title: item.title || `Trending GIF #${item.id}`,
+        previewUrl: item.images?.fixed_height?.mp4 || item.images?.fixed_height?.url || gifUrl,
+        thumbnailUrl: item.images?.fixed_height_small?.url || item.images?.fixed_height?.url || gifUrl,
+        downloadUrl: mp4Url || gifUrl,
+        width: parseInt(item.images?.original?.width || "480", 10),
+        height: parseInt(item.images?.original?.height || "270", 10),
+        duration: 4,
+        author: item.user?.display_name || item.username || "GIPHY",
+        authorUrl: item.user?.profile_url || item.url,
+        quality: mp4Url ? "MP4 Video / Animated GIF (GIPHY)" : "Animated GIF (GIPHY)"
+      };
+    });
+    res.json({ count: results.length, results });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to fetch trending GIFs" });
+  }
+});
+
 // 4. Download Python script
 app.get("/api/download-python-script", (req, res) => {
   const pexKey = (req.query.pexelsKey as string) || PEXELS_KEY;
   const pixKey = (req.query.pixabayKey as string) || PIXABAY_KEY;
-  const format = (req.query.format as string) || "landscape";
-  const scriptContent = generatePythonScript(pexKey, pixKey, "./kdenlive_media_assets", format);
+  const scriptContent = generatePythonScript(pexKey, pixKey);
 
   res.setHeader("Content-Type", "text/x-python");
   res.setHeader("Content-Disposition", 'attachment; filename="download_assets.py"');

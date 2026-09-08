@@ -35,7 +35,7 @@ export interface ProjectPlan {
 
 export interface StockMediaItem {
   id: string;
-  source: 'pexels' | 'pixabay';
+  source: 'pexels' | 'pixabay' | 'giphy' | 'archive' | 'nasa';
   type: 'video' | 'image';
   title?: string;
   previewUrl: string;
@@ -60,6 +60,9 @@ export interface RateLimitInfo {
 export interface SystemRateLimits {
   pexels: RateLimitInfo;
   pixabay: RateLimitInfo;
+  giphy?: RateLimitInfo;
+  nasa?: RateLimitInfo;
+  archive?: RateLimitInfo;
 }
 
 export interface AutoVideoScene {
@@ -95,5 +98,5 @@ export interface SearchResultScene {
   loading: boolean;
   error?: string;
   results: StockMediaItem[];
-  activeSource: 'all' | 'pexels' | 'pixabay';
+  activeSource: 'all' | 'pexels' | 'pixabay' | 'giphy' | 'archive' | 'nasa';
 }
