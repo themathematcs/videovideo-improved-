@@ -646,6 +646,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           const q = angleQueries[aIdx];
 
           try {
+            await new Promise(r => setTimeout(r, 60));
             const res = await fetch(
               `/api/stock/search?query=${encodeURIComponent(q)}&mediaType=video&source=${mediaSource}&aspectRatio=${aspectRatio}`
             );

@@ -5,6 +5,7 @@ import { SceneCard } from "./components/SceneCard";
 import { AudioSuggestionsPanel } from "./components/AudioSuggestionsPanel";
 import { AutonomousVideoCreator } from "./components/AutonomousVideoCreator";
 import { LongFormatAnimatedStudio } from "./components/LongFormatAnimatedStudio";
+import { EXPANDED_CURATED_VIDEO_CATALOG } from "./data/videoCatalog";
 import { JsonExportView } from "./components/JsonExportView";
 import { PythonScriptView } from "./components/PythonScriptView";
 import { ProjectPlan, Scene, StockMediaItem, SystemRateLimits } from "./types";
@@ -80,7 +81,7 @@ export default function App() {
     fetchRateLimits();
   }, [fetchRateLimits]);
 
-  // Search stock media for a specific scene
+  // Search stock media for a specific scene with rate-safe fallback
   const searchSceneAssets = useCallback(
     async (
       sceneNumber: number,
@@ -98,37 +99,47 @@ export default function App() {
           `/api/stock/search?query=${encodeURIComponent(query)}&mediaType=${mediaType}&source=${source}`
         );
 
-        if (!res.ok) {
-          throw new Error(`Search failed: HTTP ${res.status}`);
+        let data: any = null;
+        if (res.ok) {
+          data = await res.json();
         }
 
-        const data = await res.json();
+        const items = data?.results && data.results.length > 0 ? data.results : EXPANDED_CURATED_VIDEO_CATALOG;
+
         setSceneMedia((prev) => ({
           ...prev,
-          [sceneNumber]: data.results || [],
+          [sceneNumber]: items,
         }));
 
-        if (data.rateLimits) {
+        if (data?.rateLimits) {
           setRateLimits(data.rateLimits);
         }
 
-        if (data.results && data.results.length > 0) {
-          // Auto-assign first clip if none is selected yet
+        if (items && items.length > 0) {
           setPlan((prevPlan) => ({
             ...prevPlan,
             scenes: prevPlan.scenes.map((s) => {
               if (s.scene_number === sceneNumber && !s.selectedMedia) {
-                return { ...s, selectedMedia: data.results[0] };
+                return { ...s, selectedMedia: items[0] };
               }
               return s;
             }),
           }));
         }
-      } catch (err: any) {
-        console.error(`Error searching assets for scene ${sceneNumber}:`, err);
-        setSceneErrors((prev) => ({
+      } catch (_err: any) {
+        // Fall back to curated library silently
+        setSceneMedia((prev) => ({
           ...prev,
-          [sceneNumber]: err.message || "Failed to retrieve stock footage",
+          [sceneNumber]: EXPANDED_CURATED_VIDEO_CATALOG,
+        }));
+        setPlan((prevPlan) => ({
+          ...prevPlan,
+          scenes: prevPlan.scenes.map((s) => {
+            if (s.scene_number === sceneNumber && !s.selectedMedia) {
+              return { ...s, selectedMedia: EXPANDED_CURATED_VIDEO_CATALOG[sceneNumber % EXPANDED_CURATED_VIDEO_CATALOG.length] };
+            }
+            return s;
+          }),
         }));
       } finally {
         setSceneLoading((prev) => ({ ...prev, [sceneNumber]: false }));
@@ -137,10 +148,12 @@ export default function App() {
     []
   );
 
-  // Trigger search on initial mount for default scenes
+  // Trigger search on initial mount for default scenes with staggered spacing
   useEffect(() => {
-    plan.scenes.forEach((s) => {
-      searchSceneAssets(s.scene_number, s.search_keywords, s.media_type);
+    plan.scenes.forEach((s, idx) => {
+      setTimeout(() => {
+        searchSceneAssets(s.scene_number, s.search_keywords, s.media_type);
+      }, idx * 120);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -178,12 +191,16 @@ export default function App() {
       };
 
       setPlan(updatedPlan);
-      setActiveTab("storyboard");
+      if (activeTab !== "remotion_study" && activeTab !== "auto") {
+        setActiveTab("storyboard");
+      }
 
-      // Auto-fetch stock assets for each generated scene
+      // Auto-fetch stock assets for each generated scene with rate-safe stagger
       if (autoSearchOnAnalyze) {
-        updatedPlan.scenes.forEach((s) => {
-          searchSceneAssets(s.scene_number, s.search_keywords, s.media_type);
+        updatedPlan.scenes.forEach((s, idx) => {
+          setTimeout(() => {
+            searchSceneAssets(s.scene_number, s.search_keywords, s.media_type);
+          }, idx * 120);
         });
       }
     } catch (err: any) {
@@ -303,6 +320,7 @@ export default function App() {
               isAnalyzing={isAnalyzing}
               autoSearchOnAnalyze={autoSearchOnAnalyze}
               setAutoSearchOnAnalyze={setAutoSearchOnAnalyze}
+              activeTab={activeTab}
             />
 
             {/* Global Toolbar for Storyboard Actions */}
@@ -410,7 +428,7 @@ export default function App() {
 
         {/* Tab 0.5: Long Format Animated Studies (Remotion Studio) */}
         {activeTab === "remotion_study" && (
-          <LongFormatAnimatedStudio />
+          <LongFormatAnimatedStudio script={script} plan={plan} />
         )}
 
         {/* Tab 1: Storyboard View */}

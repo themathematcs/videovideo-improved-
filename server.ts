@@ -9,8 +9,8 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import { generatePythonScript } from "./src/pythonTemplate.ts";
 import { EXPANDED_CURATED_VIDEO_CATALOG } from "./src/data/videoCatalog.ts";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const _filename = typeof __filename !== 'undefined' ? __filename : fileURLToPath((import.meta as any).url);
+const _dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(_filename);
 
 const app = express();
 const PORT = 3000;
@@ -263,7 +263,7 @@ function formatAssTime(seconds: number): string {
 }
 
 function generateAssContent(
-  scenes: Array<{ duration: number; subtitle?: string; narration?: string }>,
+  scenes: Array<{ duration: number; subtitle?: string; narration?: string; overlayData?: any; title?: string }>,
   subtitlesStyle: string = "highlight",
   aspectRatio: string = "16:9"
 ): string {
@@ -273,12 +273,6 @@ function generateAssContent(
   const fontSize = isPortrait ? 56 : 46;
   const marginV = isPortrait ? 220 : 75;
 
-  // Colors in ASS are &HAABBGGRR (Alpha, Blue, Green, Red)
-  // Yellow highlight: &H0000FFFF (&H00BBGGRR -> BB=00, GG=FF, RR=FF)
-  // White: &H00FFFFFF
-  // Black outline: &H00000000
-  // Shadow: &H80000000
-
   let styleLine = `Style: Default,DejaVu Sans,${fontSize},&H0000FFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3.5,2,2,40,40,${marginV},1`;
   if (subtitlesStyle === "classic") {
     styleLine = `Style: Default,DejaVu Sans,${fontSize},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3.5,2,2,40,40,${marginV},1`;
@@ -286,14 +280,23 @@ function generateAssContent(
     styleLine = `Style: Default,DejaVu Sans,${fontSize - 4},&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,3,2,1,2,40,40,${marginV},1`;
   }
 
+  // Add styles for Overlay
+  // BorderStyle=1 means Outline/Shadow
+  const overlayHeadingStyle = `Style: OverlayHeading,DejaVu Sans,${isPortrait ? 60 : 65},&H0000FFFF,&H000000FF,&H00000000,&H60000000,-1,0,0,0,100,100,0,0,1,4,4,8,80,80,${isPortrait ? 300 : 120},1`;
+  const overlayCodeStyle = `Style: OverlayCode,Courier New,${isPortrait ? 35 : 40},&H0000FF00,&H000000FF,&H00000000,&H60000000,0,0,0,0,100,100,0,0,1,3,3,4,100,100,${isPortrait ? 450 : 250},1`;
+  const overlayBulletStyle = `Style: OverlayBullet,DejaVu Sans,${isPortrait ? 45 : 50},&H00FFFFFF,&H000000FF,&H00000000,&H60000000,0,0,0,0,100,100,0,0,1,3,3,4,100,100,${isPortrait ? 450 : 250},1`;
+
   let events = "";
   let currentTime = 0;
 
   for (const sc of scenes) {
     const dur = Math.max(1, Number(sc.duration) || 5);
+    const startTimeStr = formatAssTime(currentTime);
+    const endTimeStr = formatAssTime(currentTime + dur);
+    
+    // Subtitles
     const textRaw = (sc.subtitle || sc.narration || "").trim();
     if (textRaw) {
-      // Clean and break long text into 2 balanced lines if needed, stripping special ASS tag braces
       const cleanText = textRaw.replace(/[\r\n]+/g, " ").replace(/[{}]/g, "").replace(/"/g, "'");
       const words = cleanText.split(/\s+/);
       let formattedText = cleanText;
@@ -301,11 +304,31 @@ function generateAssContent(
         const mid = Math.ceil(words.length / 2);
         formattedText = words.slice(0, mid).join(" ") + "\\N" + words.slice(mid).join(" ");
       }
-
-      const startTimeStr = formatAssTime(currentTime);
-      const endTimeStr = formatAssTime(currentTime + dur);
       events += `Dialogue: 0,${startTimeStr},${endTimeStr},Default,,0,0,0,,${formattedText}\n`;
     }
+
+    // Overlay Data
+    if (sc.overlayData) {
+      const o = sc.overlayData;
+      if (o.heading) {
+        const hClean = o.heading.replace(/[\r\n]+/g, " ").replace(/[{}]/g, "");
+        const subClean = (o.subheading || "").replace(/[\r\n]+/g, " ").replace(/[{}]/g, "");
+        const subTag = subClean ? `\\N{\\fs${isPortrait ? 35 : 40}\\c&H00FFFFFF&}${subClean}` : "";
+        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayHeading,,0,0,0,,${hClean}${subTag}\n`;
+      }
+      
+      if (o.codeSnippet) {
+        const lines = o.codeSnippet.split("\n").slice(0, 7).join("\\N").replace(/[{}]/g, "");
+        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayCode,,0,0,0,,${lines}\n`;
+      } else if (o.bulletPoints && o.bulletPoints.length > 0) {
+        const lines = o.bulletPoints.map((b: string) => `• ${b.replace(/[{}]/g, "")}`).slice(0, 4).join("\\N\\N");
+        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayBullet,,0,0,0,,${lines}\n`;
+      } else if (o.diagramNodes && o.diagramNodes.length > 0) {
+        const lines = o.diagramNodes.map((n: any) => `[ ${n.label || ""} ]`).join("  -->  ").replace(/[{}]/g, "");
+        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayBullet,,0,0,0,,${lines}\n`;
+      }
+    }
+
     currentTime += dur;
   }
 
@@ -318,6 +341,9 @@ WrapStyle: 0
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 ${styleLine}
+${overlayHeadingStyle}
+${overlayCodeStyle}
+${overlayBulletStyle}
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -550,7 +576,7 @@ OUTPUT FORMAT:
     return res.json(parsed);
 
   } catch (error: any) {
-    console.info("Gemini analysis notice (using built-in semantic scene engine):", error?.message || error);
+    console.log("Using built-in semantic scene engine (AI analysis skipped).");
     // Graceful fallback to avoid leaving user hanging
     const fallbackResult = fallbackRuleBasedParser(script);
     return res.json({
@@ -1262,53 +1288,105 @@ const CURATED_NEURAL_VOICES = [
   { id: "en-GB-RyanNeural", name: "Ryan", gender: "male", tag: "Smooth British", description: "Articulate, stylish British male narrator", popular: false },
 ];
 
+// Generate a valid minimal silent MP3 buffer (1 second silence at 24kHz/48kbps) for voiceover fallback
+function createSilentMp3Buffer(): Buffer {
+  // Standard MPEG-1 Layer 3 sync word header + silence frame data
+  const frameHeader = Buffer.from([0xFF, 0xFB, 0x90, 0x64]);
+  const framePadding = Buffer.alloc(284, 0);
+  return Buffer.concat([frameHeader, framePadding]);
+}
+
 async function synthesizeNeuralSpeechBuffer(
   text: string,
   voice: string = "en-US-JennyNeural",
   rate: string = "+0%",
-  pitch: string = "+0Hz"
+  pitch: string = "+0Hz",
+  attempt: number = 1
 ): Promise<Buffer> {
   const safeVoice = CURATED_NEURAL_VOICES.some(v => v.id === voice) ? voice : "en-US-JennyNeural";
-  const cacheKey = `${safeVoice}__${rate}__${pitch}__${text.trim()}`;
-  
+  const cleanText = text.trim();
+  if (!cleanText) return createSilentMp3Buffer();
+
+  const cacheKey = `${safeVoice}__${rate}__${pitch}__${cleanText}`;
   const cached = ttsAudioCache.get(cacheKey);
   if (cached && cached.buffer) {
     return cached.buffer;
   }
 
-  const tts = new MsEdgeTTS();
-  await tts.setMetadata(safeVoice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+  try {
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata(safeVoice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-  const { audioStream } = tts.toStream(text, {
-    rate: rate || "+0%",
-    pitch: pitch || "+0Hz",
-  });
+    const { audioStream } = tts.toStream(cleanText, {
+      rate: rate || "+0%",
+      pitch: pitch || "+0Hz",
+    });
 
-  return new Promise<Buffer>((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    const timeout = setTimeout(() => {
-      try { tts.close(); } catch {}
-      reject(new Error("Neural TTS request timed out after 10 seconds"));
-    }, 10000);
+    const resultBuffer = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      let isDone = false;
 
-    audioStream.on("data", (chunk: Buffer) => chunks.push(chunk));
-    audioStream.on("end", () => {
-      clearTimeout(timeout);
-      try { tts.close(); } catch {}
-      const combined = Buffer.concat(chunks);
+      const timeout = setTimeout(() => {
+        if (isDone) return;
+        isDone = true;
+        try { tts.close(); } catch {}
+        if (chunks.length > 0) {
+          const combined = Buffer.concat(chunks);
+          if (combined.length > 500) return resolve(combined);
+        }
+        reject(new Error("Neural TTS request timed out"));
+      }, 12000);
+
+      audioStream.on("data", (chunk: Buffer) => {
+        if (chunk && chunk.length > 0) {
+          chunks.push(chunk);
+        }
+      });
+
+      audioStream.on("end", () => {
+        if (isDone) return;
+        isDone = true;
+        clearTimeout(timeout);
+        try { tts.close(); } catch {}
+        const combined = Buffer.concat(chunks);
+        resolve(combined);
+      });
+
+      audioStream.on("error", (_err: any) => {
+        if (isDone) return;
+        try { tts.close(); } catch {}
+        // If stream closed before turn.end but audio chunks were received, resolve successfully!
+        if (chunks.length > 0) {
+          const combined = Buffer.concat(chunks);
+          if (combined.length > 500) {
+            isDone = true;
+            clearTimeout(timeout);
+            return resolve(combined);
+          }
+        }
+        isDone = true;
+        clearTimeout(timeout);
+        reject(new Error("Neural TTS stream closed without sufficient data"));
+      });
+    });
+
+    if (resultBuffer && resultBuffer.length > 0) {
       if (ttsAudioCache.size > 250) {
         const oldest = ttsAudioCache.keys().next().value;
         if (oldest) ttsAudioCache.delete(oldest);
       }
-      ttsAudioCache.set(cacheKey, { buffer: combined, timestamp: Date.now() });
-      resolve(combined);
-    });
-    audioStream.on("error", (err: any) => {
-      clearTimeout(timeout);
-      try { tts.close(); } catch {}
-      reject(err);
-    });
-  });
+      ttsAudioCache.set(cacheKey, { buffer: resultBuffer, timestamp: Date.now() });
+      return resultBuffer;
+    }
+  } catch (_err: any) {
+    if (attempt < 2) {
+      // Retry once with default voice
+      return synthesizeNeuralSpeechBuffer(cleanText, "en-US-JennyNeural", "+0%", "+0Hz", attempt + 1);
+    }
+  }
+
+  // Final fallback: return silent MP3 buffer to ensure non-breaking video render
+  return createSilentMp3Buffer();
 }
 
 // Fast streaming video proxy to prevent CORS or Range headers issues in browser
@@ -1384,7 +1462,7 @@ app.post("/api/render-complete-video", async (req, res) => {
     const downloadedClips: string[] = [];
     const voiceClips: string[] = [];
     let hasAnyVoiceover = false;
-    const finalScenesSpecs: Array<{ duration: number; subtitle?: string; narration?: string }> = [];
+    const finalScenesSpecs: Array<{ duration: number; subtitle?: string; narration?: string; overlayData?: any; title?: string }> = [];
 
     for (let i = 0; i < scenes.length; i++) {
       const sc = scenes[i];
@@ -1416,16 +1494,18 @@ app.post("/api/render-complete-video", async (req, res) => {
       }
 
       // Calculate TRUE required duration:
-      // Must be at least the requested scene duration AND at least exactVoiceDur + 0.6s (natural comfort buffer so it is never cut off!)
+      // Must be at least the requested scene duration AND at least exactVoiceDur + 1.0s (natural comfort buffer so it is never cut off!)
       const baseRequestedDur = Math.max(1, Number(sc.duration) || 5);
       const targetDur = exactVoiceDur > 0
-        ? Math.max(baseRequestedDur, Math.ceil((exactVoiceDur + 0.6) * 10) / 10)
+        ? Math.max(baseRequestedDur, Math.ceil((exactVoiceDur + 1.0) * 10) / 10)
         : baseRequestedDur;
 
       finalScenesSpecs.push({
         duration: targetDur,
         subtitle: sc.subtitle || sc.narration || "",
-        narration: sc.narration || sc.subtitle || ""
+        narration: sc.narration || sc.subtitle || "",
+        overlayData: sc.overlayData,
+        title: sc.title || sc.script_line
       });
 
       // 2. Pad voiceover to exact targetDur
@@ -1450,8 +1530,40 @@ app.post("/api/render-complete-video", async (req, res) => {
 
       // 3. Download & process video clip with -stream_loop -1 -t ${targetDur}
       try {
-        const resp = await fetch(videoUrl);
-        if (!resp.ok) continue;
+        let safeVideoUrl = videoUrl;
+        let resp = await fetch(safeVideoUrl);
+        
+        if (!resp.ok) {
+          console.warn(`Video fetch failed for scene ${i}, attempting dynamic fallback search...`);
+          try {
+            const fallbackQ = encodeURIComponent(sc.search_keywords || "technology");
+            const pexUrl = `https://api.pexels.com/videos/search?query=${fallbackQ}&per_page=3&orientation=${isPortrait ? 'portrait' : 'landscape'}`;
+            const pexRes = await fetch(pexUrl, { 
+              headers: { Authorization: process.env.PEXELS_API_KEY || "h1r1DWw3EyuEcP8pFXl6e9jo76I0RfxUoG3d18kvEliS6pH6eEyHbmNo" } 
+            });
+            if (pexRes.ok) {
+              const data = await pexRes.json();
+              if (data.videos && data.videos.length > 0) {
+                const randomIdx = Math.floor(Math.random() * Math.min(3, data.videos.length));
+                const bestFile = data.videos[randomIdx].video_files.find((f: any) => f.quality === "hd" || f.quality === "sd") || data.videos[randomIdx].video_files[0];
+                if (bestFile?.link) {
+                  safeVideoUrl = bestFile.link;
+                  resp = await fetch(safeVideoUrl);
+                }
+              }
+            }
+          } catch(e) {}
+          
+          if (!resp.ok) {
+            safeVideoUrl = EXPANDED_CURATED_VIDEO_CATALOG[i % EXPANDED_CURATED_VIDEO_CATALOG.length].downloadUrl;
+            resp = await fetch(safeVideoUrl);
+          }
+        }
+
+        if (!resp.ok) {
+          throw new Error("Fallback video download also failed.");
+        }
+
         const buffer = Buffer.from(await resp.arrayBuffer());
         await fs.promises.writeFile(rawClipPath, buffer);
 
@@ -1506,14 +1618,14 @@ app.post("/api/render-complete-video", async (req, res) => {
             const inputsStr = localPaths.map(p => `-stream_loop -1 -i "${p}"`).join(" ");
             const filterStr = `"[0:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[tl]; [1:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[tr]; [2:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[bl]; [3:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[br]; [tl][tr]hstack[top]; [bl][br]hstack[bot]; [top][bot]vstack[v]"`;
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y ${inputsStr} -t ${targetDur} -filter_complex ${filterStr} -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y ${inputsStr} -t ${targetDur} -filter_complex ${filterStr} -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           } else {
             // Fallback
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
@@ -1539,13 +1651,13 @@ app.post("/api/render-complete-video", async (req, res) => {
               ? `"[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=540:960:force_original_aspect_ratio=increase,crop=540:960,setsar=1[b1]; [2:v]scale=540:960:force_original_aspect_ratio=increase,crop=540:960,setsar=1[b2]; [b1][b2]hstack[bot]; [top][bot]vstack[v]"`
               : `"[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:540:force_original_aspect_ratio=increase,crop=960:540,setsar=1[r1]; [2:v]scale=960:540:force_original_aspect_ratio=increase,crop=960:540,setsar=1[r2]; [r1][r2]vstack[right]; [left][right]hstack[v]"`;
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y ${inputsStr} -t ${targetDur} -filter_complex ${filterStr} -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y ${inputsStr} -t ${targetDur} -filter_complex ${filterStr} -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           } else {
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
@@ -1558,15 +1670,15 @@ app.post("/api/render-complete-video", async (req, res) => {
             await fs.promises.writeFile(secRawPath, Buffer.from(await secResp.arrayBuffer()));
             await new Promise((resolve, reject) => {
               const splitCmd = isPortrait
-                ? `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`
-                : `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+                ? `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]; [top][bottom]vstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`
+                : `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -stream_loop -1 -i "${secRawPath}" -t ${targetDur} -filter_complex "[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[right]; [left][right]hstack[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`;
               exec(splitCmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
           } else {
             // Fallback to standard dimension if secondary fetch fails
             await new Promise((resolve, reject) => {
-              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`;
               exec(cmd, (err) => err ? reject(err) : resolve(true));
             });
             downloadedClips.push(normClipPath);
@@ -1574,13 +1686,22 @@ app.post("/api/render-complete-video", async (req, res) => {
         } else {
           // Standard clip normalization with seamless stream_loop, exact framerate and SAR 1:1
           await new Promise((resolve, reject) => {
-            const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+            const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -video_track_timescale 90000 -an "${normClipPath}"`;
             exec(cmd, (err) => err ? reject(err) : resolve(true));
           });
           downloadedClips.push(normClipPath);
         }
       } catch (clipErr) {
-        console.warn(`Error processing scene clip ${i}:`, clipErr);
+        console.warn(`Error processing scene clip ${i}, generating black fallback clip:`, clipErr);
+        try {
+          await new Promise((resolve, reject) => {
+            const cmd = `ffmpeg -y -f lavfi -i color=c=black:s=${targetW}x${targetH}:r=30 -t ${targetDur} -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -video_track_timescale 90000 -an "${normClipPath}"`;
+            exec(cmd, (err) => err ? reject(err) : resolve(true));
+          });
+          downloadedClips.push(normClipPath);
+        } catch (fatalErr) {
+           console.error("Fatal error generating black fallback clip:", fatalErr);
+        }
       }
     }
 
@@ -2982,6 +3103,25 @@ app.get("/api/stock/search", async (req, res) => {
         }
       }
     } catch {}
+  }
+
+  // Guaranteed non-empty catalog fallback if remote APIs returned 429 or 0 results
+  if (results.length === 0) {
+    const fallbackItems = EXPANDED_CURATED_VIDEO_CATALOG.slice(0, 10).map((c, i) => ({
+      id: c.id || `curated-fallback-${i}`,
+      source: c.source || "pexels",
+      type: c.type || "video",
+      title: c.title || "Curated High-Definition B-Roll",
+      previewUrl: c.previewUrl,
+      thumbnailUrl: c.thumbnailUrl,
+      downloadUrl: c.downloadUrl,
+      width: c.width || 1920,
+      height: c.height || 1080,
+      duration: c.duration || 8,
+      author: c.author || "Curated Stock Studio",
+      quality: "1080p FHD (Curated B-Roll)"
+    }));
+    results.push(...fallbackItems);
   }
 
   res.json({

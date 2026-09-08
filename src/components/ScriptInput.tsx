@@ -14,6 +14,7 @@ interface ScriptInputProps {
   videoFormat: VideoFormat;
   setVideoFormat: (format: VideoFormat) => void;
   usedModel?: string | null;
+  activeTab?: string;
 }
 
 const PRESETS = [
@@ -51,6 +52,7 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
   videoFormat,
   setVideoFormat,
   usedModel,
+  activeTab,
 }) => {
   const lineCount = script.trim() ? script.trim().split(/\n+/).length : 0;
   const wordCount = script.trim() ? script.trim().split(/\s+/).length : 0;
@@ -186,6 +188,12 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
             <>
               <Wand2 className="w-4 h-4 animate-spin" />
               <span>Analyzing Script with AI...</span>
+            </>
+          ) : activeTab === "remotion_study" ? (
+            <>
+              <Sparkles className="w-4 h-4" />
+              <span>Generate Long-Format Study Plan</span>
+              <ArrowRight className="w-4 h-4" />
             </>
           ) : (
             <>
