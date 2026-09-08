@@ -1477,8 +1477,8 @@ app.post("/api/render-complete-video", async (req, res) => {
 
     for (let i = 0; i < scenes.length; i++) {
       const sc = scenes[i];
-      const videoUrl = sc.videoUrl;
-      if (!videoUrl) continue;
+      let videoUrl = sc.videoUrl;
+      if (!videoUrl) videoUrl = "https://invalid.local/force-fallback";
 
       const rawClipPath = path.join(tmpDir, `raw_clip_${i}.mp4`);
       const normClipPath = path.join(tmpDir, `norm_clip_${i}.mp4`);
@@ -1580,9 +1580,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           }
         }
 
-        if (!resp || !resp.ok) {
-          throw new Error("Fallback video download also failed.");
-        }
+        if (!resp || !resp.ok) { throw new Error("Fallback video download also failed."); }
 
         const buffer = Buffer.from(await resp.arrayBuffer());
         await fs.promises.writeFile(rawClipPath, buffer);
@@ -1712,7 +1710,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           downloadedClips.push(normClipPath);
         }
       } catch (clipErr) {
-        console.log(`Error processing scene clip ${i}, generating black fallback clip:`, clipErr);
+        require("fs").writeFileSync("clip_error.log", String(clipErr) + (clipErr.stack || ""), {flag:"a"}); console.error(`Error processing scene clip ${i}:`, clipErr);
         try {
           await new Promise((resolve, reject) => {
             const cmd = `ffmpeg -y -f lavfi -i color=c=black:s=${targetW}x${targetH}:r=30 -t ${targetDur} -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -video_track_timescale 90000 -an "${normClipPath}"`;
