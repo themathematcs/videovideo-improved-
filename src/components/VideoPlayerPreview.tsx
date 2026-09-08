@@ -138,13 +138,28 @@ export const VideoPlayerPreview: React.FC<VideoPlayerPreviewProps> = ({
             muted={isMuted}
             loop
             playsInline
-            onError={() => setHasError(true)}
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src && !target.src.includes("/api/proxy-video")) {
+                target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                target.play().catch(() => {});
+              } else {
+                setHasError(true);
+              }
+            }}
             className="w-full h-full object-cover"
           />
         ) : (
           <img
             src={item.thumbnailUrl || item.previewUrl}
             alt={item.title || "Stock footage"}
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.src.includes("/api/proxy-image")) {
+                target.src = `/api/proxy-image?url=${encodeURIComponent(item.thumbnailUrl || item.previewUrl)}`;
+              }
+            }}
             className="w-full h-full object-cover"
             loading="lazy"
           />

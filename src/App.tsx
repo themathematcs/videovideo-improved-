@@ -4,13 +4,14 @@ import { ScriptInput } from "./components/ScriptInput";
 import { SceneCard } from "./components/SceneCard";
 import { AudioSuggestionsPanel } from "./components/AudioSuggestionsPanel";
 import { AutonomousVideoCreator } from "./components/AutonomousVideoCreator";
+import { LongFormatAnimatedStudio } from "./components/LongFormatAnimatedStudio";
 import { JsonExportView } from "./components/JsonExportView";
 import { PythonScriptView } from "./components/PythonScriptView";
 import { ProjectPlan, Scene, StockMediaItem, SystemRateLimits } from "./types";
 import { Download, FileJson, Terminal, Film, Sparkles, AlertCircle, Play, Music } from "lucide-react";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"storyboard" | "audio" | "json" | "python" | "auto">("auto");
+  const [activeTab, setActiveTab] = useState<"storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study">("auto");
   
   // Initial script using the exact test prompt requested by the user
   const [script, setScript] = useState(
@@ -405,6 +406,11 @@ export default function App() {
               setActiveTab("storyboard");
             }}
           />
+        )}
+
+        {/* Tab 0.5: Long Format Animated Studies (Remotion Studio) */}
+        {activeTab === "remotion_study" && (
+          <LongFormatAnimatedStudio />
         )}
 
         {/* Tab 1: Storyboard View */}

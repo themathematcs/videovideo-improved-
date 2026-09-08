@@ -7,6 +7,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import { generatePythonScript } from "./src/pythonTemplate.ts";
+import { EXPANDED_CURATED_VIDEO_CATALOG } from "./src/data/videoCatalog.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -559,6 +560,177 @@ OUTPUT FORMAT:
   }
 });
 
+// Helper to detect if prompt has structured script formatting (timestamps, visual/audio tags, scene headers)
+function hasStructuredScriptFormatting(text: string): boolean {
+  return (
+    /\d{1,2}:\d{2}\s*[-–—to]\s*\d{1,2}:\d{2}/i.test(text) ||
+    /(?:visual|video|scene)\s*:\s*/i.test(text) ||
+    /(?:audio|narration|voice)\s*:\s*/i.test(text) ||
+    /^scene\s*\d+[:\s-]/im.test(text)
+  );
+}
+
+// Studio-grade structured script parser for timestamped drafts (e.g. 0:00 - 0:02 (Hook): Visual: ... Audio: ...)
+function parseStructuredScriptDraft(scriptText: string, defaultAspect = "16:9") {
+  const lines = scriptText.split("\n").map(l => l.trim()).filter(Boolean);
+  
+  // Extract title if present
+  let title = "";
+  const firstLine = lines[0] || "";
+  const titleMatch = firstLine.match(/^(?:high-retention\s+script\s+draft|script\s+draft|script|title)\s*:\s*["\x27]?([^"\x27\n]+)["\x27]?/i);
+  if (titleMatch) {
+    title = titleMatch[1].trim();
+  } else if (!/^\d{1,2}:\d{2}/.test(firstLine) && !/^scene\s*\d+/i.test(firstLine) && firstLine.length < 60) {
+    title = firstLine.replace(/["\x27#]/g, "").trim();
+  }
+  if (!title) {
+    title = "Autonomous Video";
+  }
+
+  // Split into timestamp or scene blocks
+  const blocks = scriptText.split(/(?=(?:^|\n)(?:(?:scene\s*\d+[:\s]*)?\d{1,2}:\d{2}\s*[-–—to]\s*\d{1,2}:\d{2}|scene\s*\d+[:\s-]))/gi);
+  
+  const parsedScenes: any[] = [];
+  
+  for (const block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
+    
+    // Check for timestamp header: e.g. "0:00 - 0:02 (Hook):" or "Scene 1: 0:02 - 0:15 (Pacing & Setup):"
+    const tsMatch = trimmed.match(/^(?:scene\s*\d+[:\s-]*)?(\d{1,2}:\d{2})\s*[-–—to]\s*(\d{1,2}:\d{2})(?:\s*\(([^)]+)\))?/i);
+    const sceneNumMatch = trimmed.match(/^scene\s*(\d+)[:\s-]*([^\n]*)/i);
+    
+    let startSec: number | undefined;
+    let endSec: number | undefined;
+    let tag = "";
+    let content = trimmed;
+    
+    if (tsMatch) {
+      const [_, sStr, eStr, t] = tsMatch;
+      const parseT = (str: string) => {
+        const parts = str.split(":").map(Number);
+        return parts[0] * 60 + parts[1];
+      };
+      startSec = parseT(sStr);
+      endSec = parseT(eStr);
+      tag = t?.trim() || "";
+      content = trimmed.replace(/^[^\n]+\n?/, "");
+    } else if (sceneNumMatch) {
+      tag = sceneNumMatch[2]?.trim() || "";
+      content = trimmed.replace(/^[^\n]+\n?/, "");
+    } else {
+      if (!/(?:visual|audio|narration)\s*:/i.test(trimmed)) {
+        continue; // skip title preamble
+      }
+    }
+    
+    // Extract Visual and Audio
+    let visualText = "";
+    let audioText = "";
+    
+    const vMatch = content.match(/(?:visual|video|scene|screen|b-roll)\s*:\s*([^\n]+(?:\n(?!(?:audio|narration|voice|sound|sfx)\s*:)[^\n]+)*)/i);
+    if (vMatch) visualText = vMatch[1].trim();
+    
+    const aMatch = content.match(/(?:audio|narration|voice|dialogue|spoken|speech)\s*:\s*([^\n]+(?:\n(?!(?:visual|video|scene|screen)\s*:)[^\n]+)*)/i);
+    if (aMatch) audioText = aMatch[1].trim();
+    
+    if (!visualText && !audioText) {
+      const cleaned = content.replace(/^["\x27\s]+|["\x27\s]+$/g, "");
+      if (cleaned) {
+        audioText = cleaned;
+        visualText = cleaned;
+      }
+    }
+    
+    // Clean audio text
+    audioText = audioText.replace(/^["\x27\s]+|["\x27\s]+$/g, "");
+    
+    if (!audioText && !visualText) continue;
+    
+    // Calculate scene duration
+    let dur = 5;
+    if (startSec !== undefined && endSec !== undefined && endSec > startSec) {
+      dur = Math.max(2, Math.min(30, endSec - startSec));
+    } else if (audioText) {
+      const words = audioText.split(/\s+/).length;
+      dur = Math.max(3, Math.min(15, Math.round(words / 2.6)));
+    }
+    
+    // Detect split screen or zoom
+    const isSplit = /split\s*screen|side\s*by\s*side|compare|reaction|two\s*screens|split\s*view/i.test(visualText) || /split\s*screen/i.test(tag);
+    const isZoom = /zoom|close\s*up|fast\s*zoom|focus/i.test(visualText);
+    
+    // Clean keywords for stock search (smart angle extraction for split screen)
+    let primaryKw = "";
+    let secondaryKw = "";
+    let tertiaryKw = "";
+    let quaternaryKw = "";
+
+    if (isSplit && visualText) {
+      const parts = visualText
+        .replace(/split\s*screen\s*(?:showing|with)?/gi, "")
+        .split(/\s+(?:and|vs|versus|alongside|with)\s+/i)
+        .map(p => p.trim())
+        .filter(Boolean);
+
+      const cleanPart = (p: string) =>
+        p
+          .replace(/["\x27:]/g, " ")
+          .replace(/[^a-zA-Z0-9\s]/g, " ")
+          .split(/\s+/)
+          .filter(w => w.length > 2 && !["the", "and", "with", "for", "that", "this", "when", "said", "from", "into", "showing"].includes(w.toLowerCase()))
+          .slice(0, 4)
+          .join(" ");
+
+      if (parts.length >= 2) {
+        primaryKw = cleanPart(parts[0]);
+        secondaryKw = cleanPart(parts[1]);
+        if (parts[2]) tertiaryKw = cleanPart(parts[2]);
+        if (parts[3]) quaternaryKw = cleanPart(parts[3]);
+      } else {
+        primaryKw = cleanPart(visualText);
+        secondaryKw = `${primaryKw} meme reaction contrast`.trim();
+      }
+    } else {
+      const cleanKw = (visualText || audioText)
+        .replace(/overlaid\s*with|giant\s*text|high-speed\s*zoom\s*on|typing|on\s*a/gi, "")
+        .replace(/["\x27:]/g, " ")
+        .replace(/[^a-zA-Z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter(w => w.length > 2 && !["the", "and", "with", "for", "that", "this", "when", "said", "from", "into"].includes(w.toLowerCase()))
+        .slice(0, 4)
+        .join(" ");
+      primaryKw = cleanKw || "technology coding workspace";
+    }
+
+    parsedScenes.push({
+      scene_number: parsedScenes.length + 1,
+      narration: audioText || visualText || `Scene ${parsedScenes.length + 1}`,
+      search_keywords: primaryKw || "technology coding workspace",
+      secondary_keywords: isSplit ? (secondaryKw || "funny reaction graphic meme") : undefined,
+      tertiary_keywords: isSplit && tertiaryKw ? tertiaryKw : undefined,
+      quaternary_keywords: isSplit && quaternaryKw ? quaternaryKw : undefined,
+      duration: dur,
+      subtitle: tag || (audioText.length > 35 ? audioText.slice(0, 32) + "..." : audioText),
+      transition: isSplit ? "splitscreen" : isZoom ? "zoom" : "fade",
+      layout: isSplit ? "splitscreen" : "standard",
+      splitLayout: isSplit ? "2-split" : "single"
+    });
+  }
+
+  return {
+    title,
+    prompt: scriptText.slice(0, 80),
+    full_script: parsedScenes.map(s => s.narration).join(" "),
+    aspect_ratio: defaultAspect,
+    music_keyword: "energetic modern tech electronic",
+    music_mood: "dynamic tech satirical",
+    scenes: parsedScenes,
+    total_duration: parsedScenes.reduce((sum, s) => sum + s.duration, 0),
+    _structured: true
+  };
+}
+
 // Dynamic Topic-Aware Autonomous Video Generator for any prompt or custom script
 function generateTopicAwareVideoPlan(
   rawInput: string,
@@ -569,6 +741,14 @@ function generateTopicAwareVideoPlan(
 ) {
   const rawInputTopic = (rawInput || "Creative Video Storytelling").trim();
   const sceneDuration = pacing === "fast" ? 3.5 : pacing === "cinematic" ? 7 : 5;
+
+  // If input has structured timestamp or scene format, parse directly with precision
+  if (hasStructuredScriptFormatting(rawInputTopic)) {
+    const structuredPlan = parseStructuredScriptDraft(rawInputTopic, aspectRatio);
+    if (structuredPlan.scenes.length > 0) {
+      return structuredPlan;
+    }
+  }
 
   // Intelligent meta-prompt cleaner: if user writes a prompt like "Write a fast-paced script about X. Hook audience with Y...",
   // extract the core content sentences and remove formatting/instruction directives ("Write a...", "Match with...", "subtitles", etc.)
@@ -960,6 +1140,14 @@ app.post("/api/auto-video/plan", async (req, res) => {
   const sceneDuration = pacing === "fast" ? 3.5 : pacing === "cinematic" ? 7 : 5;
   const targetNumScenes = Math.max(3, Math.min(16, Math.round(Number(targetDuration || 30) / sceneDuration)));
 
+  // If input is a structured script draft with timestamps or cues, parse directly
+  if (hasStructuredScriptFormatting(inputTopic)) {
+    const structuredPlan = parseStructuredScriptDraft(inputTopic, aspectRatio);
+    if (structuredPlan.scenes.length > 0) {
+      return res.json(structuredPlan);
+    }
+  }
+
   const systemInstruction = `You are an expert Autonomous AI Video Director and Producer.
 Your goal is to transform a custom user prompt or video script into an autonomous video production plan ready for instant playback and rendering.
 
@@ -1267,10 +1455,105 @@ app.post("/api/render-complete-video", async (req, res) => {
         const buffer = Buffer.from(await resp.arrayBuffer());
         await fs.promises.writeFile(rawClipPath, buffer);
 
-        // Check if this scene is split screen with secondary video
-        if (sc.transition === "splitscreen" && sc.secondaryVideoUrl) {
+        // Check if this scene is split screen with multiple videos (2-split, 3-split, 4-split)
+        const rawSplitUrls: string[] = [];
+        if (Array.isArray(sc.splitUrls) && sc.splitUrls.length > 0) {
+          rawSplitUrls.push(...sc.splitUrls.filter(Boolean));
+        }
+        if (sc.secondaryVideoUrl) rawSplitUrls.push(sc.secondaryVideoUrl);
+        if (sc.tertiaryVideoUrl) rawSplitUrls.push(sc.tertiaryVideoUrl);
+        if (sc.quaternaryVideoUrl) rawSplitUrls.push(sc.quaternaryVideoUrl);
+
+        // Deduplicate and filter out angleAUrl from secondary list if present
+        const angleAUrl = videoUrl;
+        const distinctExtras = Array.from(new Set(rawSplitUrls.filter(u => u && u !== angleAUrl)));
+
+        let angleBUrl = distinctExtras[0] || sc.secondaryVideoUrl;
+        let angleCUrl = distinctExtras[1] || sc.tertiaryVideoUrl;
+        let angleDUrl = distinctExtras[2] || sc.quaternaryVideoUrl;
+
+        // Guaranteed fallbacks if secondary clips are missing or identical
+        if (!angleBUrl || angleBUrl === angleAUrl) {
+          angleBUrl = EXPANDED_CURATED_VIDEO_CATALOG[(i + 1) % EXPANDED_CURATED_VIDEO_CATALOG.length].downloadUrl;
+        }
+        if (!angleCUrl || angleCUrl === angleAUrl || angleCUrl === angleBUrl) {
+          angleCUrl = EXPANDED_CURATED_VIDEO_CATALOG[(i + 2) % EXPANDED_CURATED_VIDEO_CATALOG.length].downloadUrl;
+        }
+        if (!angleDUrl || angleDUrl === angleAUrl || angleDUrl === angleBUrl || angleDUrl === angleCUrl) {
+          angleDUrl = EXPANDED_CURATED_VIDEO_CATALOG[(i + 3) % EXPANDED_CURATED_VIDEO_CATALOG.length].downloadUrl;
+        }
+
+        const isSplit = (sc.transition === "splitscreen" || sc.layout === "splitscreen" || (sc.splitLayout && sc.splitLayout !== "single"));
+
+        if (isSplit && (sc.splitLayout === "4-split" || (sc.splitLayout === "auto" && distinctExtras.length >= 3))) {
+          // 4-Split Grid (2x2 Quad View)
+          const allUrls = [angleAUrl, angleBUrl, angleCUrl, angleDUrl];
+          const localPaths: string[] = [rawClipPath];
+          for (let sIdx = 1; sIdx < allUrls.length; sIdx++) {
+            const extraPath = path.join(tmpDir, `quad_clip_${i}_${sIdx}.mp4`);
+            try {
+              const eRes = await fetch(allUrls[sIdx]);
+              if (eRes.ok) {
+                await fs.promises.writeFile(extraPath, Buffer.from(await eRes.arrayBuffer()));
+                localPaths.push(extraPath);
+              }
+            } catch {}
+          }
+
+          if (localPaths.length === 4) {
+            const w4 = isPortrait ? 540 : 960;
+            const h4 = isPortrait ? 960 : 540;
+            const inputsStr = localPaths.map(p => `-stream_loop -1 -i "${p}"`).join(" ");
+            const filterStr = `"[0:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[tl]; [1:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[tr]; [2:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[bl]; [3:v]scale=${w4}:${h4}:force_original_aspect_ratio=increase,crop=${w4}:${h4},setsar=1[br]; [tl][tr]hstack[top]; [bl][br]hstack[bot]; [top][bot]vstack[v]"`;
+            await new Promise((resolve, reject) => {
+              const cmd = `ffmpeg -y ${inputsStr} -t ${targetDur} -filter_complex ${filterStr} -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              exec(cmd, (err) => err ? reject(err) : resolve(true));
+            });
+            downloadedClips.push(normClipPath);
+          } else {
+            // Fallback
+            await new Promise((resolve, reject) => {
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              exec(cmd, (err) => err ? reject(err) : resolve(true));
+            });
+            downloadedClips.push(normClipPath);
+          }
+        } else if (isSplit && (sc.splitLayout === "3-split" || (sc.splitLayout === "auto" && distinctExtras.length >= 2))) {
+          // 3-Split (Hero + 2 stacked sub-views)
+          const allUrls = [angleAUrl, angleBUrl, angleCUrl];
+          const localPaths: string[] = [rawClipPath];
+          for (let sIdx = 1; sIdx < allUrls.length; sIdx++) {
+            const extraPath = path.join(tmpDir, `triple_clip_${i}_${sIdx}.mp4`);
+            try {
+              const eRes = await fetch(allUrls[sIdx]);
+              if (eRes.ok) {
+                await fs.promises.writeFile(extraPath, Buffer.from(await eRes.arrayBuffer()));
+                localPaths.push(extraPath);
+              }
+            } catch {}
+          }
+
+          if (localPaths.length === 3) {
+            const inputsStr = localPaths.map(p => `-stream_loop -1 -i "${p}"`).join(" ");
+            const filterStr = isPortrait
+              ? `"[0:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top]; [1:v]scale=540:960:force_original_aspect_ratio=increase,crop=540:960,setsar=1[b1]; [2:v]scale=540:960:force_original_aspect_ratio=increase,crop=540:960,setsar=1[b2]; [b1][b2]hstack[bot]; [top][bot]vstack[v]"`
+              : `"[0:v]scale=960:1080:force_original_aspect_ratio=increase,crop=960:1080,setsar=1[left]; [1:v]scale=960:540:force_original_aspect_ratio=increase,crop=960:540,setsar=1[r1]; [2:v]scale=960:540:force_original_aspect_ratio=increase,crop=960:540,setsar=1[r2]; [r1][r2]vstack[right]; [left][right]hstack[v]"`;
+            await new Promise((resolve, reject) => {
+              const cmd = `ffmpeg -y ${inputsStr} -t ${targetDur} -filter_complex ${filterStr} -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              exec(cmd, (err) => err ? reject(err) : resolve(true));
+            });
+            downloadedClips.push(normClipPath);
+          } else {
+            await new Promise((resolve, reject) => {
+              const cmd = `ffmpeg -y -stream_loop -1 -i "${rawClipPath}" -t ${targetDur} -vf "scale=${targetW}:${targetH}:force_original_aspect_ratio=increase,crop=${targetW}:${targetH},setsar=1" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -an "${normClipPath}"`;
+              exec(cmd, (err) => err ? reject(err) : resolve(true));
+            });
+            downloadedClips.push(normClipPath);
+          }
+        } else if (isSplit) {
+          // 2-Split (Side-by-Side Dual View)
           const secRawPath = path.join(tmpDir, `sec_clip_${i}.mp4`);
-          const secResp = await fetch(sc.secondaryVideoUrl);
+          const secResp = await fetch(angleBUrl);
           if (secResp.ok) {
             await fs.promises.writeFile(secRawPath, Buffer.from(await secResp.arrayBuffer()));
             await new Promise((resolve, reject) => {
@@ -2367,6 +2650,12 @@ app.get("/api/stock/search", async (req, res) => {
             // Giphy original or fixed_height MP4 clip
             const mp4Url = item.images?.original?.mp4 || item.images?.fixed_height?.mp4 || item.images?.looping?.mp4;
             const gifUrl = item.images?.original?.url || item.images?.fixed_height?.url;
+
+            // When searching for videos, only accept items with valid MP4 video streams
+            if (mediaType === "video" && !mp4Url) {
+              continue;
+            }
+
             const previewUrl = (mediaType === "video" && mp4Url) ? (item.images?.fixed_height?.mp4 || mp4Url) : (gifUrl || item.images?.fixed_height?.url);
             const thumbUrl = item.images?.fixed_height_small?.url || item.images?.fixed_height?.url || item.images?.preview_gif?.url || gifUrl;
             const downloadUrl = (mediaType === "video" && mp4Url) ? mp4Url : (gifUrl || mp4Url);
@@ -2385,7 +2674,7 @@ app.get("/api/stock/search", async (req, res) => {
                 duration: 4,
                 author: item.user?.display_name || item.username || "GIPHY Creator",
                 authorUrl: item.user?.profile_url || item.url,
-                quality: mp4Url ? "MP4 Video / Animated GIF (GIPHY)" : "Animated GIF (GIPHY)"
+                quality: mp4Url ? "MP4 Video (GIPHY)" : "Animated GIF (GIPHY)"
               });
             }
           }
@@ -2566,9 +2855,31 @@ app.get("/api/stock/search", async (req, res) => {
 
   // Smart Contextual Merging & Round-Robin Interleaving
   const results: any[] = [];
-  const isSpaceQuery = /rocket|space|nasa|mars|moon|galaxy|astronomy|star|satellite|astronaut|earth|orbit|cosmos|nebula|planet|shuttle|iss|apollo|artemis|webb|hubble|universe/i.test(query);
-  const isHistoricalQuery = /history|vintage|classic|archive|retro|19\d\d|documentary|antique|library/i.test(query);
-  const isGifQuery = /meme|reaction|funny|anime|sticker|cartoon|dance|lol|loop/i.test(query);
+  // Use strict word boundary matching for space queries so coding/starting/workspace keywords don't trigger space results
+  const isSpaceQuery = /\b(rocket|outer space|deep space|nasa|mars rover|astronomy|satellite|astronaut|orbit|cosmos|nebula|exoplanet|iss|apollo|artemis|webb telescope|hubble)\b/i.test(query);
+  const isHistoricalQuery = /\b(history|vintage|classic|archive|retro|19\d\d|documentary|antique|library)\b/i.test(query);
+  const isGifQuery = /\b(meme|reaction|funny|anime|sticker|cartoon|dance|lol|loop)\b/i.test(query);
+
+  // Match Curated Stock Video Catalog based on prompt query
+  const qTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+  const curatedMatches = EXPANDED_CURATED_VIDEO_CATALOG.filter(item => {
+    if (mediaType === "image" && item.type !== "image") return false;
+    const itemText = `${item.title} ${item.tags} ${item.category}`.toLowerCase();
+    return qTerms.some(term => itemText.includes(term));
+  }).map(item => ({
+    id: item.id,
+    source: item.source,
+    type: item.type,
+    title: item.title,
+    previewUrl: item.previewUrl,
+    thumbnailUrl: item.thumbnailUrl,
+    downloadUrl: item.downloadUrl,
+    width: item.width,
+    height: item.height,
+    duration: item.duration,
+    author: item.author,
+    quality: item.quality || "1080p FHD"
+  }));
 
   if (source === "nasa") {
     results.push(...nasaResults);
@@ -2581,33 +2892,28 @@ app.get("/api/stock/search", async (req, res) => {
   } else if (source === "pixabay") {
     results.push(...pixResults);
   } else {
-    // source === "all"
+    // source === "all" - Diverse mix defined directly from the user's prompt
     if (isSpaceQuery && nasaResults.length > 0) {
-      // Space/astronomy/rocket query: prioritize NASA clips right at the top
-      results.push(...nasaResults.slice(0, 3));
+      results.push(...nasaResults.slice(0, 2));
     } else if (isHistoricalQuery && iaResults.length > 0) {
-      // Historical/archive query: prioritize Internet Library clips right at the top
-      results.push(...iaResults.slice(0, 3));
+      results.push(...iaResults.slice(0, 2));
     } else if (isGifQuery && giphResults.length > 0) {
-      // GIF/meme query: prioritize GIPHY clips right at the top
-      results.push(...giphResults.slice(0, 3));
+      results.push(...giphResults.slice(0, 2));
     }
 
-    // Interleave all 5 providers fairly in round-robin fashion
+    // Interleave providers fairly with prompt-driven prioritization (Pexels, Pixabay, Curated, Archive, GIPHY)
     const maxLen = Math.max(
       pexResults.length,
       pixResults.length,
-      nasaResults.length,
+      curatedMatches.length,
       iaResults.length,
-      giphResults.length
+      giphResults.length,
+      isSpaceQuery ? nasaResults.length : 0
     );
 
     const existingIds = new Set(results.map((r) => r.id));
     for (let i = 0; i < maxLen; i++) {
-      if (nasaResults[i] && !existingIds.has(nasaResults[i].id)) {
-        results.push(nasaResults[i]);
-        existingIds.add(nasaResults[i].id);
-      }
+      // Primary: high definition stock video from Pexels and Pixabay matching prompt keywords
       if (pexResults[i] && !existingIds.has(pexResults[i].id)) {
         results.push(pexResults[i]);
         existingIds.add(pexResults[i].id);
@@ -2616,6 +2922,10 @@ app.get("/api/stock/search", async (req, res) => {
         results.push(pixResults[i]);
         existingIds.add(pixResults[i].id);
       }
+      if (curatedMatches[i] && !existingIds.has(curatedMatches[i].id)) {
+        results.push(curatedMatches[i]);
+        existingIds.add(curatedMatches[i].id);
+      }
       if (iaResults[i] && !existingIds.has(iaResults[i].id)) {
         results.push(iaResults[i]);
         existingIds.add(iaResults[i].id);
@@ -2623,6 +2933,20 @@ app.get("/api/stock/search", async (req, res) => {
       if (giphResults[i] && !existingIds.has(giphResults[i].id)) {
         results.push(giphResults[i]);
         existingIds.add(giphResults[i].id);
+      }
+      if (isSpaceQuery && nasaResults[i] && !existingIds.has(nasaResults[i].id)) {
+        results.push(nasaResults[i]);
+        existingIds.add(nasaResults[i].id);
+      }
+    }
+
+    // If still completely empty, try any available provider results
+    if (results.length === 0) {
+      for (const pr of [...pexResults, ...pixResults, ...curatedMatches, ...iaResults, ...giphResults]) {
+        if (!existingIds.has(pr.id)) {
+          results.push(pr);
+          existingIds.add(pr.id);
+        }
       }
     }
   }

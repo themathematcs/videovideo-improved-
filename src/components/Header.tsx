@@ -1,11 +1,11 @@
 import React from "react";
-import { Film, Video, Download, Terminal, Code2, Music, Sparkles } from "lucide-react";
+import { Film, Video, Download, Terminal, Code2, Music, Sparkles, GraduationCap } from "lucide-react";
 import { SystemRateLimits } from "../types";
 import { RateLimitPill } from "./RateLimitPill";
 
 interface HeaderProps {
-  activeTab: "storyboard" | "audio" | "json" | "python" | "auto";
-  setActiveTab: (tab: "storyboard" | "audio" | "json" | "python" | "auto") => void;
+  activeTab: "storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study";
+  setActiveTab: (tab: "storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study") => void;
   rateLimits: SystemRateLimits;
   onRefreshRateLimits: () => void;
   isRefreshingLimits: boolean;
@@ -67,6 +67,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Sparkles className="w-3.5 h-3.5 fill-current" />
               <span>Auto Creator</span>
+            </button>
+
+            <button
+              id="tab-remotion-study-btn"
+              onClick={() => setActiveTab("remotion_study")}
+              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                activeTab === "remotion_study"
+                  ? "bg-indigo-500 text-white font-bold shadow-xs"
+                  : "text-indigo-400 hover:text-indigo-200"
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Long Format Studies</span>
             </button>
 
             <button

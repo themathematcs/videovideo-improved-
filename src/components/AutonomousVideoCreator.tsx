@@ -4,10 +4,11 @@ import {
   Layers, Sliders, CheckCircle2, Loader2, ArrowRight, Video, FileText,
   Monitor, Smartphone, Maximize2, Minimize2, ExternalLink, RefreshCw,
   Mic, User, Volume1, Settings2, ChevronDown, ChevronUp, Columns, Film, Check,
-  Search, X, Upload, Disc, Radio, Filter, FolderOpen
+  Search, X, Upload, Disc, Radio, Filter, FolderOpen, Grid2X2, LayoutGrid
 } from "lucide-react";
 import { AutoVideoPlan, AutoVideoScene, StockMediaItem, AudioTrackItem } from "../types";
 import { EXPANDED_CURATED_MUSIC_LIBRARY, MUSIC_GENRES, MusicGenre } from "../data/musicCatalog";
+import { EXPANDED_CURATED_VIDEO_CATALOG, VIDEO_CATEGORIES } from "../data/videoCatalog";
 
 // Keywords to accurately distinguish female and male synthesizer voices across OS and browsers
 const FEMALE_VOICE_KEYWORDS = [
@@ -28,112 +29,7 @@ interface AutonomousVideoCreatorProps {
 }
 
 // Guaranteed rock-solid diverse fallback stock video footage pool
-const FALLBACK_STOCK_VIDEOS: StockMediaItem[] = [
-  {
-    id: "fallback-v1-code",
-    source: "pixabay",
-    type: "video",
-    title: "Software Developer Coding",
-    previewUrl: "https://cdn.pixabay.com/video/2020/05/25/40130-424754705_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2020/05/25/40130-424754705_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2020/05/25/17/03/code-5219468_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 10,
-    author: "Pixabay Video",
-  },
-  {
-    id: "fallback-v2-cyber",
-    source: "pixabay",
-    type: "video",
-    title: "Digital High Tech Matrix",
-    previewUrl: "https://cdn.pixabay.com/video/2019/04/23/23011-332470725_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2019/04/23/23011-332470725_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2019/04/23/15/45/binary-code-4149830_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 12,
-    author: "Pixabay Video",
-  },
-  {
-    id: "fallback-v3-office",
-    source: "pixabay",
-    type: "video",
-    title: "Modern Tech Workspace",
-    previewUrl: "https://cdn.pixabay.com/video/2016/09/21/5361-183786491_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2016/09/21/5361-183786491_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2016/11/29/08/42/desk-1868494_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 15,
-    author: "Pixabay Video",
-  },
-  {
-    id: "fallback-v4-city",
-    source: "pixabay",
-    type: "video",
-    title: "Futuristic Night City Lights",
-    previewUrl: "https://cdn.pixabay.com/video/2020/01/17/31377-386445585_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2020/01/17/31377-386445585_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2020/01/17/16/38/city-4773418_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 14,
-    author: "Pixabay Video",
-  },
-  {
-    id: "fallback-v5-nature",
-    source: "pixabay",
-    type: "video",
-    title: "Cinematic Nature Forest Stream",
-    previewUrl: "https://cdn.pixabay.com/video/2016/05/12/2953-166547631_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2016/05/12/2953-166547631_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2015/12/01/20/28/forest-1072828_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 12,
-    author: "Pixabay Video",
-  },
-  {
-    id: "fallback-v6-space",
-    source: "pixabay",
-    type: "video",
-    title: "Deep Space Nebula Stars",
-    previewUrl: "https://cdn.pixabay.com/video/2020/03/30/34190-401340156_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2020/03/30/34190-401340156_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2016/10/20/18/35/sunrise-1756274_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 16,
-    author: "Pixabay Video",
-  },
-  {
-    id: "fallback-v7-abstract",
-    source: "pixabay",
-    type: "video",
-    title: "Abstract Particle Waves",
-    previewUrl: "https://cdn.pixabay.com/video/2021/04/07/70685-535384435_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2021/04/07/70685-535384435_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2018/01/14/23/12/nature-3082832_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 10,
-    author: "Pixabay Video",
-  },
-  {
-    id: "fallback-v8-ocean",
-    source: "pixabay",
-    type: "video",
-    title: "Ocean Waves Aerial",
-    previewUrl: "https://cdn.pixabay.com/video/2017/05/16/9119-218087965_large.mp4",
-    downloadUrl: "https://cdn.pixabay.com/video/2017/05/16/9119-218087965_large.mp4",
-    thumbnailUrl: "https://cdn.pixabay.com/photo/2016/09/19/22/46/lake-1681534_640.jpg",
-    width: 1920,
-    height: 1080,
-    duration: 15,
-    author: "Pixabay Video",
-  }
-];
+const FALLBACK_STOCK_VIDEOS: StockMediaItem[] = EXPANDED_CURATED_VIDEO_CATALOG;
 
 export interface StudioNeuralVoice {
   id: string;
@@ -530,10 +426,12 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const musicPreviewAudioRef = useRef<HTMLAudioElement | null>(null);
   const musicFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Video Element Refs for instant seamless transitions and split screen
+  // Video Element Refs for instant seamless transitions and multi-split grid screen
   const videoRefA = useRef<HTMLVideoElement | null>(null);
   const videoRefB = useRef<HTMLVideoElement | null>(null);
   const secVideoRef = useRef<HTMLVideoElement | null>(null);
+  const tertVideoRef = useRef<HTMLVideoElement | null>(null);
+  const quatVideoRef = useRef<HTMLVideoElement | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
   const playbackTimerRef = useRef<any>(null);
@@ -544,11 +442,17 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const [renderProgressMsg, setRenderProgressMsg] = useState<string>("");
 
   // Footage Swapping Handlers
-  const openSwapModal = (idx: number) => {
+  const [swappingAngleIdx, setSwappingAngleIdx] = useState<number>(0);
+
+  const openSwapModal = (idx: number, angleIdx: number = 0) => {
     const scene = loadedScenes[idx];
     if (!scene) return;
     setSwappingSceneIdx(idx);
-    const kw = scene.search_keywords || "";
+    setSwappingAngleIdx(angleIdx);
+    let kw = scene.search_keywords || "";
+    if (angleIdx === 1 && scene.secondary_keywords) kw = scene.secondary_keywords;
+    if (angleIdx === 2 && scene.tertiary_keywords) kw = scene.tertiary_keywords;
+    if (angleIdx === 3 && scene.quaternary_keywords) kw = scene.quaternary_keywords;
     setSwapKeywords(kw);
     setSwapProvider(mediaSource);
     setSwapResults([]);
@@ -577,21 +481,80 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const handleSelectSwapMedia = (item: StockMediaItem) => {
     if (swappingSceneIdx === null) return;
     setLoadedScenes((prev) =>
-      prev.map((sc, i) => (i === swappingSceneIdx ? { ...sc, videoAsset: item } : sc))
+      prev.map((sc, i) => {
+        if (i !== swappingSceneIdx) return sc;
+        const currentSplit = sc.splitAssets ? [...sc.splitAssets] : [sc.videoAsset, sc.secondaryVideoAsset].filter(Boolean) as StockMediaItem[];
+        while (currentSplit.length <= swappingAngleIdx) {
+          currentSplit.push(item);
+        }
+        currentSplit[swappingAngleIdx] = item;
+
+        return {
+          ...sc,
+          videoAsset: swappingAngleIdx === 0 ? item : sc.videoAsset,
+          secondaryVideoAsset: swappingAngleIdx === 1 ? item : sc.secondaryVideoAsset,
+          splitAssets: currentSplit
+        };
+      })
     );
     if (videoPlan) {
       setVideoPlan((prevPlan) =>
         prevPlan
           ? {
               ...prevPlan,
-              scenes: prevPlan.scenes.map((sc, i) =>
-                i === swappingSceneIdx ? { ...sc, videoAsset: item } : sc
-              ),
+              scenes: prevPlan.scenes.map((sc, i) => {
+                if (i !== swappingSceneIdx) return sc;
+                const currentSplit = sc.splitAssets ? [...sc.splitAssets] : [sc.videoAsset, sc.secondaryVideoAsset].filter(Boolean) as StockMediaItem[];
+                while (currentSplit.length <= swappingAngleIdx) {
+                  currentSplit.push(item);
+                }
+                currentSplit[swappingAngleIdx] = item;
+                return {
+                  ...sc,
+                  videoAsset: swappingAngleIdx === 0 ? item : sc.videoAsset,
+                  secondaryVideoAsset: swappingAngleIdx === 1 ? item : sc.secondaryVideoAsset,
+                  splitAssets: currentSplit
+                };
+              }),
             }
           : null
       );
     }
     setSwappingSceneIdx(null);
+  };
+
+  // Switch scene split layout dynamically
+  const handleChangeSceneSplitMode = (sceneIdx: number, newMode: 'single' | '2-split' | '3-split' | '4-split') => {
+    setLoadedScenes(prev => prev.map((sc, i) => {
+      if (i !== sceneIdx) return sc;
+      const countNeeded = newMode === '4-split' ? 4 : newMode === '3-split' ? 3 : newMode === '2-split' ? 2 : 1;
+      const existing = sc.splitAssets ? [...sc.splitAssets] : [sc.videoAsset, sc.secondaryVideoAsset].filter(Boolean) as StockMediaItem[];
+      const splitList: StockMediaItem[] = [];
+      for (const item of existing) {
+        if (item && !splitList.some(s => s.id === item.id || s.downloadUrl === item.downloadUrl)) {
+          splitList.push(item);
+        }
+      }
+      
+      while (splitList.length < countNeeded) {
+        let fallbackCandidate = FALLBACK_STOCK_VIDEOS.find(
+          c => !splitList.some(s => s.id === c.id || s.downloadUrl === c.downloadUrl)
+        );
+        if (!fallbackCandidate) {
+          fallbackCandidate = FALLBACK_STOCK_VIDEOS[(i + splitList.length + 1) % FALLBACK_STOCK_VIDEOS.length];
+        }
+        splitList.push(fallbackCandidate);
+      }
+
+      return {
+        ...sc,
+        splitLayout: newMode,
+        transition: newMode === 'single' ? 'fade' : 'splitscreen',
+        videoAsset: splitList[0] || sc.videoAsset,
+        secondaryVideoAsset: splitList[1] || sc.secondaryVideoAsset,
+        splitAssets: splitList.slice(0, countNeeded)
+      };
+    }));
   };
 
   // Presets
@@ -666,82 +629,61 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
 
       for (let idx = 0; idx < planData.scenes.length; idx++) {
         const scene = planData.scenes[idx];
-        let chosenMedia: StockMediaItem | undefined;
 
-        try {
-          const searchRes = await fetch(
-            `/api/stock/search?query=${encodeURIComponent(scene.search_keywords)}&mediaType=video&source=${mediaSource}&aspectRatio=${aspectRatio}`
-          );
-          if (searchRes.ok) {
-            const data = await searchRes.json();
-            const mediaItems = (data.results || []).filter(
-              (r: any) => (r.type === "video" || r.source === "giphy") && (r.previewUrl || r.downloadUrl)
-            );
-            for (const v of mediaItems) {
-              if (!usedVideoIds.has(v.id)) {
-                chosenMedia = v;
-                break;
-              }
-            }
-          }
-        } catch (err) {
-          console.warn(`Stock search notice for scene ${scene.scene_number}:`, err);
-        }
+        const currentSplitMode = scene.splitLayout || ((scene.transition === "splitscreen" || scene.layout === "splitscreen") ? "2-split" : "single");
+        const numAngles = currentSplitMode === "4-split" ? 4 : currentSplitMode === "3-split" ? 3 : currentSplitMode === "2-split" ? 2 : 1;
 
-        // Guaranteed fallback / rotation if search returned 0 or all were used
-        if (!chosenMedia) {
-          for (let fIdx = 0; fIdx < FALLBACK_STOCK_VIDEOS.length; fIdx++) {
-            const candidate = FALLBACK_STOCK_VIDEOS[(idx + fIdx) % FALLBACK_STOCK_VIDEOS.length];
-            if (!usedVideoIds.has(candidate.id)) {
-              chosenMedia = candidate;
-              break;
-            }
-          }
-          if (!chosenMedia) {
-            chosenMedia = FALLBACK_STOCK_VIDEOS[idx % FALLBACK_STOCK_VIDEOS.length];
-          }
-        }
+        const splitAssets: StockMediaItem[] = [];
+        const angleQueries = [
+          scene.search_keywords,
+          scene.secondary_keywords || `${scene.search_keywords} reaction meme contrast`,
+          (scene as any).tertiary_keywords || `${scene.search_keywords} workspace perspective`,
+          (scene as any).quaternary_keywords || `${scene.search_keywords} interface modern tech`
+        ];
 
-        if (chosenMedia) {
-          usedVideoIds.add(chosenMedia.id);
-        }
+        for (let aIdx = 0; aIdx < numAngles; aIdx++) {
+          let angleMedia: StockMediaItem | undefined;
+          const q = angleQueries[aIdx];
 
-        // If scene is splitscreen, fetch secondary video clip ensuring uniqueness
-        let secondaryMedia: StockMediaItem | undefined;
-        if (scene.transition === "splitscreen" || scene.layout === "splitscreen" || scene.secondary_keywords) {
-          const secQuery = scene.secondary_keywords || `${scene.search_keywords} detail`;
           try {
-            const secRes = await fetch(
-              `/api/stock/search?query=${encodeURIComponent(secQuery)}&mediaType=video&source=${mediaSource}&aspectRatio=${aspectRatio}`
+            const res = await fetch(
+              `/api/stock/search?query=${encodeURIComponent(q)}&mediaType=video&source=${mediaSource}&aspectRatio=${aspectRatio}`
             );
-            if (secRes.ok) {
-              const sData = await secRes.json();
-              const sVideos = (sData.results || []).filter(
-                (r: any) => (r.type === "video" || r.source === "giphy") && (r.previewUrl || r.downloadUrl) && !usedVideoIds.has(r.id)
+            if (res.ok) {
+              const data = await res.json();
+              const items = (data.results || []).filter(
+                (r: any) =>
+                  (r.type === "video" || r.source === "giphy") &&
+                  (r.previewUrl || r.downloadUrl) &&
+                  !usedVideoIds.has(r.id) &&
+                  !splitAssets.some(sa => sa.id === r.id || sa.downloadUrl === r.downloadUrl)
               );
-              if (sVideos.length > 0) {
-                secondaryMedia = sVideos[0];
+              if (items.length > 0) {
+                angleMedia = items[0];
               }
             }
           } catch (e) {
-            console.warn("Secondary video fetch error:", e);
+            console.warn(`Angle ${aIdx} fetch error for scene ${idx}:`, e);
           }
-          if (!secondaryMedia) {
+
+          if (!angleMedia) {
             for (let fIdx = 0; fIdx < FALLBACK_STOCK_VIDEOS.length; fIdx++) {
-              const candidate = FALLBACK_STOCK_VIDEOS[(idx + fIdx + 3) % FALLBACK_STOCK_VIDEOS.length];
-              if (!usedVideoIds.has(candidate.id)) {
-                secondaryMedia = candidate;
+              const candidate = FALLBACK_STOCK_VIDEOS[(idx * 4 + aIdx * 3 + fIdx) % FALLBACK_STOCK_VIDEOS.length];
+              if (!usedVideoIds.has(candidate.id) && !splitAssets.some(sa => sa.id === candidate.id || sa.downloadUrl === candidate.downloadUrl)) {
+                angleMedia = candidate;
                 break;
               }
             }
-            if (!secondaryMedia) {
-              secondaryMedia = FALLBACK_STOCK_VIDEOS[(idx + 1) % FALLBACK_STOCK_VIDEOS.length];
-            }
           }
-          if (secondaryMedia) {
-            usedVideoIds.add(secondaryMedia.id);
+
+          if (angleMedia) {
+            usedVideoIds.add(angleMedia.id);
+            splitAssets.push(angleMedia);
           }
         }
+
+        const chosenMedia = splitAssets[0] || FALLBACK_STOCK_VIDEOS[idx % FALLBACK_STOCK_VIDEOS.length];
+        const secondaryMedia = splitAssets[1] || splitAssets[0];
 
         const speechDur = estimateNarrationDuration(scene.narration, scene.duration);
         scenesWithMedia.push({
@@ -749,6 +691,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           duration: speechDur,
           videoAsset: chosenMedia,
           secondaryVideoAsset: secondaryMedia,
+          splitAssets: splitAssets.length > 0 ? splitAssets : [chosenMedia]
         });
       }
 
@@ -987,7 +930,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     const videoUrl = scene.videoAsset?.downloadUrl || scene.videoAsset?.previewUrl;
     if (!videoUrl) return;
 
-    // Use A/B dual buffering for instant switch
+    // Use A/B dual buffering for primary angle
     const isCurrentlyA = activeBuffer === "A";
     const nextBuffer = isCurrentlyA ? "B" : "A";
     const nextVideo = nextBuffer === "A" ? videoRefA.current : videoRefB.current;
@@ -1001,7 +944,6 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
         nextVideo.currentTime = startOffset;
       } catch {}
       nextVideo.play().catch(() => {
-        // Fallback to proxy if direct play failed
         const proxied = `/api/proxy-video?url=${encodeURIComponent(videoUrl)}`;
         if (nextVideo.src !== proxied) {
           nextVideo.src = proxied;
@@ -1011,16 +953,40 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       setActiveBuffer(nextBuffer);
     }
 
-    // Split-screen secondary video
-    if ((scene.transition === "splitscreen" || scene.layout === "splitscreen") && scene.secondaryVideoAsset) {
-      const secUrl = scene.secondaryVideoAsset.downloadUrl || scene.secondaryVideoAsset.previewUrl;
+    const splitAssetsList = (scene.splitAssets && scene.splitAssets.length > 0)
+      ? scene.splitAssets
+      : [scene.videoAsset, scene.secondaryVideoAsset].filter(Boolean) as StockMediaItem[];
+
+    const currentSplitMode = scene.splitLayout || ((scene.transition === "splitscreen" || scene.layout === "splitscreen") ? "2-split" : "single");
+    const isSplit = currentSplitMode !== "single";
+    const numSplits = currentSplitMode === "4-split" ? 4 : currentSplitMode === "3-split" ? 3 : isSplit ? 2 : 1;
+
+    // Angle A (Primary Video in Split Screen)
+    if (isSplit && videoRefA.current) {
+      const primaryItem = splitAssetsList[0] || scene.videoAsset;
+      const primaryUrl = primaryItem?.downloadUrl || primaryItem?.previewUrl || videoUrl;
+      if (!videoRefA.current.src || (!videoRefA.current.src.includes(encodeURIComponent(primaryUrl)) && videoRefA.current.src !== primaryUrl)) {
+        videoRefA.current.src = primaryUrl;
+      }
+      try { videoRefA.current.currentTime = startOffset; } catch {}
+      videoRefA.current.play().catch(() => {
+        const proxiedA = `/api/proxy-video?url=${encodeURIComponent(primaryUrl)}`;
+        if (videoRefA.current) {
+          videoRefA.current.src = proxiedA;
+          videoRefA.current.play().catch(() => {});
+        }
+      });
+    }
+
+    // Angle B (Secondary)
+    if (numSplits >= 2) {
+      const secItem = splitAssetsList[1] || scene.secondaryVideoAsset || FALLBACK_STOCK_VIDEOS[(targetIdx + 1) % FALLBACK_STOCK_VIDEOS.length];
+      const secUrl = secItem?.downloadUrl || secItem?.previewUrl;
       if (secVideoRef.current && secUrl) {
         if (!secVideoRef.current.src || (!secVideoRef.current.src.includes(encodeURIComponent(secUrl)) && secVideoRef.current.src !== secUrl)) {
           secVideoRef.current.src = secUrl;
         }
-        try {
-          secVideoRef.current.currentTime = startOffset;
-        } catch {}
+        try { secVideoRef.current.currentTime = startOffset; } catch {}
         secVideoRef.current.play().catch(() => {
           const proxiedSec = `/api/proxy-video?url=${encodeURIComponent(secUrl)}`;
           if (secVideoRef.current) {
@@ -1031,6 +997,46 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       }
     } else if (secVideoRef.current) {
       secVideoRef.current.pause();
+    }
+
+    // Angle C (Tertiary)
+    if (numSplits >= 3 && splitAssetsList[2]) {
+      const tertUrl = splitAssetsList[2].downloadUrl || splitAssetsList[2].previewUrl;
+      if (tertVideoRef.current && tertUrl) {
+        if (!tertVideoRef.current.src || (!tertVideoRef.current.src.includes(encodeURIComponent(tertUrl)) && tertVideoRef.current.src !== tertUrl)) {
+          tertVideoRef.current.src = tertUrl;
+        }
+        try { tertVideoRef.current.currentTime = startOffset; } catch {}
+        tertVideoRef.current.play().catch(() => {
+          const proxiedTert = `/api/proxy-video?url=${encodeURIComponent(tertUrl)}`;
+          if (tertVideoRef.current) {
+            tertVideoRef.current.src = proxiedTert;
+            tertVideoRef.current.play().catch(() => {});
+          }
+        });
+      }
+    } else if (tertVideoRef.current) {
+      tertVideoRef.current.pause();
+    }
+
+    // Angle D (Quaternary)
+    if (numSplits >= 4 && splitAssetsList[3]) {
+      const quatUrl = splitAssetsList[3].downloadUrl || splitAssetsList[3].previewUrl;
+      if (quatVideoRef.current && quatUrl) {
+        if (!quatVideoRef.current.src || (!quatVideoRef.current.src.includes(encodeURIComponent(quatUrl)) && quatVideoRef.current.src !== quatUrl)) {
+          quatVideoRef.current.src = quatUrl;
+        }
+        try { quatVideoRef.current.currentTime = startOffset; } catch {}
+        quatVideoRef.current.play().catch(() => {
+          const proxiedQuat = `/api/proxy-video?url=${encodeURIComponent(quatUrl)}`;
+          if (quatVideoRef.current) {
+            quatVideoRef.current.src = proxiedQuat;
+            quatVideoRef.current.play().catch(() => {});
+          }
+        });
+      }
+    } else if (quatVideoRef.current) {
+      quatVideoRef.current.pause();
     }
 
     // Preload next upcoming scene video in background
@@ -1129,6 +1135,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     if (videoRefA.current) videoRefA.current.pause();
     if (videoRefB.current) videoRefB.current.pause();
     if (secVideoRef.current) secVideoRef.current.pause();
+    if (tertVideoRef.current) tertVideoRef.current.pause();
+    if (quatVideoRef.current) quatVideoRef.current.pause();
     if (audioElementRef.current) audioElementRef.current.pause();
     if (voiceAudioRef.current) {
       try {
@@ -1188,6 +1196,16 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             secVideoRef.current.currentTime = offset;
           } catch {}
         }
+        if (tertVideoRef.current) {
+          try {
+            tertVideoRef.current.currentTime = offset;
+          } catch {}
+        }
+        if (quatVideoRef.current) {
+          try {
+            quatVideoRef.current.currentTime = offset;
+          } catch {}
+        }
         break;
       }
       accTime += sDur;
@@ -1211,15 +1229,26 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
         voice: selectedNeuralVoice,
         voiceRate: voicePacingRate,
         voicePitch: voicePitchOffset,
-        scenes: loadedScenes.map((sc) => ({
-          scene_number: sc.scene_number,
-          duration: sc.duration,
-          transition: sc.transition || "fade",
-          videoUrl: sc.videoAsset?.downloadUrl || sc.videoAsset?.previewUrl,
-          secondaryVideoUrl: sc.secondaryVideoAsset?.downloadUrl || sc.secondaryVideoAsset?.previewUrl,
-          subtitle: sc.subtitle || sc.narration || "",
-          narration: sc.narration || sc.subtitle || ""
-        }))
+        scenes: loadedScenes.map((sc) => {
+          const splitList = (sc.splitAssets || []).map(a => a.downloadUrl || a.previewUrl).filter(Boolean) as string[];
+          if (splitList.length === 0) {
+            if (sc.videoAsset?.downloadUrl || sc.videoAsset?.previewUrl) splitList.push((sc.videoAsset.downloadUrl || sc.videoAsset.previewUrl)!);
+            if (sc.secondaryVideoAsset?.downloadUrl || sc.secondaryVideoAsset?.previewUrl) splitList.push((sc.secondaryVideoAsset.downloadUrl || sc.secondaryVideoAsset.previewUrl)!);
+          }
+          return {
+            scene_number: sc.scene_number,
+            duration: sc.duration,
+            transition: sc.transition || "fade",
+            splitLayout: sc.splitLayout || (sc.transition === "splitscreen" ? "2-split" : "single"),
+            videoUrl: sc.videoAsset?.downloadUrl || sc.videoAsset?.previewUrl,
+            secondaryVideoUrl: sc.secondaryVideoAsset?.downloadUrl || sc.secondaryVideoAsset?.previewUrl || splitList[1] || "",
+            tertiaryVideoUrl: splitList[2] || "",
+            quaternaryVideoUrl: splitList[3] || "",
+            splitUrls: splitList,
+            subtitle: sc.subtitle || sc.narration || "",
+            narration: sc.narration || sc.subtitle || ""
+          };
+        })
       };
 
       setRenderProgressMsg("Synthesizing neural voiceover & stitching scenes with FFmpeg...");
@@ -2129,86 +2158,331 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             <div className={`relative w-full rounded-xl bg-stone-950 border border-stone-800 overflow-hidden flex items-center justify-center shadow-inner group ${
               aspectRatio === "9:16" ? "max-w-[320px] mx-auto aspect-[9/16]" : "aspect-[16/9]"
             }`}>
-              {/* Always-Mounted Video Element A */}
-              <video
-                ref={videoRefA}
-                muted
-                playsInline
-                loop
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src && !target.src.includes("/api/proxy-video")) {
-                    console.info("Buffer A video playback fallback to streaming proxy");
-                    target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
-                    target.play().catch(() => {});
-                  }
-                }}
-                className={`absolute top-0 bottom-0 object-cover transition-all duration-500 ease-in-out ${
-                  (activeScene?.transition === "splitscreen" || activeScene?.layout === "splitscreen") && activeScene.secondaryVideoAsset
-                    ? "left-0 w-1/2 border-r-2 border-amber-500/60 z-10 opacity-100"
-                    : activeBuffer === "A"
-                    ? "left-0 w-full opacity-100 scale-100 z-10"
-                    : "left-0 w-full opacity-0 scale-105 z-0 pointer-events-none"
-                } ${activeScene?.transition === "zoom" && activeScene?.transition !== "splitscreen" ? "scale-105 transition-transform duration-3000" : ""}`}
-              />
+              {/* Dynamic Viewport Router based on split mode */}
+              {(() => {
+                const currentSplitMode = activeScene?.splitLayout || ((activeScene?.transition === "splitscreen" || activeScene?.layout === "splitscreen") ? "2-split" : "single");
 
-              {/* Always-Mounted Video Element B */}
-              <video
-                ref={videoRefB}
-                muted
-                playsInline
-                loop
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src && !target.src.includes("/api/proxy-video")) {
-                    console.info("Buffer B video playback fallback to streaming proxy");
-                    target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
-                    target.play().catch(() => {});
-                  }
-                }}
-                className={`absolute top-0 bottom-0 left-0 w-full object-cover transition-all duration-500 ease-in-out ${
-                  !((activeScene?.transition === "splitscreen" || activeScene?.layout === "splitscreen") && activeScene.secondaryVideoAsset) && activeBuffer === "B"
-                    ? "opacity-100 scale-100 z-10"
-                    : "opacity-0 scale-105 z-0 pointer-events-none"
-                } ${activeScene?.transition === "zoom" && activeScene?.transition !== "splitscreen" ? "scale-105 transition-transform duration-3000" : ""}`}
-              />
+                if (currentSplitMode === "4-split") {
+                  return (
+                    <div className="absolute inset-0 z-10 w-full h-full grid grid-cols-2 grid-rows-2 divide-x-2 divide-y-2 divide-amber-500/40 bg-black">
+                      {/* Angle A */}
+                      <div className="relative w-full h-full overflow-hidden group/tile bg-stone-950">
+                        <video
+                          ref={videoRefA}
+                          muted
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src && !target.src.includes("/api/proxy-video")) {
+                              target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                              target.play().catch(() => {});
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-amber-300 font-bold border border-amber-500/40">
+                          ANGLE A
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 0); }}
+                          className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </button>
+                      </div>
 
-              {/* Always-Mounted Secondary Video Element for Split-Screen */}
-              <video
-                ref={secVideoRef}
-                muted
-                playsInline
-                loop
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src && !target.src.includes("/api/proxy-video")) {
-                    console.info("Secondary video playback fallback to streaming proxy");
-                    target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
-                    target.play().catch(() => {});
-                  }
-                }}
-                className={`absolute top-0 bottom-0 right-0 w-1/2 object-cover transition-all duration-500 ease-in-out ${
-                  (activeScene?.transition === "splitscreen" || activeScene?.layout === "splitscreen") && activeScene.secondaryVideoAsset
-                    ? "opacity-100 z-10"
-                    : "opacity-0 pointer-events-none z-0"
-                }`}
-              />
+                      {/* Angle B */}
+                      <div className="relative w-full h-full overflow-hidden group/tile bg-stone-950">
+                        <video
+                          ref={secVideoRef}
+                          muted
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src && !target.src.includes("/api/proxy-video")) {
+                              target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                              target.play().catch(() => {});
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-cyan-300 font-bold border border-cyan-500/40">
+                          ANGLE B
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 1); }}
+                          className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </button>
+                      </div>
+
+                      {/* Angle C */}
+                      <div className="relative w-full h-full overflow-hidden group/tile bg-stone-950">
+                        <video
+                          ref={tertVideoRef}
+                          muted
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src && !target.src.includes("/api/proxy-video")) {
+                              target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                              target.play().catch(() => {});
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-emerald-300 font-bold border border-emerald-500/40">
+                          ANGLE C
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 2); }}
+                          className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </button>
+                      </div>
+
+                      {/* Angle D */}
+                      <div className="relative w-full h-full overflow-hidden group/tile bg-stone-950">
+                        <video
+                          ref={quatVideoRef}
+                          muted
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src && !target.src.includes("/api/proxy-video")) {
+                              target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                              target.play().catch(() => {});
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-purple-300 font-bold border border-purple-500/40">
+                          ANGLE D
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 3); }}
+                          className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (currentSplitMode === "3-split") {
+                  return (
+                    <div className={`absolute inset-0 z-10 w-full h-full flex ${aspectRatio === "9:16" ? "flex-col divide-y-2" : "flex-row divide-x-2"} divide-amber-500/40 bg-black`}>
+                      {/* Hero Section */}
+                      <div className={`relative ${aspectRatio === "9:16" ? "w-full h-1/2" : "w-1/2 h-full"} overflow-hidden group/tile bg-stone-950`}>
+                        <video
+                          ref={videoRefA}
+                          muted
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src && !target.src.includes("/api/proxy-video")) {
+                              target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                              target.play().catch(() => {});
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-amber-300 font-bold border border-amber-500/40">
+                          ANGLE A (HERO)
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 0); }}
+                          className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </button>
+                      </div>
+
+                      {/* Sub-Column / Sub-Row */}
+                      <div className={`relative ${aspectRatio === "9:16" ? "w-full h-1/2 flex flex-row divide-x-2" : "w-1/2 h-full flex flex-col divide-y-2"} divide-amber-500/40`}>
+                        <div className={`relative ${aspectRatio === "9:16" ? "w-1/2 h-full" : "w-full h-1/2"} overflow-hidden group/tile bg-stone-950`}>
+                          <video
+                            ref={secVideoRef}
+                            muted
+                            playsInline
+                            loop
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (target.src && !target.src.includes("/api/proxy-video")) {
+                                target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                                target.play().catch(() => {});
+                              }
+                            }}
+                          />
+                          <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-cyan-300 font-bold border border-cyan-500/40">
+                            ANGLE B
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 1); }}
+                            className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                          >
+                            <RefreshCw className="w-2.5 h-2.5" /> Swap
+                          </button>
+                        </div>
+                        <div className={`relative ${aspectRatio === "9:16" ? "w-1/2 h-full" : "w-full h-1/2"} overflow-hidden group/tile bg-stone-950`}>
+                          <video
+                            ref={tertVideoRef}
+                            muted
+                            playsInline
+                            loop
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (target.src && !target.src.includes("/api/proxy-video")) {
+                                target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                                target.play().catch(() => {});
+                              }
+                            }}
+                          />
+                          <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-emerald-300 font-bold border border-emerald-500/40">
+                            ANGLE C
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 2); }}
+                            className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                          >
+                            <RefreshCw className="w-2.5 h-2.5" /> Swap
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (currentSplitMode === "2-split") {
+                  return (
+                    <div className={`absolute inset-0 z-10 w-full h-full flex ${aspectRatio === "9:16" ? "flex-col divide-y-2" : "flex-row divide-x-2"} divide-amber-500/40 bg-black`}>
+                      {/* Angle A */}
+                      <div className={`relative ${aspectRatio === "9:16" ? "w-full h-1/2" : "w-1/2 h-full"} overflow-hidden group/tile bg-stone-950`}>
+                        <video
+                          ref={videoRefA}
+                          muted
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src && !target.src.includes("/api/proxy-video")) {
+                              target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                              target.play().catch(() => {});
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-amber-300 font-bold border border-amber-500/40">
+                          ANGLE A
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 0); }}
+                          className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </button>
+                      </div>
+
+                      {/* Angle B */}
+                      <div className={`relative ${aspectRatio === "9:16" ? "w-full h-1/2" : "w-1/2 h-full"} overflow-hidden group/tile bg-stone-950`}>
+                        <video
+                          ref={secVideoRef}
+                          muted
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src && !target.src.includes("/api/proxy-video")) {
+                              target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                              target.play().catch(() => {});
+                            }
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] font-mono text-cyan-300 font-bold border border-cyan-500/40">
+                          ANGLE B
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openSwapModal(activeSceneIndex, 1); }}
+                          className="absolute bottom-2 right-2 z-20 opacity-0 group-hover/tile:opacity-100 transition-opacity px-2 py-0.5 rounded bg-black/80 hover:bg-amber-500 hover:text-black text-white text-[10px] font-medium flex items-center gap-1 border border-white/20"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Swap
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Standard Single Mode
+                return (
+                  <div className="absolute inset-0 z-10 w-full h-full overflow-hidden">
+                    <video
+                      ref={videoRefA}
+                      muted
+                      playsInline
+                      loop
+                      className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out ${
+                        activeBuffer === "A" ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0 pointer-events-none"
+                      } ${activeScene?.transition === "zoom" ? "scale-105 transition-transform duration-3000" : ""}`}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src && !target.src.includes("/api/proxy-video")) {
+                          target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                          target.play().catch(() => {});
+                        }
+                      }}
+                    />
+                    <video
+                      ref={videoRefB}
+                      muted
+                      playsInline
+                      loop
+                      className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out ${
+                        activeBuffer === "B" ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0 pointer-events-none"
+                      } ${activeScene?.transition === "zoom" ? "scale-105 transition-transform duration-3000" : ""}`}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src && !target.src.includes("/api/proxy-video")) {
+                          target.src = `/api/proxy-video?url=${encodeURIComponent(target.src)}`;
+                          target.play().catch(() => {});
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              })()}
 
               {/* Split Screen Indicator Badges when active */}
-              {(activeScene?.transition === "splitscreen" || activeScene?.layout === "splitscreen") && activeScene.secondaryVideoAsset && (
-                <>
-                  <div className="absolute top-3 left-3 z-30 px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-[10px] font-mono text-amber-300 font-bold border border-amber-500/40">
-                    ANGLE A
-                  </div>
-                  <div className="absolute top-3 right-3 z-30 px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-[10px] font-mono text-cyan-300 font-bold border border-cyan-500/40">
-                    ANGLE B
-                  </div>
+              {(() => {
+                const currentSplitMode = activeScene?.splitLayout || ((activeScene?.transition === "splitscreen" || activeScene?.layout === "splitscreen") ? "2-split" : "single");
+                if (currentSplitMode === "single") return null;
+
+                return (
                   <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-amber-500/50 text-[10px] font-mono font-bold text-amber-400 shadow-xl flex items-center gap-1.5">
-                    <Columns className="w-3 h-3 text-amber-400" />
-                    <span>SPLIT-SCREEN DUAL VIEW</span>
+                    {currentSplitMode === "4-split" ? <Grid2X2 className="w-3 h-3 text-amber-400" /> : <Columns className="w-3 h-3 text-amber-400" />}
+                    <span>{currentSplitMode === "4-split" ? "4-SPLIT QUAD VIEW (16:9 FULL)" : currentSplitMode === "3-split" ? "3-SPLIT TRIPLE VIEW (16:9 FULL)" : "2-SPLIT DUAL VIEW (16:9 FULL)"}</span>
                   </div>
-                </>
-              )}
+                );
+              })()}
 
               {/* Cinematic Vignette Overlay */}
               <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-black/30" />
@@ -2225,7 +2499,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                   {activeScene?.transition && activeScene.transition !== "none" && (
                     <span className="px-2 py-0.5 rounded-md bg-stone-900/80 backdrop-blur-sm text-[10px] text-amber-300 font-medium border border-amber-500/30 flex items-center gap-1">
                       {activeScene.transition === "splitscreen" ? <Columns className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
-                      <span className="capitalize">{activeScene.transition}</span>
+                      <span className="capitalize">{activeScene.splitLayout || activeScene.transition}</span>
                     </span>
                   )}
                   {voiceoverEnabled && (
@@ -2431,96 +2705,123 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[340px] overflow-y-auto pr-1">
                 {loadedScenes.map((scene, idx) => {
                   const isActive = activeSceneIndex === idx;
                   const sceneStart = getSceneStartTime(idx);
+                  const currentSplit = scene.splitLayout || (scene.transition === "splitscreen" ? "2-split" : "single");
+                  const numClips = currentSplit === "4-split" ? 4 : currentSplit === "3-split" ? 3 : currentSplit === "2-split" ? 2 : 1;
+                  const activeClips = scene.splitAssets && scene.splitAssets.length >= numClips
+                    ? scene.splitAssets.slice(0, numClips)
+                    : [scene.videoAsset, scene.secondaryVideoAsset, ...(scene.splitAssets || [])].filter(Boolean).slice(0, numClips) as StockMediaItem[];
 
                   return (
                     <div
                       key={scene.scene_number}
                       onClick={() => handleJumpToScene(idx)}
-                      className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all flex items-start gap-2.5 relative overflow-hidden group ${
+                      className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex flex-col gap-2 relative overflow-hidden group ${
                         isActive
                           ? "bg-amber-500/10 border-amber-500 text-stone-100 shadow-sm ring-1 ring-amber-500/30"
                           : "bg-stone-950 border-stone-800/80 text-stone-400 hover:border-stone-700"
                       }`}
                     >
-                      {/* Thumbnail container */}
-                      <div className="w-16 h-12 rounded-lg overflow-hidden bg-stone-850 shrink-0 relative">
-                        {scene.videoAsset?.thumbnailUrl ? (
-                          <img
-                            src={scene.videoAsset.thumbnailUrl}
-                            alt=""
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-stone-600">
-                            <Video className="w-4 h-4" />
+                      <div className="flex items-start gap-2.5 w-full">
+                        {/* Thumbnail container */}
+                        <div className="w-16 h-12 rounded-lg overflow-hidden bg-stone-850 shrink-0 relative">
+                          {scene.videoAsset?.thumbnailUrl ? (
+                            <img
+                              src={scene.videoAsset.thumbnailUrl}
+                              alt=""
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-stone-600">
+                              <Video className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="absolute bottom-0.5 right-0.5 px-1 rounded bg-black/80 font-mono text-[9px] text-white">
+                            {scene.duration}s
+                          </span>
+                          {isActive && (
+                            <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
+                              <Play className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className={`font-semibold truncate ${isActive ? "text-amber-400" : "text-stone-300"}`}>
+                                Scene {scene.scene_number}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-[9px] text-amber-300 font-mono">
+                                {currentSplit === "single" ? "Single" : currentSplit.toUpperCase()}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-mono text-stone-500 shrink-0">
+                              {sceneStart.toFixed(0)}s - {(sceneStart + scene.duration).toFixed(0)}s
+                            </span>
                           </div>
-                        )}
-                        <span className="absolute bottom-0.5 right-0.5 px-1 rounded bg-black/80 font-mono text-[9px] text-white">
-                          {scene.duration}s
-                        </span>
-                        {isActive && (
-                          <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
-                            <Play className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          </div>
-                        )}
+                          <p className="text-[11px] line-clamp-2 mt-0.5 text-stone-400">
+                            {scene.narration}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <span className={`font-semibold truncate ${isActive ? "text-amber-400" : "text-stone-300"}`}>
-                              Scene {scene.scene_number}
-                            </span>
-                            {scene.transition === "splitscreen" && (
-                              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-[9px] text-amber-300 font-mono">
-                                Split-Screen
-                              </span>
-                            )}
-                            {scene.transition === "zoom" && (
-                              <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-[9px] text-cyan-300 font-mono">
-                                Zoom
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] font-mono text-stone-500 shrink-0">
-                            {sceneStart.toFixed(0)}s - {(sceneStart + scene.duration).toFixed(0)}s
-                          </span>
+                      {/* Split-Mode Switcher & Angle Chips Row */}
+                      <div className="flex items-center justify-between pt-1.5 border-t border-stone-800/80 gap-1 flex-wrap">
+                        {/* Split Selector Buttons */}
+                        <div className="flex items-center gap-1 bg-stone-900/90 p-0.5 rounded-lg border border-stone-800">
+                          {(['single', '2-split', '3-split', '4-split'] as const).map((mode) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleChangeSceneSplitMode(idx, mode);
+                              }}
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold transition-colors ${
+                                currentSplit === mode
+                                  ? "bg-amber-500 text-stone-950 shadow-sm"
+                                  : "text-stone-400 hover:text-stone-200"
+                              }`}
+                              title={`Switch to ${mode}`}
+                            >
+                              {mode === "single" ? "1x" : mode.replace("-split", "x")}
+                            </button>
+                          ))}
                         </div>
-                        <p className="text-[11px] line-clamp-2 mt-0.5 text-stone-400">
-                          {scene.narration}
-                        </p>
-                        <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-stone-800/60">
-                          <span
-                            className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold ${
-                              scene.videoAsset?.source === "giphy"
-                                ? "bg-purple-900/70 text-purple-200 border border-purple-700/50"
-                                : scene.videoAsset?.source === "pexels"
-                                ? "bg-emerald-900/70 text-emerald-200 border border-emerald-700/50"
-                                : scene.videoAsset?.source === "nasa"
-                                ? "bg-blue-900/70 text-blue-200 border border-blue-700/50"
-                                : scene.videoAsset?.source === "archive"
-                                ? "bg-amber-900/70 text-amber-200 border border-amber-700/50"
-                                : "bg-sky-900/70 text-sky-200 border border-sky-700/50"
-                            }`}
-                          >
-                            {scene.videoAsset?.source || "stock"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openSwapModal(idx);
-                            }}
-                            className="px-2 py-0.5 rounded bg-stone-800 hover:bg-amber-500 hover:text-stone-950 text-stone-300 text-[10px] font-medium flex items-center gap-1 transition-colors border border-stone-700/50"
-                            title="Replace footage with custom Pexels, Pixabay, GIPHY, Archive, or NASA clip"
-                          >
-                            <RefreshCw className="w-2.5 h-2.5" />
-                            <span>Swap / Providers</span>
-                          </button>
+
+                        {/* Angle Swap Chips */}
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: numClips }).map((_, angleIdx) => {
+                            const angleLetter = ["A", "B", "C", "D"][angleIdx];
+                            const clip = activeClips[angleIdx];
+                            const colorClass = angleIdx === 0
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                              : angleIdx === 1
+                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                              : angleIdx === 2
+                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                              : "bg-purple-500/20 text-purple-300 border-purple-500/40";
+
+                            return (
+                              <button
+                                key={angleIdx}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openSwapModal(idx, angleIdx);
+                                }}
+                                className={`px-1.5 py-0.5 rounded border text-[9px] font-mono font-bold flex items-center gap-1 hover:brightness-125 transition-all ${colorClass}`}
+                                title={`Swap Angle ${angleLetter} (${clip?.source || 'stock'})`}
+                              >
+                                <span>{angleLetter}</span>
+                                <RefreshCw className="w-2 h-2 opacity-70" />
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -2541,7 +2842,7 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-xs font-bold">
-                    Scene {swappingSceneIdx + 1}
+                    Scene {swappingSceneIdx + 1} • Angle {["A (Hero/Left)", "B (Right/Secondary)", "C (Tertiary)", "D (Quaternary)"][swappingAngleIdx] || "A"}
                   </span>
                   <h3 className="text-sm font-semibold text-stone-100">
                     Replace Footage with Pexels, Pixabay, or GIPHY

@@ -1,5 +1,3 @@
-export type VideoFormat = 'landscape' | 'portrait';
-
 export interface Scene {
   scene_number: number;
   script_line: string;
@@ -28,7 +26,6 @@ export interface AudioTrackItem {
 
 export interface ProjectPlan {
   project_name: string;
-  video_format?: VideoFormat;
   scenes: Scene[];
   audio_suggestions?: AudioSuggestions;
 }
@@ -70,13 +67,16 @@ export interface AutoVideoScene {
   narration: string;
   search_keywords: string;
   secondary_keywords?: string;
+  tertiary_keywords?: string;
+  quaternary_keywords?: string;
   duration: number; // in seconds
   subtitle: string;
   transition?: 'fade' | 'cut' | 'zoom' | 'splitscreen' | 'slide';
   layout?: 'standard' | 'splitscreen';
+  splitLayout?: 'single' | '2-split' | '3-split' | '4-split';
   videoAsset?: StockMediaItem;
   secondaryVideoAsset?: StockMediaItem;
-  is_outro?: boolean;
+  splitAssets?: StockMediaItem[];
 }
 
 export interface AutoVideoPlan {
@@ -100,3 +100,5 @@ export interface SearchResultScene {
   results: StockMediaItem[];
   activeSource: 'all' | 'pexels' | 'pixabay' | 'giphy' | 'archive' | 'nasa';
 }
+
+export type VideoFormat = 'landscape' | 'portrait';
