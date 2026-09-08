@@ -9,8 +9,19 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import { generatePythonScript } from "./src/pythonTemplate.ts";
 import { EXPANDED_CURATED_VIDEO_CATALOG } from "./src/data/videoCatalog.ts";
 
-const _filename = typeof __filename !== 'undefined' ? __filename : fileURLToPath((import.meta as any).url);
-const _dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(_filename);
+let _filename = "";
+let _dirname = "";
+try {
+  _filename = fileURLToPath((import.meta as any).url);
+  _dirname = path.dirname(_filename);
+} catch (e) {
+  if (typeof __filename !== "undefined") {
+    _filename = __filename;
+    _dirname = __dirname;
+  } else {
+    _dirname = process.cwd();
+  }
+}
 
 const app = express();
 const PORT = 3000;
@@ -1422,7 +1433,7 @@ app.get("/api/proxy-video", async (req, res) => {
     }
     res.end();
   } catch (err: any) {
-    console.error("Proxy video stream error:", err?.message);
+    console.log("Proxy video stream error:", err?.message);
     if (!res.headersSent) {
       res.status(500).json({ error: "Video proxy streaming error" });
     } else {
@@ -1486,10 +1497,10 @@ app.post("/api/render-complete-video", async (req, res) => {
             const probeOut = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${rawVoicePath}"`).toString().trim();
             exactVoiceDur = parseFloat(probeOut) || 0;
           } catch (pErr) {
-            console.warn(`Duration probe notice:`, pErr);
+            console.log(`Duration probe notice:`, pErr);
           }
         } catch (vErr) {
-          console.warn(`Voice synthesis warning for scene ${i}:`, vErr);
+          console.log(`Voice synthesis warning for scene ${i}:`, vErr);
         }
       }
 
@@ -1518,7 +1529,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           voiceClips.push(voiceScenePath);
           hasAnyVoiceover = true;
         } catch (padErr) {
-          console.warn(`Voice padding notice for scene ${i}:`, padErr);
+          console.log(`Voice padding notice for scene ${i}:`, padErr);
         }
       } else {
         await new Promise((resolve, reject) => {
@@ -1531,10 +1542,15 @@ app.post("/api/render-complete-video", async (req, res) => {
       // 3. Download & process video clip with -stream_loop -1 -t ${targetDur}
       try {
         let safeVideoUrl = videoUrl;
-        let resp = await fetch(safeVideoUrl);
+        let resp: Response | null = null;
+        try {
+          resp = await fetch(safeVideoUrl);
+        } catch (fetchErr) {
+          // Silent fallback
+        }
         
-        if (!resp.ok) {
-          console.warn(`Video fetch failed for scene ${i}, attempting dynamic fallback search...`);
+        if (!resp || !resp.ok) {
+          // Attempting dynamic fallback search
           try {
             const fallbackQ = encodeURIComponent(sc.search_keywords || "technology");
             const pexUrl = `https://api.pexels.com/videos/search?query=${fallbackQ}&per_page=3&orientation=${isPortrait ? 'portrait' : 'landscape'}`;
@@ -1548,19 +1564,23 @@ app.post("/api/render-complete-video", async (req, res) => {
                 const bestFile = data.videos[randomIdx].video_files.find((f: any) => f.quality === "hd" || f.quality === "sd") || data.videos[randomIdx].video_files[0];
                 if (bestFile?.link) {
                   safeVideoUrl = bestFile.link;
-                  resp = await fetch(safeVideoUrl);
+                  try {
+                    resp = await fetch(safeVideoUrl);
+                  } catch (e) {}
                 }
               }
             }
           } catch(e) {}
           
-          if (!resp.ok) {
+          if (!resp || !resp.ok) {
             safeVideoUrl = EXPANDED_CURATED_VIDEO_CATALOG[i % EXPANDED_CURATED_VIDEO_CATALOG.length].downloadUrl;
-            resp = await fetch(safeVideoUrl);
+            try {
+              resp = await fetch(safeVideoUrl);
+            } catch (e) {}
           }
         }
 
-        if (!resp.ok) {
+        if (!resp || !resp.ok) {
           throw new Error("Fallback video download also failed.");
         }
 
@@ -1692,7 +1712,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           downloadedClips.push(normClipPath);
         }
       } catch (clipErr) {
-        console.warn(`Error processing scene clip ${i}, generating black fallback clip:`, clipErr);
+        console.log(`Error processing scene clip ${i}, generating black fallback clip:`, clipErr);
         try {
           await new Promise((resolve, reject) => {
             const cmd = `ffmpeg -y -f lavfi -i color=c=black:s=${targetW}x${targetH}:r=30 -t ${targetDur} -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -video_track_timescale 90000 -an "${normClipPath}"`;
@@ -1700,7 +1720,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           });
           downloadedClips.push(normClipPath);
         } catch (fatalErr) {
-           console.error("Fatal error generating black fallback clip:", fatalErr);
+           console.log("Fatal error generating black fallback clip:", fatalErr);
         }
       }
     }
@@ -1735,7 +1755,7 @@ app.post("/api/render-complete-video", async (req, res) => {
         });
         masterVoicePath = fullVoicePath;
       } catch (vConcatErr) {
-        console.warn("Voice concatenation failed:", vConcatErr);
+        console.log("Voice concatenation failed:", vConcatErr);
       }
     }
 
@@ -1750,7 +1770,7 @@ app.post("/api/render-complete-video", async (req, res) => {
           musicLocalPath = musicPath;
         }
       } catch (mErr) {
-        console.warn("Background music download skipped:", mErr);
+        console.log("Background music download skipped:", mErr);
       }
     }
 
@@ -1844,7 +1864,7 @@ app.post("/api/render-complete-video", async (req, res) => {
       } catch {}
     });
   } catch (err: any) {
-    console.error("Render complete video error:", err);
+    console.log("Render complete video error:", err);
     try {
       await fs.promises.rm(tmpDir, { recursive: true, force: true });
     } catch {}
@@ -2522,7 +2542,7 @@ app.get("/api/audio/proxy", async (req, res) => {
       res.end();
     }
   } catch (err: any) {
-    console.error("Audio proxy error:", err);
+    console.log("Audio proxy error:", err);
     res.status(500).json({ error: "Failed to stream audio: " + err.message });
   }
 });
@@ -2650,7 +2670,7 @@ app.get("/api/stock/search", async (req, res) => {
         }
       }
     } catch (err: any) {
-      console.error("Pexels fetch error:", err?.message);
+      console.log("Pexels fetch error:", err?.message);
       errors.push(`Pexels: ${err?.message}`);
     }
   }
@@ -2733,7 +2753,7 @@ app.get("/api/stock/search", async (req, res) => {
         }
       }
     } catch (err: any) {
-      console.error("Pixabay fetch error:", err?.message);
+      console.log("Pixabay fetch error:", err?.message);
       errors.push(`Pixabay: ${err?.message}`);
     }
   }
@@ -2807,7 +2827,7 @@ app.get("/api/stock/search", async (req, res) => {
         }
       }
     } catch (gErr: any) {
-      console.error("GIPHY search error:", gErr?.message);
+      console.log("GIPHY search error:", gErr?.message);
       errors.push(`GIPHY: ${gErr?.message}`);
     }
   }
@@ -2893,7 +2913,7 @@ app.get("/api/stock/search", async (req, res) => {
         rateLimitState.archive.lastUpdated = new Date().toISOString();
       }
     } catch (iaErr: any) {
-      console.error("Internet Archive search error:", iaErr?.message);
+      console.log("Internet Archive search error:", iaErr?.message);
       errors.push(`Internet Archive: ${iaErr?.message}`);
     }
   }
@@ -2969,7 +2989,7 @@ app.get("/api/stock/search", async (req, res) => {
         rateLimitState.nasa.lastUpdated = new Date().toISOString();
       }
     } catch (nasaErr: any) {
-      console.error("NASA search error:", nasaErr?.message);
+      console.log("NASA search error:", nasaErr?.message);
       errors.push(`NASA: ${nasaErr?.message}`);
     }
   }
@@ -3189,7 +3209,7 @@ app.get("/api/proxy-download", async (req, res) => {
     }
     res.end();
   } catch (err: any) {
-    console.error("Proxy download error:", err?.message);
+    console.log("Proxy download error:", err?.message);
     if (!res.headersSent) {
       res.status(500).json({ error: `Download streaming failed: ${err?.message}` });
     } else {
@@ -3272,7 +3292,7 @@ app.get("/api/tts", async (req, res) => {
     res.setHeader("Accept-Ranges", "bytes");
     res.send(audioBuffer);
   } catch (err: any) {
-    console.error("Neural TTS streaming error:", err?.message);
+    console.log("Neural TTS streaming error:", err?.message);
     res.status(500).json({ error: "Speech synthesis failed", details: err?.message });
   }
 });
@@ -3298,7 +3318,7 @@ app.post("/api/tts", async (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=86400, immutable");
     res.send(audioBuffer);
   } catch (err: any) {
-    console.error("Neural TTS POST error:", err?.message);
+    console.log("Neural TTS POST error:", err?.message);
     res.status(500).json({ error: "Speech synthesis failed", details: err?.message });
   }
 });
