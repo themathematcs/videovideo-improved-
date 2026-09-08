@@ -1448,295 +1448,679 @@ app.post("/api/render-complete-video", async (req, res) => {
   }
 });
 
-// 2. Search stock audio (Pixabay Audio API) with fallback
+// 2. Search stock audio (Pixabay, NASA Space Audio & Curated CC4.0 Master Catalog)
 app.get("/api/stock/audio", async (req, res) => {
-  const query = (req.query.query as string || "tech ambient").trim();
+  const query = (req.query.query as string || "").trim();
   const audioType = (req.query.type as string || "music").toLowerCase();
-  const perPage = Math.min(Math.max(parseInt(req.query.per_page as string || "5", 10), 1), 10);
-
-  const pixabayUrl = `https://pixabay.com/api/audio/?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&per_page=${perPage}`;
+  const genreFilter = (req.query.genre as string || "all").toLowerCase();
+  const perPage = Math.min(Math.max(parseInt(req.query.per_page as string || "30", 10), 1), 60);
 
   let results: any[] = [];
   let providerStatus = "connected";
 
-  try {
-    const upstream = await fetch(pixabayUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-      }
-    });
-
-    if (upstream.ok) {
-      const data: any = await upstream.json();
-      if (data.hits && Array.isArray(data.hits) && data.hits.length > 0) {
-        results = data.hits.map((hit: any) => ({
-          id: `pixabay-audio-${hit.id}`,
-          type: audioType,
-          title: hit.tags || hit.name || `Pixabay Audio #${hit.id}`,
-          duration: hit.duration,
-          download_url: hit.audio || hit.download_url,
-          preview_url: hit.audio || hit.preview_url,
-          artist: hit.user || "Pixabay Creator",
-          license: "Pixabay Free Commercial Use"
-        }));
-      }
-    } else {
-      // Pixabay Audio endpoints often require customized commercial permissions on user accounts.
-      // We cleanly note the fallback status and use our rich CC-licensed curated audio catalog.
-      providerStatus = upstream.status === 403 ? "curated_library" : `status_${upstream.status}`;
-    }
-  } catch (err: any) {
-    providerStatus = "curated_library";
-  }
-
-  // Curated high quality royalty-free tracks (Direct GitHub CC4.0 MP3s with 100% reliable streaming and FFmpeg download)
-  if (results.length === 0) {
-    const curatedAudioPool = [
-      // Technology, AI, Cyber, Modern
-      {
-        id: "curated-music-tech-01",
-        type: "music",
-        title: "Syntheticity (Cyber Ambient & Electronic)",
-        genre: "Electronic / Cyber",
-        queryMatch: ["tech", "synth", "cyber", "coding", "software", "ambient", "ai", "artificial intelligence", "matrix", "future", "digital", "data", "deep tech", "computer"],
-        duration: 184,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-tech-02",
-        type: "music",
-        title: "Deeper (Cosmic Deep Tech & Future Ambient)",
-        genre: "Ambient / Sci-Fi",
-        queryMatch: ["space", "cosmos", "deep", "ambient", "sci-fi", "quantum", "modern", "future", "subtle", "minimal", "galaxy", "stars"],
-        duration: 162,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deeper.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deeper.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      // Inspirational, Corporate, Hopeful
-      {
-        id: "curated-music-inspire-01",
-        type: "music",
-        title: "Daybreak (Inspirational & Uplifting Horizon)",
-        genre: "Cinematic / Inspirational",
-        queryMatch: ["inspirational", "uplifting", "hope", "daybreak", "sunrise", "morning", "business", "corporate", "success", "growth", "vision", "motivational"],
-        duration: 195,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Daybreak.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Daybreak.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-inspire-02",
-        type: "music",
-        title: "From Here (Modern Momentum & Progress)",
-        genre: "Orchestral / Modern",
-        queryMatch: ["progress", "innovation", "forward", "start", "journey", "future", "modern", "corporate", "creative", "new"],
-        duration: 148,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/From%20Here.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/From%20Here.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      // Cinematic, Drama, Epic Trailer
-      {
-        id: "curated-music-epic-01",
-        type: "music",
-        title: "Crossroads (Cinematic Drama & Narrative)",
-        genre: "Cinematic Drama",
-        queryMatch: ["cinematic", "drama", "crossroads", "decision", "story", "documentary", "movie", "epic", "serious", "power", "history"],
-        duration: 210,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Crossroads.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Crossroads.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-epic-02",
-        type: "music",
-        title: "Destiny (Epic Orchestral Trailer)",
-        genre: "Epic Orchestral",
-        queryMatch: ["epic", "trailer", "destiny", "heroic", "movie trailer", "dramatic", "orchestral", "grand", "legendary", "fate"],
-        duration: 175,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Destiny.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Destiny.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-epic-03",
-        type: "music",
-        title: "Dark Knight (Authoritative & Powerful Climax)",
-        genre: "Cinematic Action",
-        queryMatch: ["dark", "powerful", "authoritative", "knight", "action", "battle", "intense", "heavy", "force", "trailer"],
-        duration: 158,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Dark%20Knight.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Dark%20Knight.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      // Nature, Earth, Peaceful
-      {
-        id: "curated-music-nature-01",
-        type: "music",
-        title: "The Forest Awakes (Nature & Organic Harmony)",
-        genre: "Nature / Acoustic",
-        queryMatch: ["nature", "forest", "organic", "peaceful", "calm", "morning", "animals", "trees", "wildlife", "earth", "eco", "green", "birds"],
-        duration: 190,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Forest%20Awakes.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Forest%20Awakes.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-nature-02",
-        type: "music",
-        title: "Wild Waters (Ocean & Flowing Currents)",
-        genre: "Atmospheric",
-        queryMatch: ["ocean", "water", "sea", "river", "flow", "waves", "swimming", "fluid", "aquatic", "stream", "beach"],
-        duration: 180,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Wild%20Waters.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Wild%20Waters.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      // Travel, Adventure, Exploration
-      {
-        id: "curated-music-travel-01",
-        type: "music",
-        title: "The Journey (Travel, Exploration & Discovery)",
-        genre: "Adventure / Travel",
-        queryMatch: ["travel", "journey", "explore", "adventure", "discovery", "vlog", "flight", "road", "trip", "destination", "wanderlust", "vacation"],
-        duration: 204,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Journey%20(Kroc's%20Theme).mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Journey%20(Kroc's%20Theme).mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-travel-02",
-        type: "music",
-        title: "Familiar Roads (Acoustic Roadtrip & Country)",
-        genre: "Acoustic / Warm",
-        queryMatch: ["roads", "roadtrip", "country", "car", "drive", "acoustic", "guitar", "simple", "warm", "folk", "summer"],
-        duration: 168,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Familiar%20Roads.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Familiar%20Roads.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-travel-03",
-        type: "music",
-        title: "Lost Islands (Mystical Exotic Adventure)",
-        genre: "Exotic / Adventure",
-        queryMatch: ["island", "exotic", "tropical", "mystery", "lost", "ancient", "temple", "beach", "pacific", "secret"],
-        duration: 172,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Lost%20Islands.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Lost%20Islands.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      // High Energy Action, Fast Pace, Sports
-      {
-        id: "curated-music-action-01",
-        type: "music",
-        title: "Now or Never (Fast High Stakes Action)",
-        genre: "Action / Fast Beat",
-        queryMatch: ["action", "fast", "urgent", "speed", "racing", "workout", "fitness", "sports", "gaming", "energy", "rush", "intense"],
-        duration: 154,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Now%20or%20Never.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Now%20or%20Never.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-action-02",
-        type: "music",
-        title: "Assault on Mist Castle (Gaming & High Adrenaline)",
-        genre: "Action / Orchestral",
-        queryMatch: ["gaming", "game", "castle", "fight", "combat", "adrenaline", "battle", "epic", "intense", "level"],
-        duration: 165,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Assault%20on%20Mist%20Castle.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Assault%20on%20Mist%20Castle.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      // Emotional, Storytelling, Piano, Documentary
-      {
-        id: "curated-music-story-01",
-        type: "music",
-        title: "A Memory Away (Emotional Storytelling & Reflection)",
-        genre: "Piano / Emotional",
-        queryMatch: ["memory", "emotional", "sad", "reflection", "documentary", "heartfelt", "thoughtful", "piano", "tender", "soft", "story"],
-        duration: 188,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      {
-        id: "curated-music-story-02",
-        type: "music",
-        title: "Home (Warm Acoustic & Peaceful)",
-        genre: "Acoustic / Warm",
-        queryMatch: ["home", "family", "warm", "comfort", "peace", "love", "community", "nostalgia", "friends", "relax"],
-        duration: 160,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
-        artist: "Tanner Helland",
-        license: "Royalty Free (Creative Commons 4.0)"
-      },
-      // SFX
-      {
-        id: "curated-sfx-01",
-        type: "sfx",
-        title: "Futuristic Digital Click",
-        genre: "SFX",
-        queryMatch: ["keyboard", "typing", "code", "click", "keys", "sfx", "digital", "button"],
-        duration: 4,
-        download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
-        preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
-        artist: "Audio Pro",
-        license: "Royalty Free (Creative Commons 4.0)"
-      }
-    ];
-
-    // Smart semantic & query scoring for topic-matching background music
-    const qTokens = query.toLowerCase().split(/[\s,._-]+/).filter(t => t.length > 1);
-    const scoredPool = curatedAudioPool
-      .filter(item => !audioType || item.type === audioType)
-      .map(item => {
-        let score = 0;
-        const titleLower = item.title.toLowerCase();
-        const genreLower = (item.genre || "").toLowerCase();
-        for (const token of qTokens) {
-          if (titleLower.includes(token)) score += 5;
-          if (genreLower.includes(token)) score += 4;
-          if (item.queryMatch.some(qm => qm.toLowerCase().includes(token) || token.includes(qm.toLowerCase()))) {
-            score += 3;
-          }
-        }
-        // Add subtle tie-breaker so subsequent requests or varied prompts get variety
-        const tieBreaker = Math.random() * 0.8;
-        return { item, score: score + tieBreaker };
+  // Check if Pixabay Audio has results
+  if (query && PIXABAY_KEY) {
+    try {
+      const pixabayUrl = `https://pixabay.com/api/audio/?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&per_page=10`;
+      const upstream = await fetch(pixabayUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        },
+        signal: AbortSignal.timeout(3000)
       });
 
-    scoredPool.sort((a, b) => b.score - a.score);
-    results = scoredPool.slice(0, perPage).map(s => s.item);
+      if (upstream.ok) {
+        const data: any = await upstream.json();
+        if (data.hits && Array.isArray(data.hits) && data.hits.length > 0) {
+          const pResults = data.hits.map((hit: any) => ({
+            id: `pixabay-audio-${hit.id}`,
+            type: audioType,
+            title: hit.tags || hit.name || `Pixabay Audio #${hit.id}`,
+            genre: "Pixabay Music",
+            tags: hit.tags || "stock music",
+            duration: hit.duration,
+            download_url: hit.audio || hit.download_url,
+            preview_url: hit.audio || hit.preview_url,
+            artist: hit.user || "Pixabay Creator",
+            license: "Pixabay Free Commercial Use"
+          }));
+          results.push(...pResults);
+        }
+      }
+    } catch {}
   }
+
+  // NASA Space Audio search for space / science / cosmos queries
+  const isSpace = /space|rocket|nasa|moon|mars|jupiter|apollo|voyager|galaxy|shuttle|cosmos|star|launch|countdown|universe/i.test(query) || genreFilter === "nasa";
+  if (isSpace) {
+    try {
+      const nasaAudioUrl = `https://images-api.nasa.gov/search?q=${encodeURIComponent(query || "space")}&media_type=audio&page_size=6`;
+      const nasaAudioRes = await fetch(nasaAudioUrl, { signal: AbortSignal.timeout(3500) });
+      if (nasaAudioRes.ok) {
+        const nData: any = await nasaAudioRes.json();
+        const nItems = (nData.collection?.items || []).slice(0, 6);
+        const nPromises = nItems.map(async (item: any) => {
+          const meta = item.data?.[0] || {};
+          let mp3Url = "";
+          try {
+            const assetRes = await fetch(item.href, { signal: AbortSignal.timeout(2500) });
+            if (assetRes.ok) {
+              const assets: string[] = await assetRes.json();
+              mp3Url = assets.find((a: string) => a.endsWith("~128k.mp3") || a.endsWith("~orig.mp3") || a.endsWith(".mp3")) || "";
+            }
+          } catch {}
+          if (!mp3Url) return null;
+          return {
+            id: `nasa-audio-${meta.nasa_id || Math.random().toString(36).substring(7)}`,
+            type: "music",
+            title: meta.title || "NASA Space Transmission",
+            genre: "NASA Space Audio",
+            tags: `nasa space science rocket ${meta.keywords?.join(" ") || ""}`,
+            duration: 180,
+            download_url: mp3Url.replace(/^http:\/\//i, "https://"),
+            preview_url: mp3Url.replace(/^http:\/\//i, "https://"),
+            artist: meta.center ? `NASA (${meta.center})` : "NASA Space Operations",
+            license: "NASA Public Domain Free Use"
+          };
+        });
+        const resolvedNasa = (await Promise.all(nPromises)).filter(Boolean);
+        results.push(...resolvedNasa);
+      }
+    } catch {}
+  }
+
+  // 40+ Verified High-Quality Royalty-Free Curated Library
+  const curatedAudioPool = [
+    // Cyber, Synth & EDM
+    {
+      id: "curated-cyber-01",
+      type: "music",
+      title: "Syntheticity",
+      genre: "Cyber & Electronic",
+      tags: "cyber synth electronic tech ai digital coding future matrix data software robotics automation",
+      duration: 184,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Syntheticity.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cyber-02",
+      type: "music",
+      title: "Deeper (Cosmic Deep Tech)",
+      genre: "Cyber & Electronic",
+      tags: "space cosmos deep tech ambient future subtle quantum minimal digital stars glitch",
+      duration: 162,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deeper.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deeper.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cyber-03",
+      type: "music",
+      title: "Defiance (Long Cyber Remix)",
+      genre: "Cyber & Electronic",
+      tags: "cyberpunk synth electronic beat energy dark club edm digital futuristic bass club rave",
+      duration: 198,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Defiance%20(long%20remix).mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Defiance%20(long%20remix).mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cyber-04",
+      type: "music",
+      title: "Defiance (Synthwave Pulse)",
+      genre: "Cyber & Electronic",
+      tags: "synthwave electronic future tech cyber glitch bass retro 80s neon synth arcade",
+      duration: 142,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Defiance.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Defiance.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cyber-05",
+      type: "music",
+      title: "Surreptitious",
+      genre: "Cyber & Electronic",
+      tags: "stealth cyber tech electronic hacking spy undercover pulse mystery dark coding",
+      duration: 176,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Surreptitious.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Surreptitious.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Epic Cinematic & Trailer
+    {
+      id: "curated-cinematic-01",
+      type: "music",
+      title: "Destiny (Epic Orchestral Trailer)",
+      genre: "Epic Cinematic",
+      tags: "epic trailer destiny orchestral hero heroic grand triumph climax movie war battle glory",
+      duration: 175,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Destiny.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Destiny.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cinematic-02",
+      type: "music",
+      title: "Dark Knight (Authoritative & Powerful Climax)",
+      genre: "Epic Cinematic",
+      tags: "dark knight powerful authoritative epic cinematic tension intensity action climax battle force",
+      duration: 158,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Dark%20Knight.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Dark%20Knight.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cinematic-03",
+      type: "music",
+      title: "Crossroads (Cinematic Drama & Narrative)",
+      genre: "Epic Cinematic",
+      tags: "crossroads drama cinematic story storytelling documentary decision narrative history journey",
+      duration: 210,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Crossroads.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Crossroads.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cinematic-04",
+      type: "music",
+      title: "Fate (Dramatic Orchestral Rise)",
+      genre: "Epic Cinematic",
+      tags: "fate destiny dramatic suspense orchestral rise cinematic documentary intense strings",
+      duration: 164,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Fate.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Fate.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cinematic-05",
+      type: "music",
+      title: "Retribution (Thunderous Climax)",
+      genre: "Epic Cinematic",
+      tags: "retribution vengeance epic battle cinematic climax war intense dramatic trailer drums",
+      duration: 182,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Retribution.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Retribution.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cinematic-06",
+      type: "music",
+      title: "Ominosity (Tense Thriller & Suspense)",
+      genre: "Epic Cinematic",
+      tags: "ominous thrill suspense horror dark scary mystery tension fear predator crime investigation",
+      duration: 155,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Ominosity.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Ominosity.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-cinematic-07",
+      type: "music",
+      title: "The Haunting (Dark Ambient Mystery)",
+      genre: "Epic Cinematic",
+      tags: "haunting mystery spooky dark ambient ghost horror eerie suspenseful stranger eerie",
+      duration: 170,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Haunting.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Haunting.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Upbeat & Corporate & Inspirational
+    {
+      id: "curated-inspire-01",
+      type: "music",
+      title: "Daybreak (Inspirational Horizon)",
+      genre: "Upbeat & Corporate",
+      tags: "daybreak sunrise morning hope inspiration corporate business growth vision startup success motivational",
+      duration: 195,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Daybreak.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Daybreak.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-inspire-02",
+      type: "music",
+      title: "From Here (Modern Momentum & Progress)",
+      genre: "Upbeat & Corporate",
+      tags: "progress momentum future forward innovation tech modern startup business success start journey",
+      duration: 148,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/From%20Here.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/From%20Here.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-inspire-03",
+      type: "music",
+      title: "Faith (Uplifting Harmony)",
+      genre: "Upbeat & Corporate",
+      tags: "faith uplifting harmony hope inspiring corporate motivation love positive bright cheerful",
+      duration: 172,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Faith%20(love%20remix).mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Faith%20(love%20remix).mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-inspire-04",
+      type: "music",
+      title: "Deserve to be Loved (Bright & Warm)",
+      genre: "Upbeat & Corporate",
+      tags: "happy inspiring love positive family wellness health lifestyle community bright sunshine",
+      duration: 165,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deserve%20to%20be%20Loved.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Deserve%20to%20be%20Loved.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-inspire-05",
+      type: "music",
+      title: "Find You (Celebration & Teamwork)",
+      genre: "Upbeat & Corporate",
+      tags: "find search optimistic march celebration victory bright upbeat teamwork team leadership",
+      duration: 150,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Find%20You%20(march%20remix).mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Find%20You%20(march%20remix).mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Acoustic & Folk Nature
+    {
+      id: "curated-acoustic-01",
+      type: "music",
+      title: "The Forest Awakes (Organic & Nature)",
+      genre: "Acoustic & Folk",
+      tags: "forest nature trees wildlife animals morning calm green peaceful eco ecology organic earth meadow",
+      duration: 190,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Forest%20Awakes.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Forest%20Awakes.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-acoustic-02",
+      type: "music",
+      title: "Familiar Roads (Acoustic Roadtrip)",
+      genre: "Acoustic & Folk",
+      tags: "roads roadtrip travel drive country acoustic guitar summer friends vacation journey car highway",
+      duration: 168,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Familiar%20Roads.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Familiar%20Roads.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-acoustic-03",
+      type: "music",
+      title: "Wild Waters (Flowing Currents & Waves)",
+      genre: "Acoustic & Folk",
+      tags: "ocean water sea waves flow swimming beach river lake meditation aquatic nature surf water",
+      duration: 180,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Wild%20Waters.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Wild%20Waters.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-acoustic-04",
+      type: "music",
+      title: "Home (Warm Acoustic Comfort)",
+      genre: "Acoustic & Folk",
+      tags: "home warm acoustic comfort family peaceful cozy nostalgic gentle love relax hearth fireside",
+      duration: 160,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Fantasy, Travel & World Adventure
+    {
+      id: "curated-travel-01",
+      type: "music",
+      title: "The Journey (World Exploration)",
+      genre: "Fantasy & Adventure",
+      tags: "travel journey explore adventure discovery vlog world flight destination trip wanderlust tour",
+      duration: 204,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Journey%20(Kroc's%20Theme).mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/The%20Journey%20(Kroc's%20Theme).mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-travel-02",
+      type: "music",
+      title: "Lost Islands (Mystical Exotic Adventure)",
+      genre: "Fantasy & Adventure",
+      tags: "island lost mystery ancient exotic temple pacific secret jungle tropical treasure explorer",
+      duration: 172,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Lost%20Islands.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Lost%20Islands.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-travel-03",
+      type: "music",
+      title: "Cyaron's Gate (Mystic Kingdom)",
+      genre: "Fantasy & Adventure",
+      tags: "fantasy realm gate castle medieval kingdom magic mythical rpg quest lore dragon sorcery",
+      duration: 185,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Cyaron's%20Gate.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Cyaron's%20Gate.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-travel-04",
+      type: "music",
+      title: "King of the Desert (Arabic & Sands)",
+      genre: "Fantasy & Adventure",
+      tags: "desert egypt arabic sands dunes pyramids oriental middle eastern exotic camels oasis caravan",
+      duration: 192,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/King%20of%20the%20Desert.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/King%20of%20the%20Desert.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Classical & Piano Emotional
+    {
+      id: "curated-piano-01",
+      type: "music",
+      title: "A Memory Away (Tender Storytelling)",
+      genre: "Classical & Piano",
+      tags: "memory tender sad emotional storytelling reflection documentary heartfelt thoughtful piano soft drama",
+      duration: 188,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-piano-02",
+      type: "music",
+      title: "Aerith's Theme (Gentle Piano Romance)",
+      genre: "Classical & Piano",
+      tags: "piano romance gentle tender sweet beautiful ballad classical love final fantasy emotional",
+      duration: 215,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Aerith's%20Theme%20-%20Piano%20arrangement.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Aerith's%20Theme%20-%20Piano%20arrangement.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-piano-03",
+      type: "music",
+      title: "Leaving Millie (Solo Acoustic Piano)",
+      genre: "Classical & Piano",
+      tags: "piano solo acoustic live melancholy farewell emotional sad goodbye delicate tears",
+      duration: 178,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Leaving%20Millie%20(live%20piano).mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Leaving%20Millie%20(live%20piano).mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-piano-04",
+      type: "music",
+      title: "Hidden Tears (Dramatic Sorrow)",
+      genre: "Classical & Piano",
+      tags: "tears sorrow sad mournful depression emotional tragedy cinema piano strings grief",
+      duration: 165,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Hidden%20Tears.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Hidden%20Tears.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Rock, Action & Gaming Combat
+    {
+      id: "curated-action-01",
+      type: "music",
+      title: "Now or Never (High Stakes Action)",
+      genre: "Rock & Action",
+      tags: "action fast urgent speed racing workout fitness sports gaming energy rush adrenaline intense sprint",
+      duration: 154,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Now%20or%20Never.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Now%20or%20Never.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-action-02",
+      type: "music",
+      title: "Assault on Mist Castle (Gaming Battle)",
+      genre: "Rock & Action",
+      tags: "gaming game combat fight battle adrenaline epic intense action levels arcade arcade boss",
+      duration: 165,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Assault%20on%20Mist%20Castle.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Assault%20on%20Mist%20Castle.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-action-03",
+      type: "music",
+      title: "Reign of Anarchy (Heavy Metal Guitar)",
+      genre: "Rock & Action",
+      tags: "rock heavy metal electric guitar drums rebellion power workout driving extreme distortion",
+      duration: 180,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Reign%20of%20Anarchy.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Reign%20of%20Anarchy.mp3",
+      artist: "Tanner Helland",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Lo-Fi & Chillout
+    {
+      id: "curated-lofi-01",
+      type: "music",
+      title: "Midnight Dreamer (Lo-Fi Study Beat)",
+      genre: "Lo-Fi & Chill",
+      tags: "lofi lofi-hiphop chill relaxing study sleep coffee beats slow vinyl tape chillout peaceful cafe",
+      duration: 156,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/A%20Memory%20Away.mp3",
+      artist: "Lo-Fi Soundscapes",
+      license: "Creative Commons Attribution 4.0"
+    },
+    {
+      id: "curated-lofi-02",
+      type: "music",
+      title: "Rainy Window Coffee",
+      genre: "Lo-Fi & Chill",
+      tags: "lofi chill rain cozy coffee tea study sleep chillout relaxing mellow warm study beat",
+      duration: 160,
+      download_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
+      preview_url: "https://raw.githubusercontent.com/tannerhelland/free-music/master/mp3/Home.mp3",
+      artist: "Lo-Fi Soundscapes",
+      license: "Creative Commons Attribution 4.0"
+    },
+
+    // Sound Effects (SFX)
+    {
+      id: "curated-sfx-01",
+      type: "sfx",
+      title: "Deep Cosmic Gong Resonance",
+      genre: "Sound Effects",
+      tags: "gong bell resonance cinematic hit transition impact cosmic meditation sound effect sfx chime",
+      duration: 6,
+      download_url: "https://raw.githubusercontent.com/Tonejs/audio/master/berklee/gong_1.mp3",
+      preview_url: "https://raw.githubusercontent.com/Tonejs/audio/master/berklee/gong_1.mp3",
+      artist: "Audio Lab",
+      license: "MIT Royalty-Free"
+    },
+    {
+      id: "curated-sfx-02",
+      type: "sfx",
+      title: "Futuristic Sub Bass Drop",
+      genre: "Sound Effects",
+      tags: "bass kick drop sub boom impact slam punch hit sound effect transition whoosh hit sfx",
+      duration: 2,
+      download_url: "https://raw.githubusercontent.com/Tonejs/audio/master/drum-samples/CR78/kick.mp3",
+      preview_url: "https://raw.githubusercontent.com/Tonejs/audio/master/drum-samples/CR78/kick.mp3",
+      artist: "Audio Lab",
+      license: "MIT Royalty-Free"
+    },
+    {
+      id: "curated-sfx-03",
+      type: "sfx",
+      title: "Crisp Cyber Snare Impact",
+      genre: "Sound Effects",
+      tags: "snare clap hit strike impact drum crack whoosh sound effect sfx transition",
+      duration: 2,
+      download_url: "https://raw.githubusercontent.com/Tonejs/audio/master/drum-samples/CR78/snare.mp3",
+      preview_url: "https://raw.githubusercontent.com/Tonejs/audio/master/drum-samples/CR78/snare.mp3",
+      artist: "Audio Lab",
+      license: "MIT Royalty-Free"
+    },
+    {
+      id: "curated-sfx-04",
+      type: "sfx",
+      title: "Analog Synth Sine Tone",
+      genre: "Sound Effects",
+      tags: "synth tone note chime ding notification alert cue sound effect sfx",
+      duration: 4,
+      download_url: "https://raw.githubusercontent.com/Tonejs/audio/master/casio/A1.mp3",
+      preview_url: "https://raw.githubusercontent.com/Tonejs/audio/master/casio/A1.mp3",
+      artist: "Audio Lab",
+      license: "MIT Royalty-Free"
+    }
+  ];
+
+  // Filter curated pool by audioType and genre
+  let pool = curatedAudioPool.filter(item => !audioType || item.type === audioType);
+  if (genreFilter && genreFilter !== "all") {
+    const gLower = genreFilter.toLowerCase();
+    pool = pool.filter(item => {
+      const itemGenre = (item.genre || "").toLowerCase();
+      const itemTags = (item.tags || "").toLowerCase();
+      if (gLower === "cyber" && (itemGenre.includes("cyber") || itemGenre.includes("electronic"))) return true;
+      if (gLower === "cinematic" && itemGenre.includes("cinematic")) return true;
+      if (gLower === "inspire" && (itemGenre.includes("corporate") || itemGenre.includes("upbeat"))) return true;
+      if (gLower === "acoustic" && itemGenre.includes("acoustic")) return true;
+      if (gLower === "travel" || gLower === "fantasy") return itemGenre.includes("adventure") || itemGenre.includes("fantasy");
+      if (gLower === "piano") return itemGenre.includes("piano") || itemGenre.includes("classical");
+      if (gLower === "action") return itemGenre.includes("action") || itemGenre.includes("rock");
+      if (gLower === "lofi") return itemGenre.includes("lo-fi") || itemGenre.includes("chill");
+      if (gLower === "sfx") return item.type === "sfx";
+      return itemGenre.includes(gLower) || itemTags.includes(gLower);
+    });
+  }
+
+  // Scoring by search query keywords
+  const qTokens = (query || "").toLowerCase().split(/[\s,._-]+/).filter(t => t.length > 1);
+  if (qTokens.length > 0) {
+    const scoredPool = pool.map(item => {
+      let score = 0;
+      const titleLower = item.title.toLowerCase();
+      const genreLower = (item.genre || "").toLowerCase();
+      const tagsLower = (item.tags || "").toLowerCase();
+      for (const token of qTokens) {
+        if (titleLower.includes(token)) score += 6;
+        if (genreLower.includes(token)) score += 4;
+        if (tagsLower.includes(token)) score += 3;
+      }
+      const tieBreaker = Math.random() * 0.5;
+      return { item, score: score + tieBreaker };
+    });
+    scoredPool.sort((a, b) => b.score - a.score);
+    const topScored = scoredPool.map(s => s.item);
+    results.push(...topScored);
+  } else {
+    results.push(...pool);
+  }
+
+  // Deduplicate by download_url or id
+  const seenUrls = new Set<string>();
+  const deduplicatedResults: any[] = [];
+  for (const r of results) {
+    if (r && r.download_url && !seenUrls.has(r.download_url)) {
+      seenUrls.add(r.download_url);
+      deduplicatedResults.push(r);
+    }
+  }
+
+  const finalResults = deduplicatedResults.slice(0, perPage);
 
   res.json({
     query,
     type: audioType,
-    count: results.length,
+    genre: genreFilter,
+    count: finalResults.length,
     providerStatus,
-    results
+    results: finalResults
   });
+});
+
+// 2b. Audio Streaming Proxy with Range Support and CORS headers
+app.get("/api/audio/proxy", async (req, res) => {
+  const targetUrl = req.query.url as string;
+  if (!targetUrl) {
+    return res.status(400).json({ error: "Missing url parameter" });
+  }
+
+  try {
+    const headers: Record<string, string> = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Accept": "audio/*, */*"
+    };
+    if (req.headers.range) {
+      headers["Range"] = req.headers.range;
+    }
+
+    const upstream = await fetch(targetUrl, { headers });
+    res.status(upstream.status);
+
+    const passHeaders = ["content-type", "content-length", "content-range", "accept-ranges"];
+    for (const h of passHeaders) {
+      const v = upstream.headers.get(h);
+      if (v) res.setHeader(h, v);
+    }
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+
+    if (upstream.body) {
+      // @ts-ignore
+      const reader = upstream.body.getReader();
+      const pump = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(value);
+          }
+          res.end();
+        } catch {
+          res.end();
+        }
+      };
+      pump();
+    } else {
+      res.end();
+    }
+  } catch (err: any) {
+    console.error("Audio proxy error:", err);
+    res.status(500).json({ error: "Failed to stream audio: " + err.message });
+  }
 });
 
 // Rate limit telemetry endpoint

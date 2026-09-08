@@ -52,7 +52,7 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
     let isCancelled = false;
     setLoadingMusic(true);
 
-    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedMusicKeyword)}&type=music&per_page=4`)
+    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedMusicKeyword)}&type=music&per_page=8`)
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled) {
@@ -78,7 +78,7 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
     let isCancelled = false;
     setLoadingSfx(true);
 
-    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedSfxKeyword)}&type=sfx&per_page=4`)
+    fetch(`/api/stock/audio?query=${encodeURIComponent(selectedSfxKeyword)}&type=sfx&per_page=8`)
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled) {
@@ -112,18 +112,25 @@ export const AudioSuggestionsPanel: React.FC<AudioSuggestionsPanelProps> = ({
       audioRef.current = new Audio();
       audioRef.current.onended = () => setPlayingTrackId(null);
       audioRef.current.onerror = () => {
-        console.warn("Audio stream playback failed, falling back to synthesizer preview");
         setPlayingTrackId(null);
         handleSynthesizeAudio(track.title || track.type);
       };
     }
 
-    audioRef.current.src = track.preview_url || track.download_url;
+    const audioUrl = track.preview_url || track.download_url;
+    audioRef.current.src = audioUrl;
     audioRef.current.play()
       .then(() => setPlayingTrackId(track.id))
-      .catch((err) => {
-        console.warn("Browser blocked autoplay or stream failed, synthesizing audio:", err);
-        handleSynthesizeAudio(track.title || track.type);
+      .catch(() => {
+        if (audioRef.current) {
+          audioRef.current.src = `/api/audio/proxy?url=${encodeURIComponent(audioUrl)}`;
+          audioRef.current.play()
+            .then(() => setPlayingTrackId(track.id))
+            .catch(() => {
+              setPlayingTrackId(null);
+              handleSynthesizeAudio(track.title || track.type);
+            });
+        }
       });
   };
 
