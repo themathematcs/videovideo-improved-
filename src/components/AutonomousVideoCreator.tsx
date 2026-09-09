@@ -1221,6 +1221,22 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
     setRenderProgressMsg("Downloading high-definition footage & music...");
 
     try {
+      // Strip pipe-separated metadata from subtitle/narration fields before render
+      // e.g. "A junior dev's terminal | NASA Media API | satellite | Style: ..." → "A junior dev's terminal"
+      const cleanSubtitleForRender = (raw: string): string => {
+        if (!raw) return "";
+        let text = raw.trim();
+        // Remove everything after the first pipe (API source, search term, style metadata)
+        if (text.includes("|")) text = text.split("|")[0].trim();
+        // Strip quote wrappers
+        text = text.replace(/^["']|["']$/g, "").trim();
+        // Strip known metadata prefixes
+        text = text
+          .replace(/^\s*API\s+Source\s*:\s*/i, "")
+          .replace(/^\s*Style\s*:\s*/i, "");
+        return text;
+      };
+
       const payload = {
         title: videoPlan?.title || "complete_autonomous_video",
         aspectRatio: aspectRatio,
@@ -1236,6 +1252,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             if (sc.videoAsset?.downloadUrl || sc.videoAsset?.previewUrl) splitList.push((sc.videoAsset.downloadUrl || sc.videoAsset.previewUrl)!);
             if (sc.secondaryVideoAsset?.downloadUrl || sc.secondaryVideoAsset?.previewUrl) splitList.push((sc.secondaryVideoAsset.downloadUrl || sc.secondaryVideoAsset.previewUrl)!);
           }
+          const cleanedSubtitle = cleanSubtitleForRender(sc.subtitle || sc.narration || "");
+          const cleanedNarration = cleanSubtitleForRender(sc.narration || sc.subtitle || "");
           return {
             scene_number: sc.scene_number,
             duration: sc.duration,
@@ -1246,8 +1264,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
             tertiaryVideoUrl: splitList[2] || "",
             quaternaryVideoUrl: splitList[3] || "",
             splitUrls: splitList,
-            subtitle: sc.subtitle || sc.narration || "",
-            narration: sc.narration || sc.subtitle || ""
+            subtitle: cleanedSubtitle,
+            narration: cleanedNarration
           };
         })
       };

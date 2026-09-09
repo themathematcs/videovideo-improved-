@@ -1,6 +1,9 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import fs from "fs";
+import os from "os";
+import cron from "node-cron";
 import { exec, execSync } from "child_process";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
@@ -26,13 +29,529 @@ try {
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: '200mb' }));
 
 // API Keys with defaults from user configuration
 const PEXELS_KEY = process.env.PEXELS_API_KEY || "h1r1DWw3EyuEcP8pFXl6e9jo76I0RfxUoG3d18kvEliS6pH6eEyHbmNo";
 const PIXABAY_KEY = process.env.PIXABAY_API_KEY || "35348186-369453ead8e33f2eec3ada4ec";
 const GIPHY_KEY = process.env.GIPHY_API_KEY || "glVs44nST7draZncBpDT52GYz89IF5IA";
 const NASA_KEY = process.env.NASA_API_KEY || "DEMO_KEY";
+
+const YOUTUBE_CLIENT_ID = process.env.CLIENT_ID || process.env.YOUTUBE_CLIENT_ID || "";
+const YOUTUBE_CLIENT_SECRET = process.env.CLIENT_SECRET || process.env.YOUTUBE_CLIENT_SECRET || "";
+const YOUTUBE_REFRESH_TOKEN = process.env.REFRESH_TOKEN || process.env.YOUTUBE_REFRESH_TOKEN || "";
+
+const YOUTUBE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+const YOUTUBE_UPLOAD_URL = "https://www.googleapis.com/upload/youtube/v3/videos";
+const YOUTUBE_DATA_URL = "https://youtube.googleapis.com/youtube/v3";
+const YOUTUBE_ANALYTICS_URL = "https://youtubeanalytics.googleapis.com/v2";
+const YOUTUBE_CONTENT_STORE_FILE = path.join(_dirname, "youtube-content-store.json");
+
+function normalizeAppBaseUrl(raw?: string) {
+  const envValue = String(raw || '').trim();
+  if (!envValue || /MY_APP_URL/i.test(envValue)) {
+    return 'http://localhost:3000';
+  }
+  if (/^https?:\/\//i.test(envValue)) {
+    return envValue.replace(/\/+$/, '');
+  }
+  return `http://${envValue.replace(/\/+$/, '')}`;
+}
+
+const APP_BASE_URL = normalizeAppBaseUrl(process.env.APP_URL);
+
+interface ChannelContentRecord {
+  videoId: string;
+  title: string;
+  description: string;
+  tags: string[];
+  searchKeywords: string[];
+  topicRecommendations: string[];
+  uploadedAt: number;
+  telemetry: { rows?: any[] } | any;
+  lastTelemetryAt: number;
+}
+
+function normalizeStringArray(input: unknown, fallback: string[] = []): string[] {
+  if (Array.isArray(input)) {
+    return input.map(String).map(item => item.trim()).filter(Boolean);
+  }
+  if (typeof input === "string") {
+    return input.split(/[\s,]+/).map(item => item.trim()).filter(Boolean);
+  }
+  return fallback;
+}
+
+function normalizeSingleMusicTrack(input: unknown): string | undefined {
+  if (Array.isArray(input)) {
+    const tracks = input.map(String).map(item => item.trim()).filter(Boolean);
+    return tracks.length > 0 ? tracks[0] : undefined;
+  }
+  if (typeof input === "string") {
+    const cleaned = input.trim();
+    return cleaned.length > 0 ? cleaned : undefined;
+  }
+  return undefined;
+}
+
+function loadYoutubeContentStoreFromDisk(): Map<string, ChannelContentRecord> {
+  const store = new Map<string, ChannelContentRecord>();
+  try {
+    if (!fs.existsSync(YOUTUBE_CONTENT_STORE_FILE)) {
+      return store;
+    }
+    const raw = fs.readFileSync(YOUTUBE_CONTENT_STORE_FILE, "utf8");
+    const parsed = JSON.parse(raw) as Record<string, ChannelContentRecord>;
+    for (const [videoId, record] of Object.entries(parsed)) {
+      if (record && record.videoId === videoId) {
+        store.set(videoId, record);
+      }
+    }
+  } catch (err) {
+    console.warn("Unable to load persisted YouTube content store:", err);
+  }
+  return store;
+}
+
+function persistYoutubeContentStoreToDisk(store: Map<string, ChannelContentRecord>) {
+  try {
+    const payload = Object.fromEntries(store.entries());
+    fs.writeFileSync(YOUTUBE_CONTENT_STORE_FILE, JSON.stringify(payload, null, 2), "utf8");
+  } catch (err) {
+    console.warn("Unable to persist YouTube content store:", err);
+  }
+}
+
+const youtubeContentStore = loadYoutubeContentStoreFromDisk();
+
+async function getYoutubeAccessToken() {
+  if (!YOUTUBE_CLIENT_ID || !YOUTUBE_CLIENT_SECRET || !YOUTUBE_REFRESH_TOKEN) {
+    throw new Error("Missing OAuth credentials: CLIENT_ID, CLIENT_SECRET, or REFRESH_TOKEN is required for YouTube OAuth 2.0 uploads and analytics.");
+  }
+
+  const form = new URLSearchParams({
+    client_id: YOUTUBE_CLIENT_ID,
+    client_secret: YOUTUBE_CLIENT_SECRET,
+    refresh_token: YOUTUBE_REFRESH_TOKEN,
+    grant_type: "refresh_token"
+  });
+
+  const res = await fetch(YOUTUBE_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString()
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`YouTube OAuth token refresh failed: ${res.status} ${errText}`);
+  }
+
+  const data = await res.json() as { access_token?: string; expires_in?: number; token_type?: string };
+  if (!data.access_token) {
+    throw new Error("YouTube OAuth token refresh returned no access_token");
+  }
+
+  return data.access_token;
+}
+
+async function fetchYoutubeChannel(accessToken: string) {
+  const channelRes = await fetch(`${YOUTUBE_DATA_URL}/channels?part=snippet,contentDetails,statistics&mine=true`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+
+  if (!channelRes.ok) {
+    const err = await channelRes.text();
+    throw new Error(`YouTube Data API channel lookup failed: ${channelRes.status} ${err}`);
+  }
+
+  return await channelRes.json();
+}
+
+async function fetchYoutubeAnalytics(accessToken: string, reqQuery: any) {
+  const startDate = reqQuery.startDate || "2026-01-01";
+  const endDate = reqQuery.endDate || new Date().toISOString().slice(0, 10);
+  const metrics = reqQuery.metrics || "views,estimatedMinutesWatched,averageViewDuration";
+  const dimensions = reqQuery.dimensions || "day";
+  const ids = reqQuery.ids || "channel==MINE";
+  const filters = reqQuery.videoId ? `filters=${encodeURIComponent(`video==${reqQuery.videoId}`)}` : "";
+
+  const url = `${YOUTUBE_ANALYTICS_URL}/reports?ids=${encodeURIComponent(ids)}&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&metrics=${encodeURIComponent(metrics)}&dimensions=${encodeURIComponent(dimensions)}${filters ? `&${filters}` : ""}`;
+
+  const analyticsRes = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+
+  if (!analyticsRes.ok) {
+    const err = await analyticsRes.text();
+    throw new Error(`YouTube Analytics API failed: ${analyticsRes.status} ${err}`);
+  }
+
+  return await analyticsRes.json();
+}
+
+function applyShortsDurationRule(scenes: Array<{ duration?: number; durationSeconds?: number }> = [], aspectRatio?: string) {
+  if (String(aspectRatio || "16:9") !== "9:16") {
+    return scenes;
+  }
+
+  const currentTotal = scenes.reduce((sum, s) => sum + Number(s.duration ?? s.durationSeconds ?? 0), 0);
+  if (currentTotal < 50 || currentTotal > 60) {
+    const target = 55;
+    const ratio = Math.max(0.001, target / Math.max(currentTotal, 1));
+    scenes.forEach((s) => {
+      const cur = Number(s.duration ?? s.durationSeconds ?? 5);
+      const next = Math.min(18, Math.max(3, Math.round(cur * ratio)));
+      s.duration = next;
+      s.durationSeconds = next;
+    });
+  }
+
+  const total = scenes.reduce((sum, s) => sum + Number(s.duration ?? s.durationSeconds ?? 0), 0);
+  if (total < 50) {
+    scenes[scenes.length - 1].duration = Number(scenes[scenes.length - 1].duration ?? scenes[scenes.length - 1].durationSeconds ?? 5) + (50 - total);
+    scenes[scenes.length - 1].durationSeconds = scenes[scenes.length - 1].duration;
+  } else if (total > 60) {
+    const over = total - 60;
+    scenes[scenes.length - 1].duration = Math.max(3, Number(scenes[scenes.length - 1].duration ?? scenes[scenes.length - 1].durationSeconds ?? 5) - over);
+    scenes[scenes.length - 1].durationSeconds = scenes[scenes.length - 1].duration;
+  }
+
+  return scenes;
+}
+
+async function fetchYouTubeCompetitorResearch(accessToken: string, niche: string = "creator strategy ai workflow") {
+  const q = encodeURIComponent(niche || "creator strategy ai workflow");
+  const url = `${YOUTUBE_DATA_URL}/search?part=snippet&type=video&order=viewCount&maxResults=5&safeSearch=none&q=${q}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`YouTube search.list failed: ${res.status} ${err}`);
+  }
+
+  const data = await res.json();
+  return Array.isArray(data.items) ? data.items : [];
+}
+
+function buildRichDescription(title: string, description: string, tags: string[], keywords: string[]) {
+  const cleanTitle = String(title || "Creator Workflow").replace(/\s+/g, " ").trim();
+  const cleanTags = Array.from(new Set([
+    ...normalizeStringArray(tags, []),
+    ...normalizeStringArray(keywords, [])
+  ].map((t: string) => String(t).trim().replace(/^#+/, "")).filter(Boolean))).slice(0, 12);
+
+  const hook = `${cleanTitle}: research, systems, and publishing momentum`;
+  const valueBody = [
+    "This short turns creator research into a clear automation workflow for publishing faster.",
+    "It connects searchable ideas, repeatable structure, and channel feedback to improve future content decisions.",
+    "The goal is to make the next video stronger, cleaner, and easier to optimize."
+  ].slice(0, 3).join(" ");
+
+  const hashtags = Array.from(new Set([
+    "#Shorts",
+    "#YouTubeAutomation",
+    "#AI",
+    ...cleanTags.map(t => `#${String(t).replace(/[^a-zA-Z0-9_\-]/g, "")}`)
+  ])).filter(Boolean).slice(0, 12);
+
+  return `${hook}\n${valueBody}\n${hashtags.join(" ")}`;
+}
+
+async function uploadThumbnailToYouTube(accessToken: string, videoId: string, buffer: Buffer, mimeType: string = "image/jpeg") {
+  const url = `${YOUTUBE_DATA_URL}/thumbnails/set?videoId=${encodeURIComponent(videoId)}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": mimeType,
+      "Content-Length": String(buffer.byteLength)
+    },
+    body: buffer
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`YouTube thumbnail upload failed: ${res.status} ${err}`);
+  }
+
+  return await res.json();
+}
+
+async function createThumbnailFromVideoBuffer(videoBuffer: Buffer, tmpDir?: string) {
+  const workDir = tmpDir || path.join(os.tmpdir(), `thumb_${Date.now()}_${Math.round(Math.random() * 1e7)}`);
+  await fs.promises.mkdir(workDir, { recursive: true });
+  const src = path.join(workDir, "source.mp4");
+  const thumb = path.join(workDir, "thumb.jpg");
+  await fs.promises.writeFile(src, videoBuffer);
+
+  await new Promise((resolve, reject) => {
+    exec(`ffmpeg -y -i "${src}" -ss 00:00:01 -vframes 1 -q:v 2 "${thumb}"`, (err) => err ? reject(err) : resolve(true));
+  });
+
+  const image = await fs.promises.readFile(thumb);
+  try { await fs.promises.rm(workDir, { recursive: true, force: true }); } catch {}
+  return image;
+}
+
+function chooseUploadPacing(analytics: any): number {
+  const rows = Array.isArray(analytics?.rows) ? analytics.rows : [];
+  const totalViews = rows.reduce((sum: number, row: any) => sum + Number(row[1] || row.views || 0), 0);
+  const totalWatch = rows.reduce((sum: number, row: any) => sum + Number(row[2] || row.estimatedMinutesWatched || 0), 0);
+  const velocity = totalViews > 0 ? totalViews / Math.max(rows.length, 1) : 0;
+  const retention = totalWatch > 0 && totalViews > 0 ? totalWatch / Math.max(totalViews, 1) : 0;
+
+  if (velocity >= 8 && retention >= 2) {
+    return 2;
+  }
+  return 1;
+}
+
+async function runAutonomousYoutubeLoop(payload: any = {}) {
+  try {
+    const accessToken = await getYoutubeAccessToken();
+    const channel = await fetchYoutubeChannel(accessToken);
+    const analytics = await fetchYoutubeAnalytics(accessToken, {
+      ids: "channel==MINE",
+      startDate: "2026-01-01",
+      endDate: new Date().toISOString().slice(0, 10),
+      metrics: "views,estimatedMinutesWatched,averageViewDuration",
+      dimensions: "day"
+    });
+
+    const uploadBudget = chooseUploadPacing(analytics);
+    const niche = payload.niche || "creator workflow automation";
+    const research = await fetchYouTubeCompetitorResearch(accessToken, niche);
+
+    const planner = {
+      niche,
+      researchCount: research.length,
+      uploadBudget,
+      trendingTopics: research.map((item: any) => item?.snippet?.title || "").filter(Boolean),
+      scheduledAt: new Date().toISOString()
+    };
+
+    const source = {
+      title: `${niche} ${uploadBudget === 2 ? "Growth System" : "Workflow Sprint"} #Shorts`,
+      description: `Plan a weekly creator workflow for ${niche}.`,
+      tags: ["#Shorts", niche, "creator workflow", "youtube automation", "ai video"]
+    };
+
+    const title = source.title;
+    const description = buildRichDescription(title, source.description, source.tags, planner.trendingTopics);
+    const tags = Array.from(new Set([...(source.tags || []), ...(planner.trendingTopics || [])].map((x) => String(x).trim()).filter(Boolean)));
+
+    const scenes = [
+      { scene_number: 1, title: 'Research Sprint', script_line: 'Map the niche pattern', narration: 'Research the strongest creator workflows in your niche.', subtitle: 'Research the strongest creator workflows in your niche.', duration: 15, search_keywords: niche, videoUrl: EXPANDED_CURATED_VIDEO_CATALOG[0].downloadUrl, transition: 'fade', overlayData: { style: 'headline' } },
+      { scene_number: 2, title: 'Production System', script_line: 'Turn research into a repeatable system', narration: 'Create a video loop that turns research into assets and publishing momentum.', subtitle: 'Create a video loop that turns research into assets and publishing momentum.', duration: 15, search_keywords: niche, videoUrl: EXPANDED_CURATED_VIDEO_CATALOG[1].downloadUrl, transition: 'fade', overlayData: { style: 'headline' } },
+      { scene_number: 3, title: 'Publish Window', script_line: 'Ship the short and learn', narration: 'Publish the short and let your analytics feedback shape the next cycle.', subtitle: 'Publish the short and let your analytics feedback shape the next cycle.', duration: 20, search_keywords: niche, videoUrl: EXPANDED_CURATED_VIDEO_CATALOG[2].downloadUrl, transition: 'fade', overlayData: { style: 'headline' } }
+    ];
+
+    applyShortsDurationRule(scenes, '9:16');
+
+    const renderPayload = {
+      title,
+      aspectRatio: '9:16',
+      scenes,
+      voice: 'en-US-JennyNeural',
+      subtitlesStyle: 'none',
+      musicUrl: undefined,
+      musicVolume: 0.2
+    };
+
+    const renderRes = await fetch(`${APP_BASE_URL}/api/render-complete-video`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(renderPayload)
+    });
+
+    if (!renderRes.ok) {
+      throw new Error(`Autonomous render failed: ${renderRes.status}`);
+    }
+
+    const renderBuffer = Buffer.from(await renderRes.arrayBuffer());
+    const thumbBuffer = await createThumbnailFromVideoBuffer(renderBuffer, path.join(os.tmpdir(), `autonomous_thumb_${Date.now()}`));
+
+    const publishPayload = {
+      title,
+      description,
+      tags,
+      searchKeywords: tags,
+      categoryId: '27',
+      privacyStatus: 'private',
+      videoDataUrl: `data:video/mp4;base64,${renderBuffer.toString('base64')}`,
+      playlistId: undefined,
+      thumbnailDataUrl: `data:image/jpeg;base64,${thumbBuffer.toString('base64')}`
+    };
+
+    const publishRes = await fetch(`${APP_BASE_URL}/api/youtube/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(publishPayload)
+    });
+
+    const publishText = await publishRes.text();
+    if (!publishRes.ok) {
+      throw new Error(`Autonomous publish failed: ${publishRes.status} ${publishText}`);
+    }
+
+    const published = JSON.parse(publishText);
+    return { ok: true, uploadBudget, researchCount: research.length, channel, analytics, published };
+  } catch (err: any) {
+    console.error("Autonomous YouTube loop failed:", err);
+    return { ok: false, error: err?.message || "Autonomous loop failed" };
+  }
+}
+
+function buildTopicRecommendationsFromTelemetry(record: ChannelContentRecord) {
+  const telemetry = record.telemetry || {};
+  const rows = Array.isArray(telemetry.rows) ? telemetry.rows : [];
+  const totalViews = rows.reduce((sum: number, row: any) => sum + Number(row[1] || row.views || 0), 0);
+  const totalWatchTime = rows.reduce((sum: number, row: any) => sum + Number(row[2] || row.estimatedMinutesWatched || 0), 0);
+  const trend = totalViews > 0 ? "high-performing" : "newlyPublished";
+
+  const topics = new Set<string>(record.topicRecommendations || []);
+  if (trend === "high-performing") {
+    topics.add(record.title.trim().split(/\s+/).slice(0, 2).join(" "));
+    topics.add(`${record.title} analytics feedback`);
+  } else {
+    topics.add(`${record.title} topic expansion`);
+    topics.add(`channel performance improvement`);
+  }
+
+  return Array.from(topics).slice(0, 4);
+}
+
+function optimizeTeachingTagsAndKeywords(record: ChannelContentRecord) {
+  const telemetry = record.telemetry || {};
+  const rows = Array.isArray(telemetry.rows) ? telemetry.rows : [];
+  const totalViews = rows.reduce((sum: number, row: any) => sum + Number(row[1] || row.views || 0), 0);
+
+  const tags = Array.from(new Set([
+    ...record.tags,
+    ...(totalViews > 100 ? ["performance", "analytics", "growth"] : []),
+    "automation",
+    "ai video"
+  ])).slice(0, 8);
+
+  const searchKeywords = Array.from(new Set([
+    ...record.searchKeywords,
+    ...(totalViews > 100 ? ["learn", "creator workflow", "content strategy"] : []),
+    record.title.split(/\s+/).slice(0, 4).join(" ")
+  ])).slice(0, 5);
+
+  return { tags, searchKeywords };
+}
+
+async function uploadVideoToYouTubeFromUrl(accessToken: string, payload: any) {
+  const { title, description = "", tags = [], categoryId = "28", privacyStatus = "private", videoUrl, filePath, playlistId, videoDataUrl } = payload;
+
+  let videoBuffer: Buffer;
+  if (filePath) {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Uploaded video file path not found: ${filePath}`);
+    }
+    videoBuffer = await fs.promises.readFile(filePath);
+  } else if (videoDataUrl) {
+    const match = videoDataUrl.match(/^data:video\/mp4;base64,(.+)$/i)
+      || videoDataUrl.match(/^data:application\/octet-stream;base64,(.+)$/i)
+      || videoDataUrl.match(/^data:.*;base64,(.+)$/i);
+
+    if (!match || !match[1]) {
+      throw new Error("YouTube publish received an invalid videoDataUrl payload.");
+    }
+
+    const base64Data = match[1].replace(/\s/g, "");
+    videoBuffer = Buffer.from(base64Data, "base64");
+  } else if (videoUrl) {
+    const remote = await fetch(videoUrl);
+    if (!remote.ok) {
+      throw new Error(`Remote video URL fetch failed: ${remote.status}`);
+    }
+    const remoteBuffer = Buffer.from(await remote.arrayBuffer());
+    videoBuffer = remoteBuffer;
+  } else {
+    throw new Error("YouTube upload requires either videoUrl, filePath, or videoDataUrl in the request body.");
+  }
+
+  if (!videoBuffer || videoBuffer.byteLength <= 0) {
+    throw new Error("YouTube upload received an empty video binary payload.");
+  }
+
+  const metadata = {
+    snippet: {
+      title: title || "AI Generated Video",
+      description: description || "Generated by the AI Video B-Roll Assistant.",
+      tags: Array.isArray(tags) ? tags : String(tags || "").split(/[,\s]+/).filter(Boolean),
+      categoryId: String(categoryId || "28")
+    },
+    status: {
+      privacyStatus: privacyStatus || "private",
+      selfDeclaredMadeForKids: false
+    }
+  };
+
+  const metaRes = await fetch(`${YOUTUBE_UPLOAD_URL}?part=snippet,status&uploadType=resumable`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json; charset=UTF-8",
+      "X-Upload-Content-Type": "video/mp4",
+      "X-Upload-Content-Length": String(videoBuffer.byteLength)
+    },
+    body: JSON.stringify(metadata)
+  });
+
+  if (!metaRes.ok) {
+    const err = await metaRes.text();
+    throw new Error(`YouTube resumable upload session failed: ${metaRes.status} ${err}`);
+  }
+
+  const uploadLocation = metaRes.headers.get("location") || metaRes.headers.get("Location");
+  if (!uploadLocation) {
+    throw new Error("YouTube resumable upload did not return a Location header for the video byte upload.");
+  }
+
+  const uploadRes = await fetch(uploadLocation, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "video/mp4",
+      "Content-Length": String(videoBuffer.byteLength)
+    },
+    body: videoBuffer
+  });
+
+  if (!uploadRes.ok) {
+    const err = await uploadRes.text();
+    throw new Error(`YouTube video upload failed during PUT bytes: ${uploadRes.status} ${err}`);
+  }
+
+  const uploaded = await uploadRes.json();
+  if (playlistId) {
+    try {
+      await fetch(`${YOUTUBE_DATA_URL}/playlistItems?part=snippet`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json; charset=UTF-8"
+        },
+        body: JSON.stringify({
+          snippet: {
+            playlistId,
+            resourceId: { kind: "youtube#video", videoId: uploaded.id }
+          }
+        })
+      });
+    } catch (playlistErr) {
+      console.warn("Playlist add warning:", playlistErr);
+    }
+  }
+
+  return uploaded;
+}
 
 // Rate limit in-memory telemetry
 const rateLimitState = {
@@ -273,6 +792,40 @@ function formatAssTime(seconds: number): string {
   return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
 }
 
+// Strips metadata artifacts from subtitle/narration text before writing to ASS.
+// Removes pipe-separated API source/style labels, "API Source:" and "Style:" prefixes
+// that leak from the LongFormat script parser into visual subtitles.
+function cleanSubtitleText(raw: string): string {
+  if (!raw) return "";
+  let text = raw.trim();
+
+  // Remove pipe-separated segments after the first (narration) pipe:
+  // e.g. "Narration text | NASA Media API | keyword | Style: ..." → "Narration text"
+  if (text.includes("|")) {
+    text = text.split("|")[0].trim();
+  }
+
+  // Strip known metadata prefixes if they somehow survived
+  text = text
+    .replace(/^\s*API\s+Source\s*:\s*/i, "")
+    .replace(/^\s*Style\s*:\s*/i, "")
+    .replace(/^\s*Visual\s+Style\s*:\s*/i, "")
+    .replace(/\bAPI Source\s*:.*$/im, "")
+    .replace(/\bStyle\s*:.*$/im, "");
+
+  // Remove surrounding quotes that might wrap the narration
+  text = text.replace(/^["']|["']$/g, "").trim();
+
+  // Truncate to a sane max length for display
+  if (text.length > 220) {
+    // Break at last word boundary before 220 chars
+    const cutoff = text.lastIndexOf(" ", 220);
+    text = text.slice(0, cutoff > 0 ? cutoff : 220).trim();
+  }
+
+  return text;
+}
+
 function generateAssContent(
   scenes: Array<{ duration: number; subtitle?: string; narration?: string; overlayData?: any; title?: string }>,
   subtitlesStyle: string = "highlight",
@@ -281,9 +834,10 @@ function generateAssContent(
   const isPortrait = aspectRatio === "9:16";
   const resX = isPortrait ? 1080 : 1920;
   const resY = isPortrait ? 1920 : 1080;
-  const fontSize = isPortrait ? 56 : 46;
-  const marginV = isPortrait ? 220 : 75;
+  const fontSize = isPortrait ? 56 : 48;
+  const marginV = isPortrait ? 220 : 80;
 
+  // Default style: yellow text, bold, strong outline/shadow, bottom-center
   let styleLine = `Style: Default,DejaVu Sans,${fontSize},&H0000FFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3.5,2,2,40,40,${marginV},1`;
   if (subtitlesStyle === "classic") {
     styleLine = `Style: Default,DejaVu Sans,${fontSize},&H00FFFFFF,&H000000FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3.5,2,2,40,40,${marginV},1`;
@@ -291,11 +845,15 @@ function generateAssContent(
     styleLine = `Style: Default,DejaVu Sans,${fontSize - 4},&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,3,2,1,2,40,40,${marginV},1`;
   }
 
-  // Add styles for Overlay
-  // BorderStyle=1 means Outline/Shadow
-  const overlayHeadingStyle = `Style: OverlayHeading,DejaVu Sans,${isPortrait ? 60 : 65},&H0000FFFF,&H000000FF,&H00000000,&H60000000,-1,0,0,0,100,100,0,0,1,4,4,8,80,80,${isPortrait ? 300 : 120},1`;
-  const overlayCodeStyle = `Style: OverlayCode,Courier New,${isPortrait ? 35 : 40},&H0000FF00,&H000000FF,&H00000000,&H60000000,0,0,0,0,100,100,0,0,1,3,3,4,100,100,${isPortrait ? 450 : 250},1`;
-  const overlayBulletStyle = `Style: OverlayBullet,DejaVu Sans,${isPortrait ? 45 : 50},&H00FFFFFF,&H000000FF,&H00000000,&H60000000,0,0,0,0,100,100,0,0,1,3,3,4,100,100,${isPortrait ? 450 : 250},1`;
+  // Overlay heading: large cyan bold text at top-center with shadow for depth
+  // Alignment=8 = top-center
+  const overlayHeadingStyle = `Style: OverlayHeading,DejaVu Sans,${isPortrait ? 58 : 62},&H00FFFF00,&H000000FF,&H00000000,&HB0000000,-1,0,0,0,100,100,0,0,1,4,4,8,80,80,${isPortrait ? 280 : 110},1`;
+
+  // Code style: green monospace, left-aligned panel
+  const overlayCodeStyle = `Style: OverlayCode,Courier New,${isPortrait ? 34 : 38},&H0000FF00,&H000000FF,&H00000000,&HA0000000,0,0,0,0,100,100,0,0,1,3,3,4,80,80,${isPortrait ? 400 : 200},1`;
+
+  // Bullet style: white text, alignment=4 (middle-left), left-margin pushed in for panel look
+  const overlayBulletStyle = `Style: OverlayBullet,DejaVu Sans,${isPortrait ? 42 : 46},&H00FFFFFF,&H000000FF,&H00000000,&HB0000000,0,0,0,0,100,100,0,0,1,3,2,4,${isPortrait ? 60 : 80},${isPortrait ? 60 : 80},${isPortrait ? 400 : 200},1`;
 
   let events = "";
   let currentTime = 0;
@@ -304,39 +862,105 @@ function generateAssContent(
     const dur = Math.max(1, Number(sc.duration) || 5);
     const startTimeStr = formatAssTime(currentTime);
     const endTimeStr = formatAssTime(currentTime + dur);
-    
-    // Subtitles
-    const textRaw = (sc.subtitle || sc.narration || "").trim();
-    if (textRaw) {
-      const cleanText = textRaw.replace(/[\r\n]+/g, " ").replace(/[{}]/g, "").replace(/"/g, "'");
+
+    // ── SUBTITLE LINE (bottom narration bar) ──────────────────────────────
+    const rawSubtitle = sc.subtitle || sc.narration || "";
+    const cleanText = cleanSubtitleText(rawSubtitle)
+      .replace(/[\r\n]+/g, " ")
+      .replace(/[{}]/g, "")
+      .replace(/"/g, "'");
+
+    if (cleanText) {
       const words = cleanText.split(/\s+/);
       let formattedText = cleanText;
+      // Split long text into two lines at midpoint
       if (words.length > 7) {
         const mid = Math.ceil(words.length / 2);
         formattedText = words.slice(0, mid).join(" ") + "\\N" + words.slice(mid).join(" ");
       }
-      events += `Dialogue: 0,${startTimeStr},${endTimeStr},Default,,0,0,0,,${formattedText}\n`;
+      // Animated: fade in 300ms, fade out 300ms using ASS \fad() tag
+      events += `Dialogue: 0,${startTimeStr},${endTimeStr},Default,,0,0,0,,{\\fad(300,300)}${formattedText}\n`;
     }
 
-    // Overlay Data
+    // ── OVERLAY DATA (heading + bullets/code) ─────────────────────────────
     if (sc.overlayData) {
       const o = sc.overlayData;
+
+      // Heading: slide in from left using \move() + fade in
       if (o.heading) {
-        const hClean = o.heading.replace(/[\r\n]+/g, " ").replace(/[{}]/g, "");
-        const subClean = (o.subheading || "").replace(/[\r\n]+/g, " ").replace(/[{}]/g, "");
-        const subTag = subClean ? `\\N{\\fs${isPortrait ? 35 : 40}\\c&H00FFFFFF&}${subClean}` : "";
-        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayHeading,,0,0,0,,${hClean}${subTag}\n`;
+        const hRaw = cleanSubtitleText(o.heading)
+          .replace(/[\r\n]+/g, " ").replace(/[{}]/g, "");
+        const subRaw = (o.subheading || "")
+          .replace(/[\r\n]+/g, " ").replace(/[{}]/g, "");
+        // Clean subheading too — strip metadata
+        const subClean = cleanSubtitleText(subRaw).replace(/[{}]/g, "");
+        const subTag = subClean
+          ? `\\N{\\fs${isPortrait ? 32 : 36}\\c&H00FFFFFF&\\fad(400,300)}${subClean}`
+          : "";
+        // \fad(500,400) = 500ms fade-in, 400ms fade-out
+        // \t(0,600,\fscx105\fscy105) = slight scale-up entrance
+        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayHeading,,0,0,0,,{\\fad(500,400)\\t(0,600,\\fscx105\\fscy105)}${hRaw}${subTag}\n`;
       }
-      
+
+      // Code block: typewriter reveal using staggered lines
       if (o.codeSnippet) {
-        const lines = o.codeSnippet.split("\n").slice(0, 7).join("\\N").replace(/[{}]/g, "");
-        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayCode,,0,0,0,,${lines}\n`;
-      } else if (o.bulletPoints && o.bulletPoints.length > 0) {
-        const lines = o.bulletPoints.map((b: string) => `• ${b.replace(/[{}]/g, "")}`).slice(0, 4).join("\\N\\N");
-        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayBullet,,0,0,0,,${lines}\n`;
-      } else if (o.diagramNodes && o.diagramNodes.length > 0) {
-        const lines = o.diagramNodes.map((n: any) => `[ ${n.label || ""} ]`).join("  -->  ").replace(/[{}]/g, "");
-        events += `Dialogue: 0,${startTimeStr},${endTimeStr},OverlayBullet,,0,0,0,,${lines}\n`;
+        const codeLines = o.codeSnippet.split("\n").slice(0, 6);
+        // Each line of code appears at even intervals during the scene
+        const lineInterval = Math.max(0.5, dur / (codeLines.length + 1));
+        let visibleLines: string[] = [];
+        for (let li = 0; li < codeLines.length; li++) {
+          const lineStart = currentTime + li * lineInterval;
+          const lineEnd = currentTime + dur;
+          if (lineStart >= currentTime + dur) break;
+          visibleLines.push(codeLines[li].replace(/[{}]/g, ""));
+          const snapshot = visibleLines.join("\\N");
+          const ls = formatAssTime(lineStart);
+          const le = formatAssTime(lineEnd);
+          const fadIn = li === 0 ? 400 : 200;
+          events += `Dialogue: 0,${ls},${le},OverlayCode,,0,0,0,,{\\fad(${fadIn},300)}${snapshot}\n`;
+        }
+      }
+      // Bullet points: each bullet fades in one-at-a-time during the scene
+      else if (o.bulletPoints && o.bulletPoints.length > 0) {
+        const bullets = (o.bulletPoints as string[])
+          .slice(0, 4)
+          .map(b => cleanSubtitleText(b).replace(/[{}]/g, "").trim())
+          .filter(b => b.length > 0 && !b.match(/^(API Source|Style|Visual Style)\s*:/i));
+
+        if (bullets.length > 0) {
+          const bulletInterval = Math.max(0.8, dur / (bullets.length + 1));
+          let visibleBullets: string[] = [];
+          for (let bi = 0; bi < bullets.length; bi++) {
+            const bulletStart = currentTime + bi * bulletInterval;
+            const bulletEnd = currentTime + dur;
+            if (bulletStart >= currentTime + dur) break;
+            visibleBullets.push(`• ${bullets[bi]}`);
+            const snapshot = visibleBullets.join("\\N\\N");
+            const bs = formatAssTime(bulletStart);
+            const be = formatAssTime(bulletEnd);
+            const fadIn = bi === 0 ? 500 : 300;
+            events += `Dialogue: 0,${bs},${be},OverlayBullet,,0,0,0,,{\\fad(${fadIn},400)}${snapshot}\n`;
+          }
+        }
+      }
+      // Diagram flow nodes: appear as a left-to-right chain with fade
+      else if (o.diagramNodes && o.diagramNodes.length > 0) {
+        const nodes = (o.diagramNodes as any[]).slice(0, 5)
+          .map(n => `[ ${(n.label || "").replace(/[{}]/g, "")} ]`);
+        if (nodes.length > 0) {
+          const nodeInterval = Math.max(0.6, dur / (nodes.length + 1));
+          let visibleNodes: string[] = [];
+          for (let ni = 0; ni < nodes.length; ni++) {
+            const nodeStart = currentTime + ni * nodeInterval;
+            const nodeEnd = currentTime + dur;
+            if (nodeStart >= currentTime + dur) break;
+            visibleNodes.push(nodes[ni]);
+            const chain = visibleNodes.join("  →  ");
+            const ns = formatAssTime(nodeStart);
+            const ne = formatAssTime(nodeEnd);
+            events += `Dialogue: 0,${ns},${ne},OverlayBullet,,0,0,0,,{\\fad(300,300)}${chain}\n`;
+          }
+        }
       }
     }
 
@@ -348,6 +972,7 @@ ScriptType: v4.00+
 PlayResX: ${resX}
 PlayResY: ${resY}
 WrapStyle: 0
+ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -453,6 +1078,235 @@ function fallbackRuleBasedParser(script: string) {
     }
   };
 }
+
+const YOUTUBE_API_FEATURES = [
+  {
+    title: "YouTube Data API v3",
+    provider: "Google",
+    description: "Video & thumbnail uploads, metadata SEO, playlists, channel assets, and viewer-facing content management.",
+    capabilities: ["videos.insert", "thumbnails.set", "channels.list", "playlists.insert", "commentThreads.list"]
+  },
+  {
+    title: "YouTube Analytics API",
+    provider: "Google",
+    description: "Audience watch time, traffic sources, view counts, retention, and content performance feedback loops.",
+    capabilities: ["reports.query", "metrics", "views", "watchTime", "trafficSources"]
+  },
+  {
+    title: "YouTube Reporting API",
+    provider: "Google",
+    description: "Daily and weekly reporting exports for channel automation, creator operations, and publishing decisions.",
+    capabilities: ["reporting", "channel reports", "content reports", "performance exports"]
+  }
+];
+
+app.get("/api/youtube/features", (req, res) => {
+  res.json({ features: YOUTUBE_API_FEATURES });
+});
+
+app.post("/api/youtube/automate", (req, res) => {
+  const { action = "publish", payload = {} } = req.body || {};
+  res.json({
+    ok: true,
+    pipeline: "youtube-automation",
+    action,
+    plan: {
+      upload: action === "publish" ? "videos.insert + thumbnails.set" : "metadata only",
+      seo: "title, description, tags, categoryId, featureImage",
+      community: "commentThreads.list + comments.insert",
+      playlists: "organize series and schedule publish windows",
+      analytics: "YouTube Analytics + Reporting API feedback" ,
+      payload
+    }
+  });
+});
+
+app.get("/api/youtube/channel", async (req, res) => {
+  try {
+    const accessToken = await getYoutubeAccessToken();
+    const channel = await fetchYoutubeChannel(accessToken);
+    res.json({ ok: true, channel });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "YouTube channel lookup failed" });
+  }
+});
+
+app.get("/api/youtube/research", async (req, res) => {
+  try {
+    const accessToken = await getYoutubeAccessToken();
+    const niche = String(req.query.niche || req.query.q || "creator workflow automation");
+    const research = await fetchYouTubeCompetitorResearch(accessToken, niche);
+    res.json({ ok: true, niche, research: research.map((item: any) => ({
+      title: item?.snippet?.title || "",
+      channelTitle: item?.snippet?.channelTitle || "",
+      description: item?.snippet?.description || "",
+      tags: item?.snippet?.tags || [],
+      topic: item?.snippet?.title || ""
+    })) });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "YouTube research query failed" });
+  }
+});
+
+app.post("/api/youtube/autonomous-loop", async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const loop = await runAutonomousYoutubeLoop(payload);
+    res.json({ ok: true, loop });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "Autonomous loop failed" });
+  }
+});
+
+app.get("/api/youtube/analytics", async (req, res) => {
+  try {
+    const accessToken = await getYoutubeAccessToken();
+    const analytics = await fetchYoutubeAnalytics(accessToken, req.query);
+
+    const rows = Array.isArray(analytics.rows) ? analytics.rows : [];
+    if (req.query.videoId) {
+      const record = youtubeContentStore.get(String(req.query.videoId));
+      if (record) {
+        record.telemetry = analytics;
+        record.lastTelemetryAt = Date.now();
+        const updated = optimizeTeachingTagsAndKeywords(record);
+        record.tags = updated.tags;
+        record.searchKeywords = updated.searchKeywords;
+        record.topicRecommendations = buildTopicRecommendationsFromTelemetry(record);
+        persistYoutubeContentStoreToDisk(youtubeContentStore);
+      }
+    }
+
+    res.json({ ok: true, analytics, telemetryAvailable: rows.length > 0 });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "YouTube analytics query failed" });
+  }
+});
+
+app.post("/api/youtube/publish", async (req, res) => {
+  try {
+    const accessToken = await getYoutubeAccessToken();
+    const payload = req.body || {} as any;
+
+    if (payload.aspectRatio === "9:16" || payload.shortForm === true) {
+      applyShortsDurationRule(payload.scenes ?? [], payload.aspectRatio || "9:16");
+    }
+
+    const title = String(payload.title || "AI Generated Video");
+    const existingDescription = String(payload.description || "");
+    const existingTags = normalizeStringArray(payload.tags, []);
+    const keywords = normalizeStringArray(payload.searchKeywords, [title]);
+
+    const richDescription = buildRichDescription(title, existingDescription, existingTags, keywords);
+    const normalizedTags = Array.from(new Set([
+      ...existingTags,
+      ...(keywords || []),
+      "#Shorts",
+      "creator workflow",
+      "ai video",
+      "youtube automation"
+    ])).slice(0, 20);
+
+    payload.description = richDescription;
+    payload.tags = normalizedTags;
+
+    const result = await uploadVideoToYouTubeFromUrl(accessToken, payload);
+
+    if (payload.thumbnailDataUrl) {
+      try {
+        const match = payload.thumbnailDataUrl.match(/^data:image\/(jpeg|jpg|png|webp);base64,([\s\S]+)$/i);
+        if (match && match[2]) {
+          const mime = match[1].toLowerCase() === 'png' ? 'image/png' : 'image/jpeg';
+          const thumbBuffer = Buffer.from(match[2], 'base64');
+          await uploadThumbnailToYouTube(accessToken, result.id, thumbBuffer, mime);
+        }
+      } catch (thumbErr) {
+        console.warn("Thumbnail upload warning:", thumbErr);
+      }
+    }
+
+    const record: ChannelContentRecord = {
+      videoId: result.id,
+      title: title,
+      description: payload.description || "",
+      tags: normalizedTags,
+      searchKeywords: normalizeStringArray(payload.searchKeywords, normalizeStringArray(title || "ai video", [])),
+      topicRecommendations: normalizeStringArray([payload.title || "AI Lesson", "video content strategy", "creator feedback loop"], []),
+      uploadedAt: Date.now(),
+      telemetry: { rows: [] },
+      lastTelemetryAt: Date.now()
+    };
+
+    youtubeContentStore.set(result.id, record);
+    persistYoutubeContentStoreToDisk(youtubeContentStore);
+
+    res.json({ ok: true, youtube: result, contentRecord: { videoId: result.id, title: record.title, stored: true } });
+  } catch (err: any) {
+    console.error("YouTube publish route failed:", err);
+    res.status(500).json({ error: err?.message || "YouTube publish failed" });
+  }
+});
+
+async function optimizeContentHandler(req: express.Request, res: express.Response) {
+  try {
+    const { videoId, title, description, tags = [], searchKeywords = [], topic } = req.body || {};
+    if (!videoId) {
+      return res.status(400).json({ error: "videoId is required to optimize content" });
+    }
+
+    const baseRecord = youtubeContentStore.get(String(videoId)) || {
+      videoId: String(videoId),
+      title: title || "AI Generated Video",
+      description: description || "",
+      tags: normalizeStringArray(tags, []),
+      searchKeywords: normalizeStringArray(searchKeywords, normalizeStringArray(title || "ai video", [])),
+      topicRecommendations: [topic || title || "automation content"],
+      uploadedAt: Date.now(),
+      telemetry: { rows: [] },
+      lastTelemetryAt: Date.now()
+    } as ChannelContentRecord;
+
+    const record = baseRecord;
+    let telemetry = record.telemetry;
+    if (!telemetry || !Array.isArray(telemetry.rows) || telemetry.rows.length === 0) {
+      try {
+        const accessToken = await getYoutubeAccessToken();
+        const analytics = await fetchYoutubeAnalytics(accessToken, { startDate: "2026-01-01", endDate: new Date().toISOString().slice(0, 10), metrics: "views,estimatedMinutesWatched", dimensions: "day", videoId: String(videoId) });
+        telemetry = analytics;
+        record.telemetry = analytics;
+        record.lastTelemetryAt = Date.now();
+      } catch {
+        telemetry = { rows: [] };
+      }
+    }
+
+    const optimized = optimizeTeachingTagsAndKeywords(record);
+    record.tags = optimized.tags;
+    record.searchKeywords = optimized.searchKeywords;
+    record.topicRecommendations = buildTopicRecommendationsFromTelemetry(record);
+    if (record.videoId) {
+      youtubeContentStore.set(record.videoId, record);
+      persistYoutubeContentStoreToDisk(youtubeContentStore);
+    }
+
+    return res.json({
+      ok: true,
+      videoId,
+      contentPlan: {
+        tags: record.tags,
+        searchKeywords: record.searchKeywords,
+        topicRecommendations: record.topicRecommendations,
+        telemetryAvailable: Array.isArray(telemetry?.rows) && telemetry.rows.length > 0,
+        telemetryRows: Array.isArray(telemetry?.rows) ? telemetry.rows.length : 0
+      }
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || "Content optimization failed" });
+  }
+}
+
+app.post("/api/youtube/optimize-content", optimizeContentHandler);
+app.post("/api/youtube/optimization", optimizeContentHandler);
 
 // -------------------------------------------------------------
 // API ROUTES
@@ -1456,6 +2310,15 @@ app.post("/api/render-complete-video", async (req, res) => {
     voicePitch = "+0Hz"
   } = req.body;
 
+  const singleMusicUrl = normalizeSingleMusicTrack(musicUrl);
+  const compositionDurations = Array.isArray(scenes)
+    ? scenes.reduce((sum, sc: any) => sum + Number(sc.duration ?? sc.durationSeconds ?? 5), 0)
+    : 0;
+
+  if (Array.isArray(musicUrl) && musicUrl.length > 1) {
+    console.warn("Only the first music URL is accepted for this render; additional music tracks are ignored.");
+  }
+
   if (!scenes || scenes.length === 0) {
     return res.status(400).json({ error: "No scenes provided for complete video render" });
   }
@@ -1465,7 +2328,7 @@ app.post("/api/render-complete-video", async (req, res) => {
   const targetH = isPortrait ? 1920 : 1080;
 
   const renderId = "render_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
-  const tmpDir = path.join("/tmp", renderId);
+  const tmpDir = path.join(os.tmpdir(), renderId);
 
   try {
     await fs.promises.mkdir(tmpDir, { recursive: true });
@@ -1729,13 +2592,15 @@ app.post("/api/render-complete-video", async (req, res) => {
 
     // 1. Concatenate all video clips into single seamless video
     const concatPath = path.join(tmpDir, "concat.txt");
-    const concatContent = downloadedClips.map(p => `file '${p}'`).join("\n");
+    const concatContent = downloadedClips.map(p => `file '${path.basename(p)}'`).join("\n");
     await fs.promises.writeFile(concatPath, concatContent);
 
     const stitchedPath = path.join(tmpDir, "stitched.mp4");
+    const concatPathFwd = concatPath.replace(/\\/g, "/");
+    const stitchedPathFwd = stitchedPath.replace(/\\/g, "/");
     await new Promise((resolve, reject) => {
-      const cmd = `ffmpeg -y -f concat -safe 0 -i "${concatPath}" -c copy "${stitchedPath}"`;
-      exec(cmd, (err) => err ? reject(err) : resolve(true));
+      const cmd = `ffmpeg -y -f concat -safe 0 -i "${concatPathFwd}" -c copy "${stitchedPathFwd}"`;
+      exec(cmd, { cwd: tmpDir }, (err) => err ? reject(err) : resolve(true));
     });
 
     // 2. Concatenate all scene voiceovers into master voiceover track
@@ -1743,13 +2608,15 @@ app.post("/api/render-complete-video", async (req, res) => {
     if (hasAnyVoiceover && voiceClips.length > 0) {
       try {
         const voiceConcatPath = path.join(tmpDir, "voice_concat.txt");
-        const voiceConcatContent = voiceClips.map(p => `file '${p}'`).join("\n");
+        const voiceConcatContent = voiceClips.map(p => `file '${path.basename(p)}'`).join("\n");
         await fs.promises.writeFile(voiceConcatPath, voiceConcatContent);
 
         const fullVoicePath = path.join(tmpDir, "master_voice.mp3");
+        const vcpFwd = voiceConcatPath.replace(/\\/g, "/");
+        const fvpFwd = fullVoicePath.replace(/\\/g, "/");
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -f concat -safe 0 -i "${voiceConcatPath}" -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${fullVoicePath}"`;
-          exec(cmd, (err) => err ? reject(err) : resolve(true));
+          const cmd = `ffmpeg -y -f concat -safe 0 -i "${vcpFwd}" -ar 44100 -ac 2 -c:a libmp3lame -b:a 192k "${fvpFwd}"`;
+          exec(cmd, { cwd: tmpDir }, (err) => err ? reject(err) : resolve(true));
         });
         masterVoicePath = fullVoicePath;
       } catch (vConcatErr) {
@@ -1757,12 +2624,12 @@ app.post("/api/render-complete-video", async (req, res) => {
       }
     }
 
-    // 3. Download background music if provided
+    // 3. Download the single background music track if provided, then loop it for the whole video duration.
     let musicLocalPath: string | null = null;
-    if (musicUrl) {
+    if (oneMusicUrl) {
       try {
         const musicPath = path.join(tmpDir, "music.mp3");
-        const mResp = await fetch(musicUrl);
+        const mResp = await fetch(oneMusicUrl);
         if (mResp.ok) {
           await fs.promises.writeFile(musicPath, Buffer.from(await mResp.arrayBuffer()));
           musicLocalPath = musicPath;
@@ -1790,32 +2657,33 @@ app.post("/api/render-complete-video", async (req, res) => {
     const vol = Math.max(0.05, Math.min(1, Number(musicVolume) || 0.25));
 
     if (assLocalPath) {
-      // Escape path for ffmpeg filter
-      const escapedAssPath = assLocalPath.replace(/\\/g, "/").replace(/'/g, "'\\\\''");
+      // Use a relative ASS filename inside the tmpDir working folder.
+      // On Windows this avoids FFmpeg mis-parsing an absolute C:/ path as an image-size option.
+      const assFilename = path.basename(assLocalPath);
 
       // Burn subtitles using the ASS filter and mix audio
       if (masterVoicePath && musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
-          exec(cmd, (err) => err ? reject(err) : resolve(true));
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${assFilename}'[v]; [1:a]volume=1.0[voice]; [2:a]volume=${vol}[bg]; [voice][bg]amix=inputs=2:duration=first:dropout_transition=2[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          exec(cmd, { cwd: tmpDir }, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else if (masterVoicePath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
-          exec(cmd, (err) => err ? reject(err) : resolve(true));
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -i "${masterVoicePath}" -filter_complex "[0:v]ass='${assFilename}'[v]" -map "[v]" -map 1:a -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          exec(cmd, { cwd: tmpDir }, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else if (musicLocalPath) {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
-          exec(cmd, (err) => err ? reject(err) : resolve(true));
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -stream_loop -1 -i "${musicLocalPath}" -filter_complex "[0:v]ass='${assFilename}'[v]; [1:a]volume=${vol}[a]" -map "[v]" -map "[a]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -c:a aac -b:a 192k -ar 44100 -ac 2 -movflags +faststart -shortest "${finalMixedPath}"`;
+          exec(cmd, { cwd: tmpDir }, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       } else {
         await new Promise((resolve, reject) => {
-          const cmd = `ffmpeg -y -i "${stitchedPath}" -filter_complex "[0:v]ass='${escapedAssPath}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
-          exec(cmd, (err) => err ? reject(err) : resolve(true));
+          const cmd = `ffmpeg -y -i "${stitchedPath}" -filter_complex "[0:v]ass='${assFilename}'[v]" -map "[v]" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p -r 30 -movflags +faststart "${finalMixedPath}"`;
+          exec(cmd, { cwd: tmpDir }, (err) => err ? reject(err) : resolve(true));
         });
         finalOutputPath = finalMixedPath;
       }
@@ -3322,6 +4190,15 @@ app.post("/api/tts", async (req, res) => {
 });
 
 // Vite middleware & Static serving
+cron.schedule('0 */4 * * *', async () => {
+  console.log('[cron] autonomous youtube loop started');
+  const result = await runAutonomousYoutubeLoop({
+    niche: 'creator workflow automation',
+    maxUploadsPerCycle: 1
+  });
+  console.log('[cron] autonomous youtube loop result:', JSON.stringify(result));
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

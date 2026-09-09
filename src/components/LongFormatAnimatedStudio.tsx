@@ -71,6 +71,34 @@ export interface LessonPreset {
   chapters: RemotionLessonChapter[];
 }
 
+type YouTubeFeature = {
+  title: string;
+  provider: string;
+  description: string;
+  capabilities: string[];
+};
+
+const DEFAULT_YOUTUBE_FEATURES: YouTubeFeature[] = [
+  {
+    title: "YouTube Data API v3",
+    provider: "Google",
+    description: "Video & thumbnail uploads, metadata SEO, playlists, channel assets, and viewer-facing content management.",
+    capabilities: ["videos.insert", "thumbnails.set", "channels.list", "playlists.insert", "commentThreads.list"]
+  },
+  {
+    title: "YouTube Analytics API",
+    provider: "Google",
+    description: "Audience watch time, traffic sources, view counts, retention, and content performance feedback loops.",
+    capabilities: ["reports.query", "metrics", "views", "watchTime", "trafficSources"]
+  },
+  {
+    title: "YouTube Reporting API",
+    provider: "Google",
+    description: "Daily and weekly reporting exports for channel automation, creator operations, and publishing decisions.",
+    capabilities: ["reporting", "channel reports", "content reports", "performance exports"]
+  }
+];
+
 export const CURATED_NEURAL_VOICES = [
   { id: "en-US-JennyNeural", name: "Jenny", gender: "female", tag: "Warm Storyteller" },
   { id: "en-US-AriaNeural", name: "Aria", gender: "female", tag: "Dynamic Creator" },
@@ -266,18 +294,9 @@ export const LongFormatAnimatedStudio: React.FC<LongFormatAnimatedStudioProps> =
   const [chapters, setChapters] = useState<RemotionLessonChapter[]>(SAMPLE_LESSON_PRESETS[0].chapters);
   const [activeChapterIdx, setActiveChapterIdx] = useState<number>(0);
 
-  // Synchronize when external script or plan is updated via top ScriptInput
+  // Keep the plan-driven studio update, but do not auto-parse the outer ScriptInput text.
+  // That text is entered into a dedicated paste modal, where the user selects the chapters.
   useEffect(() => {
-    if (script && script.includes("0:")) {
-      const parsed = parseCustomStructuredScript(script);
-      if (parsed.length > 0) {
-        setChapters(parsed);
-        setActiveChapterIdx(0);
-        setCurrentFrame(0);
-        return;
-      }
-    }
-
     if (plan && plan.scenes && plan.scenes.length > 0) {
       const converted: RemotionLessonChapter[] = plan.scenes.map((s: any, idx: number) => {
         const bgVideo = s.selectedMedia
@@ -327,7 +346,7 @@ export const LongFormatAnimatedStudio: React.FC<LongFormatAnimatedStudioProps> =
         setCurrentFrame(0);
       }
     }
-  }, [script, plan]);
+  }, [plan]);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isSeamlessMasterPlay, setIsSeamlessMasterPlay] = useState<boolean>(true);
   const [currentFrame, setCurrentFrame] = useState<number>(0);
@@ -363,6 +382,33 @@ export const LongFormatAnimatedStudio: React.FC<LongFormatAnimatedStudioProps> =
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const [isRenderingFullVideo, setIsRenderingFullVideo] = useState<boolean>(false);
   const [renderingProgress, setRenderingProgress] = useState<string | null>(null);
+  const [youtubeFeatures, setYoutubeFeatures] = useState<YouTubeFeature[]>(DEFAULT_YOUTUBE_FEATURES);
+  const [isPublishingToYouTube, setIsPublishingToYouTube] = useState<boolean>(false);
+  const [youtubeVisibility, setYoutubeVisibility] = useState<"private" | "unlisted" | "public">("private");
+  const [youtubePublishStatus, setYoutubePublishStatus] = useState<string | null>(null);
+  const [youtubeAnalyticsStatus, setYoutubeAnalyticsStatus] = useState<string | null>(null);
+
+  const [publishedVideoId, setPublishedVideoId] = useState<string>("");
+  const [contentPlanTags, setContentPlanTags] = useState<string[]>([]);
+  const [contentPlanKeywords, setContentPlanKeywords] = useState<string[]>([]);
+  const [contentPlanTopics, setContentPlanTopics] = useState<string[]>([]);
+  const [contentPlanTelemetryAvailable, setContentPlanTelemetryAvailable] = useState<boolean>(false);
+  const [contentPlanTelemetryRows, setContentPlanTelemetryRows] = useState<number>(0);
+  const [contentPlanStatus, setContentPlanStatus] = useState<string | null>(null);
+  const [isSyncingAnalyticsAndOptimization, setIsSyncingAnalyticsAndOptimization] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetch("/api/youtube/features")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.features?.length) {
+          setYoutubeFeatures(data.features);
+        }
+      })
+      .catch(() => {
+        setYoutubeFeatures(DEFAULT_YOUTUBE_FEATURES);
+      });
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -611,23 +657,25 @@ Target duration: ${targetDurationMins} minutes.`;
   };
 
   // Synthesize & Render Full MP4 Video
+  const buildScenePayloads = () => chapters.map((ch) => ({
+    scene_number: ch.chapterNumber,
+    script_line: ch.title,
+    narration: ch.narration,
+    duration: ch.durationSeconds,
+    search_keywords: ch.title,
+    videoUrl: ch.backgroundVideoUrl,
+    transition: "fade",
+    subtitle: ch.narration,
+    overlayData: ch.overlayData,
+    title: ch.title
+  }));
+
   const handleRenderFullVideo = async () => {
     setIsRenderingFullVideo(true);
     setRenderingProgress("Initializing complete video render engine...");
 
     try {
-      const scenePayloads = chapters.map((ch) => ({
-        scene_number: ch.chapterNumber,
-        script_line: ch.title,
-        narration: ch.narration,
-        duration: ch.durationSeconds,
-        search_keywords: ch.title,
-        videoUrl: ch.backgroundVideoUrl,
-        transition: "fade",
-        subtitle: ch.narration,
-        overlayData: ch.overlayData,
-        title: ch.title
-      }));
+      const scenePayloads = buildScenePayloads();
 
       setRenderingProgress("Downloading background footage & stitching audio/video tracks...");
       const res = await fetch("/api/render-complete-video", {
@@ -660,6 +708,189 @@ Target duration: ${targetDurationMins} minutes.`;
       setRenderingProgress(`Rendering note: ${e.message}`);
     } finally {
       setIsRenderingFullVideo(false);
+    }
+  };
+
+  const handlePublishToYouTube = async () => {
+    if (isPublishingToYouTube || isRenderingFullVideo) return;
+    setIsPublishingToYouTube(true);
+    setYoutubePublishStatus("Rendering MP4 for YouTube upload...");
+    setYoutubeAnalyticsStatus(null);
+
+    try {
+      const scenePayloads = buildScenePayloads();
+      const res = await fetch("/api/render-complete-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: selectedPreset.id || "remotion_animated_study",
+          aspectRatio: "16:9",
+          scenes: scenePayloads,
+          voice: selectedNeuralVoice
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Rendering failed with HTTP ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const videoDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Unable to convert the rendered MP4 into a YouTube payload."));
+        reader.readAsDataURL(blob);
+      });
+
+      setYoutubePublishStatus("Uploading MP4 through the YouTube OAuth 2.0 gateway...");
+
+      const publishRes = await fetch("/api/youtube/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${selectedPreset.title || "Remotion Study"}`,
+          description: `${selectedPreset.description || "Generated by the AI Video B-Roll Assistant."}\n\nSource: ${selectedPreset.title}`,
+          tags: [selectedPreset.subject, "ai video", "learning", "remotion", "youtube automation"],
+          categoryId: "27",
+          privacyStatus: youtubeVisibility,
+          videoDataUrl,
+          playlistId: undefined
+        })
+      });
+
+      if (!publishRes.ok) {
+        const errJson = await publishRes.json().catch(() => ({ error: "YouTube upload failed with an unknown error" }));
+        throw new Error(errJson.error || `YouTube publish failed with HTTP ${publishRes.status}`);
+      }
+
+      const uploadPayload = await publishRes.json();
+      const storedVideoId = uploadPayload?.contentRecord?.videoId || uploadPayload?.youtube?.id || "";
+      setPublishedVideoId(storedVideoId);
+      setContentPlanTags(Array.isArray(uploadPayload?.contentRecord?.tags) ? uploadPayload.contentRecord.tags : []);
+      setContentPlanKeywords([]);
+      setContentPlanTopics([]);
+      setYoutubePublishStatus(`Published to YouTube successfully: ${storedVideoId || "video"}`);
+
+      try {
+        const analyticsRes = await fetch(`/api/youtube/analytics?startDate=${encodeURIComponent(new Date().toISOString().slice(0, 10))}&endDate=${encodeURIComponent(new Date().toISOString().slice(0, 10))}&metrics=${encodeURIComponent("views,estimatedMinutesWatched")}&dimensions=${encodeURIComponent("day")}`);
+        if (!analyticsRes.ok) {
+          const errJson = await analyticsRes.json().catch(() => ({ error: "analytics pending" }));
+          setYoutubeAnalyticsStatus(errJson.error || "Analytics are pending for the newly published video.");
+        } else {
+          const analytics = await analyticsRes.json();
+          if (analytics?.analytics?.rows?.length) {
+            setYoutubeAnalyticsStatus(`Telemetry ready: ${analytics.analytics.rows.length} report row(s).`);
+          } else {
+            setYoutubeAnalyticsStatus("Telemetry pending: the Analytics API has not yet reported this newly published video.");
+          }
+        }
+      } catch (err) {
+        setYoutubeAnalyticsStatus("Telemetry pending: YouTube Analytics data is not available yet for this newly published video.");
+      }
+    } catch (e: any) {
+      console.error("YouTube publish error:", e);
+      setYoutubePublishStatus(`YouTube publish note: ${e.message}`);
+      setYoutubeAnalyticsStatus("Telemetry pending: analytics unavailable until the upload appears in the YouTube channel report stream.");
+    } finally {
+      setIsPublishingToYouTube(false);
+    }
+  };
+
+  const handleSyncAnalyticsAndOptimize = async () => {
+    if (!publishedVideoId) {
+      setContentPlanStatus("Publish a video to YouTube first to generate a stored video.id.");
+      return;
+    }
+
+    setIsSyncingAnalyticsAndOptimization(true);
+    setContentPlanStatus("Syncing analytics and optimizing your content plan...");
+
+    try {
+      const endDate = new Date().toISOString().slice(0, 10);
+      const analyticsUrl = `/api/youtube/analytics?videoId=${encodeURIComponent(publishedVideoId)}&startDate=${encodeURIComponent("2026-01-01")}&endDate=${encodeURIComponent(endDate)}&metrics=${encodeURIComponent("views,estimatedMinutesWatched")}&dimensions=${encodeURIComponent("day")}`;
+      const analyticsRes = await fetch(analyticsUrl);
+      if (!analyticsRes.ok) {
+        const errJson = await analyticsRes.json().catch(() => ({ error: "Analytics sync failed" }));
+        throw new Error(errJson.error || "Analytics sync failed");
+      }
+
+      const analyticsPayload = await analyticsRes.json();
+      const analyticsRows = Array.isArray(analyticsPayload?.analytics?.rows) ? analyticsPayload.analytics.rows.length : 0;
+      setContentPlanTelemetryRows(analyticsRows);
+      setContentPlanTelemetryAvailable(analyticsRows > 0);
+
+      const optimizeRes = await fetch("/api/youtube/optimization", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId: publishedVideoId,
+          title: selectedPreset.title || "AI Generated Video",
+          description: selectedPreset.description || "",
+          tags: contentPlanTags,
+          searchKeywords: contentPlanKeywords,
+          topic: selectedPreset.title || "automation content"
+        })
+      });
+
+      if (!optimizeRes.ok) {
+        const errJson = await optimizeRes.json().catch(() => ({ error: "Optimization sync failed" }));
+        throw new Error(errJson.error || "Optimization sync failed");
+      }
+
+      const optimized = await optimizeRes.json();
+      const plan = optimized?.contentPlan || {};
+      setContentPlanTags(Array.isArray(plan.tags) ? plan.tags : []);
+      setContentPlanKeywords(Array.isArray(plan.searchKeywords) ? plan.searchKeywords : []);
+      setContentPlanTopics(Array.isArray(plan.topicRecommendations) ? plan.topicRecommendations : []);
+      setContentPlanTelemetryRows(Array.isArray(optimized?.contentPlan?.telemetryRows) ? optimized.contentPlan.telemetryRows : analyticsRows);
+      setContentPlanTelemetryAvailable(Boolean(optimized?.contentPlan?.telemetryAvailable));
+      setContentPlanStatus(`Telemetry rows: ${plan.telemetryRows ?? analyticsRows}.`);
+    } catch (e: any) {
+      console.error("Content sync error:", e);
+      setContentPlanStatus(`Content sync note: ${e.message}`);
+    } finally {
+      setIsSyncingAnalyticsAndOptimization(false);
+    }
+  };
+
+  const handleExportContentPlanJson = async () => {
+    const payload = {
+      videoId: publishedVideoId || "pending-upload",
+      generatedAt: new Date().toISOString(),
+      telemetry: {
+        available: contentPlanTelemetryAvailable,
+        rows: contentPlanTelemetryRows
+      },
+      tags: contentPlanTags,
+      searchKeywords: contentPlanKeywords,
+      topicRecommendations: contentPlanTopics,
+      source: {
+        title: selectedPreset.title || "AI Generated Video",
+        subject: selectedPreset.subject || "computer_science",
+        description: selectedPreset.description || ""
+      }
+    };
+
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `content-plan-${publishedVideoId || "draft"}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(json);
+        setContentPlanStatus("Content plan exported and copied to clipboard.");
+      } else {
+        setContentPlanStatus("Content plan exported to JSON download.");
+      }
+    } catch {
+      setContentPlanStatus("Content plan exported to JSON download.");
     }
   };
 
@@ -802,6 +1033,29 @@ Target duration: ${targetDurationMins} minutes.`;
             <span>Paste Custom Script</span>
           </button>
 
+          <div className="flex items-center gap-2 rounded-xl bg-stone-900 border border-stone-700 px-2">
+            <label className="text-[10px] uppercase tracking-wide text-stone-400">Visibility</label>
+            <select
+              value={youtubeVisibility}
+              onChange={(e) => setYoutubeVisibility(e.target.value as "private" | "unlisted" | "public")}
+              className="bg-stone-950 text-stone-100 text-xs px-2 py-2 rounded-lg border border-stone-700 focus:outline-none"
+              title="YouTube video visibility"
+            >
+              <option value="private">private</option>
+              <option value="unlisted">unlisted</option>
+              <option value="public">public</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handlePublishToYouTube}
+            disabled={isPublishingToYouTube || isRenderingFullVideo}
+            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-red-900/20 transition-colors"
+          >
+            <Film className="w-4 h-4" />
+            <span>{isPublishingToYouTube ? "Publishing..." : "Publish to YouTube"}</span>
+          </button>
+
           <button
             onClick={handleRenderFullVideo}
             disabled={isRenderingFullVideo}
@@ -822,6 +1076,80 @@ Target duration: ${targetDurationMins} minutes.`;
           </div>
         </div>
       )}
+
+      {(youtubePublishStatus || youtubeAnalyticsStatus) && (
+        <div className="p-4 rounded-xl bg-stone-900 border border-stone-700 text-stone-200 text-xs flex flex-col gap-2">
+          {youtubePublishStatus && (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-mono">{youtubePublishStatus}</span>
+            </div>
+          )}
+          {youtubeAnalyticsStatus && (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="font-mono text-amber-200">{youtubeAnalyticsStatus}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <section className="p-4 rounded-2xl bg-stone-900 border border-stone-800 shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-xs uppercase tracking-[0.18em] text-indigo-300 font-bold">Content Plan View</div>
+            <div className="text-sm font-semibold text-stone-100 mt-1">Stored video ID: <span className="font-mono text-amber-300">{publishedVideoId || "pending upload"}</span></div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleSyncAnalyticsAndOptimize}
+              disabled={isSyncingAnalyticsAndOptimization || !publishedVideoId}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>{isSyncingAnalyticsAndOptimization ? "Syncing..." : "Sync Analytics & Optimize"}</span>
+            </button>
+            <button
+              onClick={handleExportContentPlanJson}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold flex items-center gap-2 shadow-lg transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export Content Plan (JSON)</span>
+            </button>
+          </div>
+        </div>
+
+        {contentPlanStatus && (
+          <div className="mt-3 text-xs font-mono text-amber-200">{contentPlanStatus}</div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+          <div className="rounded-xl bg-stone-950/60 border border-stone-800 p-3">
+            <div className="text-[10px] uppercase tracking-widest text-stone-500">Tags</div>
+            <div className="flex flex-wrap gap-1 mt-2">
+              {(contentPlanTags.length ? contentPlanTags : ["automation", "ai video"]).map((tag, idx) => (
+                <span key={`${tag}-${idx}`} className="px-2 py-1 rounded-full bg-indigo-500/20 text-indigo-200 text-[11px] border border-indigo-500/30">{tag}</span>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl bg-stone-950/60 border border-stone-800 p-3">
+            <div className="text-[10px] uppercase tracking-widest text-stone-500">Search Keywords</div>
+            <div className="flex flex-wrap gap-1 mt-2">
+              {(contentPlanKeywords.length ? contentPlanKeywords : [selectedPreset.title || "ai video"]).map((kw, idx) => (
+                <span key={`${kw}-${idx}`} className="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 text-[11px] border border-emerald-500/30">{kw}</span>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl bg-stone-950/60 border border-stone-800 p-3">
+            <div className="text-[10px] uppercase tracking-widest text-stone-500">Topic Recommendations</div>
+            <div className="flex flex-wrap gap-1 mt-2">
+              {(contentPlanTopics.length ? contentPlanTopics : [selectedPreset.title || "automation content"]).map((topic, idx) => (
+                <span key={`${topic}-${idx}`} className="px-2 py-1 rounded-full bg-amber-500/20 text-amber-200 text-[11px] border border-amber-500/30">{topic}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Studio Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1014,6 +1342,47 @@ Target duration: ${targetDurationMins} minutes.`;
             <p className="text-[11px] text-stone-300 leading-relaxed">
               Have a timestamped script with GIPHY, NASA, or Archive API targets? Click "Paste Custom Script" above to parse it instantly!
             </p>
+          </div>
+
+          {/* Screenshot-aligned YouTube Automation API Cards */}
+          <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 flex flex-col gap-3 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold text-stone-100">
+                <Film className="w-4 h-4 text-red-400" />
+                <span>YouTube Automation API Stack</span>
+              </div>
+              <button
+                className="w-9 h-9 rounded-full bg-stone-700 hover:bg-stone-600 text-white text-lg flex items-center justify-center"
+                title="Next automation API"
+                onClick={() => {
+                  const next = youtubeFeatures[1 % youtubeFeatures.length];
+                  setYoutubeFeatures([next, ...youtubeFeatures.filter((f) => f.title !== next.title)]);
+                }}
+              >
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {youtubeFeatures.slice(0, 3).map((feature, idx) => (
+                <div key={feature.title} className="rounded-2xl bg-stone-950/60 border border-stone-700 p-4 min-h-[180px] flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-10 h-10 bg-red-500 rounded-md flex items-center justify-center">
+                      <Play className="w-4 h-4 fill-white text-white" />
+                    </span>
+                    <span className="text-lg font-semibold text-stone-100">{feature.title}</span>
+                  </div>
+                  <div className="text-xs text-stone-400 font-medium">{feature.provider}</div>
+                  <div className="text-sm text-stone-300 leading-relaxed">{feature.description}</div>
+                  {idx === 0 && (
+                    <div className="mt-auto flex flex-wrap gap-2">
+                      {feature.capabilities.slice(0, 3).map((cap) => (
+                        <span key={cap} className="px-2 py-0.5 rounded-full bg-stone-800 text-[10px] text-stone-300 border border-stone-700">{cap}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* AI Study Lesson Generator */}
