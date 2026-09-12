@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildShortsFallbackPlan, getShortsTopicIdeas, isContentPillar } from "../shortsPlanner.ts";
+import { buildShortsFallbackPlan, getShortsTopicIdeas, isContentPillar, normalizeShortsPlanRequest } from "../shortsPlanner.ts";
 
 test("each supported pillar exposes twelve concrete, non-duplicate ideas", () => {
   for (const pillar of ["tech-ai", "unusual-science", "african-history"] as const) {
@@ -58,4 +58,21 @@ test("fallback exposes the AutoVideoPlan-compatible top-level fields", () => {
   assert.equal(plan.voiceover_enabled, true);
   assert.equal(typeof plan.subtitles_style, "string");
   assert.equal("music" in plan, false);
+});
+
+test("Shorts requests reject unknown pillars and preserve creator duration overrides", () => {
+  assert.throws(() => normalizeShortsPlanRequest({ pillar: "general", targetDuration: 30 }), /Unsupported Shorts pillar/);
+  assert.deepEqual(
+    normalizeShortsPlanRequest({ pillar: "tech-ai", targetDuration: 24 }),
+    { pillar: "tech-ai", targetDuration: 24, aspectRatio: "9:16", pacing: "fast" },
+  );
+});
+
+test("Shorts requests reject non-integer durations outside 20 through 32 seconds", () => {
+  for (const targetDuration of [undefined, "30", 19, 33, 24.5, Number.NaN, Infinity]) {
+    assert.throws(
+      () => normalizeShortsPlanRequest({ pillar: "tech-ai", targetDuration }),
+      /targetDuration must be a whole number from 20 to 32 seconds/,
+    );
+  }
 });

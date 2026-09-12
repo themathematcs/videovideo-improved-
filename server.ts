@@ -11,6 +11,12 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import { generatePythonScript } from "./src/pythonTemplate.ts";
 import { EXPANDED_CURATED_VIDEO_CATALOG } from "./src/data/videoCatalog.ts";
+import {
+  buildShortsFallbackPlan,
+  getShortsTopicIdeas,
+  isContentPillar,
+  normalizeShortsPlanRequest,
+} from "./shortsPlanner.ts";
 
 let _filename = "";
 let _dirname = "";
@@ -2017,6 +2023,14 @@ function generateTopicAwareVideoPlan(
   };
 }
 
+app.get("/api/shorts/topic-ideas", (req, res) => {
+  if (!isContentPillar(req.query.pillar)) {
+    return res.status(400).json({ error: "pillar must be tech-ai, unusual-science, or african-history" });
+  }
+
+  return res.json({ pillar: req.query.pillar, ideas: getShortsTopicIdeas(req.query.pillar) });
+});
+
 // Autonomous Video Creation: Generate complete video narrative, scenes, and music cues
 app.post("/api/auto-video/plan", async (req, res) => {
   const {
@@ -2025,15 +2039,33 @@ app.post("/api/auto-video/plan", async (req, res) => {
     style = "tech",
     aspectRatio = "16:9",
     pacing = "balanced",
-    targetDuration = 30
+    targetDuration = 30,
+    pillar,
+    shortsMode = false,
   } = req.body;
+  const isShortsRequest = shortsMode === true;
+  let shortsRequest: ReturnType<typeof normalizeShortsPlanRequest> | undefined;
+
+  if (isShortsRequest) {
+    try {
+      shortsRequest = normalizeShortsPlanRequest({ pillar, targetDuration });
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  const selectedAspectRatio = shortsRequest?.aspectRatio ?? aspectRatio;
+  const selectedPacing = shortsRequest?.pacing ?? pacing;
+  const selectedTargetDuration = shortsRequest?.targetDuration ?? targetDuration;
   const inputTopic = (prompt || script || "Creative Video Storytelling").trim();
-  const sceneDuration = pacing === "fast" ? 3.5 : pacing === "cinematic" ? 7 : 5;
-  const targetNumScenes = Math.max(3, Math.min(16, Math.round(Number(targetDuration || 30) / sceneDuration)));
+  const sceneDuration = selectedPacing === "fast" ? 3.5 : selectedPacing === "cinematic" ? 7 : 5;
+  const targetNumScenes = shortsRequest
+    ? Math.max(5, Math.min(8, Math.round(selectedTargetDuration / sceneDuration)))
+    : Math.max(3, Math.min(16, Math.round(Number(selectedTargetDuration || 30) / sceneDuration)));
 
   // If input is a structured script draft with timestamps or cues, parse directly
-  if (hasStructuredScriptFormatting(inputTopic)) {
-    const structuredPlan = parseStructuredScriptDraft(inputTopic, aspectRatio);
+  if (!shortsRequest && hasStructuredScriptFormatting(inputTopic)) {
+    const structuredPlan = parseStructuredScriptDraft(inputTopic, selectedAspectRatio);
     if (structuredPlan.scenes.length > 0) {
       return res.json(structuredPlan);
     }
@@ -2043,23 +2075,28 @@ app.post("/api/auto-video/plan", async (req, res) => {
 Your goal is to transform a custom user prompt or video script into an autonomous video production plan ready for instant playback and rendering.
 
 RULES:
-1. Generate an engaging, high-impact narration script split into ${targetNumScenes} sequential scenes tailored precisely to the user's specific topic and target video duration (~${targetDuration}s).
+1. Generate an engaging, high-impact narration script split into ${targetNumScenes} sequential scenes tailored precisely to the user's specific topic and target video duration (~${selectedTargetDuration}s).
 2. For each scene:
    - "narration": A punchy, spoken sentence (8-16 words) that fits natural voiceover delivery.
-   - "search_keywords": 2-4 ultra-descriptive visual keywords tuned for Pexels / Pixabay stock videography (${aspectRatio === "9:16" ? "portrait/vertical short-form video style" : "cinematic 16:9 style"}).
+   - "search_keywords": 2-4 ultra-descriptive visual keywords tuned for Pexels / Pixabay stock videography (${selectedAspectRatio === "9:16" ? "portrait/vertical short-form video style" : "cinematic 16:9 style"}).
    - "secondary_keywords": Optional secondary B-roll search query for split-screen comparison scenes.
-   - "duration": Target duration in seconds (between 3.5 and 7.0 seconds).
+   - "duration": Target duration in seconds (between ${shortsRequest ? "2 and 4" : "3.5 and 7.0"} seconds).
    - "subtitle": Short on-screen subtitle caption text (max 8 words) for bold display.
    - "transition": One of "fade", "splitscreen", "zoom", "slide".
 3. Under "music_keyword", provide the ideal royalty-free background music search query matching the genre and vibe.
-4. Output valid JSON strictly conforming to the requested schema.`;
+4. Output valid JSON strictly conforming to the requested schema.${shortsRequest ? `
+5. This is a ${shortsRequest.pillar} YouTube Short. Begin scene one with an immediate, subject-specific hook; never open with a greeting or generic setup.
+6. Include shorts_metadata with the pillar, hook format, opening hook, payoff, retention strategy, and research note.
+7. Every scene must include a concrete visual_brief and retention_beat that earns the next moment of attention.` : ""}`;
 
   const promptText = `Produce an autonomous video plan for:
 Topic / Prompt: "${inputTopic}"
 Style: ${style}
-Aspect Ratio: ${aspectRatio} (${aspectRatio === "9:16" ? "9:16 Portrait / Vertical Short Form" : "16:9 Landscape Widescreen"})
-Target Pacing: ${pacing} (approx ${sceneDuration}s per scene)
-Target Total Video Duration: approx ${targetDuration} seconds (${targetNumScenes} total scenes)
+Aspect Ratio: ${selectedAspectRatio} (${selectedAspectRatio === "9:16" ? "9:16 Portrait / Vertical Short Form" : "16:9 Landscape Widescreen"})
+Target Pacing: ${selectedPacing} (approx ${sceneDuration}s per scene)
+Target Total Video Duration: approx ${selectedTargetDuration} seconds (${targetNumScenes} total scenes)${shortsRequest ? `
+Shorts Pillar: ${shortsRequest.pillar}
+Shorts Constraints: vertical 9:16, fast pacing, immediate subject-specific hook, no greetings or generic setup.` : ""}
 
 Include a catchy project title, cohesive full script, scene breakdowns with stock video keywords, secondary keywords for split screen, and the exact background music search keyword.`;
 
@@ -2094,13 +2131,33 @@ Include a catchy project title, cohesive full script, scene breakdowns with stoc
                   secondary_keywords: { type: Type.STRING },
                   duration: { type: Type.NUMBER },
                   subtitle: { type: Type.STRING },
-                  transition: { type: Type.STRING }
+                  transition: { type: Type.STRING },
+                  visual_brief: { type: Type.STRING },
+                  retention_beat: { type: Type.STRING }
                 },
-                required: ["scene_number", "narration", "search_keywords", "duration", "subtitle"]
+                required: [
+                  "scene_number",
+                  "narration",
+                  "search_keywords",
+                  "duration",
+                  "subtitle",
+                  ...(shortsRequest ? ["visual_brief", "retention_beat"] : [])
+                ]
+              }
+            },
+            shorts_metadata: {
+              type: Type.OBJECT,
+              properties: {
+                pillar: { type: Type.STRING },
+                hook_format: { type: Type.STRING },
+                opening_hook: { type: Type.STRING },
+                payoff: { type: Type.STRING },
+                retention_strategy: { type: Type.STRING },
+                research_note: { type: Type.STRING }
               }
             }
           },
-          required: ["title", "full_script", "music_keyword", "scenes"]
+          required: ["title", "full_script", "music_keyword", "scenes", ...(shortsRequest ? ["shorts_metadata"] : [])]
         }
       }
     });
@@ -2111,9 +2168,15 @@ Include a catchy project title, cohesive full script, scene breakdowns with stoc
       narration: s.narration || "Visual sequence",
       search_keywords: s.search_keywords || `${inputTopic} footage`,
       secondary_keywords: s.secondary_keywords || `${inputTopic} detail`,
-      duration: Math.max(3, Math.min(10, Number(s.duration) || sceneDuration)),
+      duration: shortsRequest
+        ? Math.max(2, Math.min(4, Number(s.duration) || sceneDuration))
+        : Math.max(3, Math.min(10, Number(s.duration) || sceneDuration)),
       subtitle: s.subtitle || s.narration?.slice(0, 40) || "",
       transition: s.transition || (idx % 4 === 1 ? "splitscreen" : idx % 4 === 2 ? "zoom" : "fade"),
+      ...(shortsRequest ? {
+        visual_brief: s.visual_brief || `Vertical close-up showing ${inputTopic} with a clear focal subject.`,
+        retention_beat: s.retention_beat || "Change the visual framing to set up the next reveal."
+      } : {}),
       layout: s.transition === "splitscreen" ? "splitscreen" : "standard"
     }));
 
@@ -2123,14 +2186,32 @@ Include a catchy project title, cohesive full script, scene breakdowns with stoc
       title: parsed.title || inputTopic,
       prompt: inputTopic,
       full_script: parsed.full_script || scenes.map((s: any) => s.narration).join(" "),
-      aspect_ratio: aspectRatio,
+      aspect_ratio: selectedAspectRatio,
       music_keyword: parsed.music_keyword || "ambient modern",
       music_mood: parsed.music_mood || "ambient modern",
+      ...(shortsRequest ? {
+        shorts_metadata: {
+          pillar: shortsRequest.pillar,
+          hook_format: parsed.shorts_metadata?.hook_format || "counterintuitive-explainer",
+          opening_hook: parsed.shorts_metadata?.opening_hook || scenes[0]?.narration || inputTopic,
+          payoff: parsed.shorts_metadata?.payoff || scenes.at(-1)?.narration || "A concise, source-verifiable conclusion.",
+          retention_strategy: parsed.shorts_metadata?.retention_strategy || "A new visual beat in every scene keeps the hook moving toward the payoff.",
+          research_note: parsed.shorts_metadata?.research_note || "Factual verification is required before publishing."
+        }
+      } : {}),
       scenes,
       total_duration: totalDuration
     });
   } catch (err: any) {
     console.log("Using smart dynamic topic-aware generator for prompt:", inputTopic);
+    if (shortsRequest) {
+      return res.json(buildShortsFallbackPlan({
+        topic: inputTopic,
+        pillar: shortsRequest.pillar,
+        targetDuration: shortsRequest.targetDuration,
+      }));
+    }
+
     // Intelligent, high-quality dynamic topic-aware generator
     const dynamicPlan = generateTopicAwareVideoPlan(inputTopic, style, aspectRatio, pacing, Number(targetDuration) || 30);
     return res.json(dynamicPlan);
@@ -2626,10 +2707,10 @@ app.post("/api/render-complete-video", async (req, res) => {
 
     // 3. Download the single background music track if provided, then loop it for the whole video duration.
     let musicLocalPath: string | null = null;
-    if (oneMusicUrl) {
+    if (singleMusicUrl) {
       try {
         const musicPath = path.join(tmpDir, "music.mp3");
-        const mResp = await fetch(oneMusicUrl);
+        const mResp = await fetch(singleMusicUrl);
         if (mResp.ok) {
           await fs.promises.writeFile(musicPath, Buffer.from(await mResp.arrayBuffer()));
           musicLocalPath = musicPath;

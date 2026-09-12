@@ -62,6 +62,27 @@ export interface SystemRateLimits {
   archive?: RateLimitInfo;
 }
 
+export type ContentPillar = 'tech-ai' | 'unusual-science' | 'african-history';
+
+export interface ShortsTopicIdea {
+  id: string;
+  pillar: ContentPillar;
+  title: string;
+  hook: string;
+  hookFormat: string;
+  payoff: string;
+  researchNote: string;
+}
+
+export interface ShortsPlanMetadata {
+  pillar: ContentPillar;
+  hook_format: string;
+  opening_hook: string;
+  payoff: string;
+  retention_strategy: string;
+  research_note: string;
+}
+
 export interface AutoVideoScene {
   scene_number: number;
   narration: string;
@@ -77,6 +98,8 @@ export interface AutoVideoScene {
   videoAsset?: StockMediaItem;
   secondaryVideoAsset?: StockMediaItem;
   splitAssets?: StockMediaItem[];
+  retention_beat?: string;
+  visual_brief?: string;
 }
 
 export interface AutoVideoPlan {
@@ -90,6 +113,7 @@ export interface AutoVideoPlan {
   total_duration: number;
   voiceover_enabled: boolean;
   subtitles_style: 'highlight' | 'classic' | 'minimal' | 'none';
+  shorts_metadata?: ShortsPlanMetadata;
   _fallback?: boolean;
 }
 

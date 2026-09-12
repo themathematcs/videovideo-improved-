@@ -73,6 +73,30 @@ export function getShortsTopicIdeas(pillar: ContentPillar): ShortsTopicIdea[] {
   return TOPIC_IDEAS[pillar].map((idea) => ({ ...idea }));
 }
 
+export function normalizeShortsPlanRequest(input: { pillar: unknown; targetDuration?: unknown }) {
+  if (!isContentPillar(input.pillar)) {
+    throw new Error("Unsupported Shorts pillar. Choose tech-ai, unusual-science, or african-history.");
+  }
+
+  const requested = input.targetDuration;
+  if (
+    typeof requested !== "number" ||
+    !Number.isFinite(requested) ||
+    !Number.isInteger(requested) ||
+    requested < 20 ||
+    requested > 32
+  ) {
+    throw new RangeError("targetDuration must be a whole number from 20 to 32 seconds.");
+  }
+
+  return {
+    pillar: input.pillar,
+    targetDuration: requested,
+    aspectRatio: "9:16" as const,
+    pacing: "fast" as const,
+  };
+}
+
 export interface ShortsPlanInput {
   topic: string;
   pillar: ContentPillar;
