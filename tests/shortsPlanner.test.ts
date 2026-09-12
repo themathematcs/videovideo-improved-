@@ -40,7 +40,7 @@ test("fallback durations equal each valid requested length", () => {
 });
 
 test("fallback rejects targets outside the supported duration range", () => {
-  for (const targetDuration of [16, 36, 60]) {
+  for (const targetDuration of [16, 36, 60, 19.6, 32.4]) {
     assert.throws(
       () => buildShortsFallbackPlan({ topic: "Tardigrade survival", pillar: "unusual-science", targetDuration }),
       (error: unknown) => error instanceof RangeError && error.message.includes("Shorts fallback supports 20–32 seconds"),

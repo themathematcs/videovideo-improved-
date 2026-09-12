@@ -133,3 +133,20 @@ Result:
 ```
 
 TypeScript lint completed with no diagnostics. The existing `npm test`/tsx host ENOMEM limitation remains documented above.
+
+## Review-fix round 3
+
+Added decimal invalid-target coverage for `19.6` and `32.4` (alongside the existing integer out-of-range cases). The RED run failed with `Missing expected exception` because the implementation rounded before validation.
+
+### GREEN evidence
+
+Changed validation to require `Number.isFinite(target)`, `Number.isInteger(target)`, and an inclusive 20–32 range before scene construction; no rounding occurs.
+
+Commands:
+
+```text
+node --experimental-strip-types --test tests/shortsPlanner.test.ts
+npx tsc --noEmit --pretty false
+```
+
+Result: all 5 tests passed (`# pass 5`, `# fail 0`) and TypeScript lint completed with no diagnostics.
