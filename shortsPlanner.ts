@@ -102,9 +102,15 @@ export interface ShortsPlanScene {
 
 export interface ShortsFallbackPlan {
   aspect_ratio: "9:16";
+  title: string;
+  prompt: string;
+  full_script: string;
+  music_keyword: string;
+  total_duration: number;
+  voiceover_enabled: boolean;
+  subtitles_style: string;
   shorts_metadata: ShortsPlanMetadata;
   scenes: ShortsPlanScene[];
-  music: { mood: string; search_keywords: string };
 }
 
 function pickIdea(input: ShortsPlanInput): ShortsTopicIdea {
@@ -116,8 +122,11 @@ function pickIdea(input: ShortsPlanInput): ShortsTopicIdea {
 export function buildShortsFallbackPlan(input: ShortsPlanInput): ShortsFallbackPlan {
   const idea = pickIdea(input);
   const topic = input.topic.trim() || idea.title;
-  const target = Math.max(16, Math.min(60, Math.round(input.targetDuration ?? 30)));
-  const sceneCount = target <= 24 ? 6 : target <= 36 ? 8 : 12;
+  const requestedTarget = Math.max(16, Math.min(60, Math.round(input.targetDuration ?? 30)));
+  // The renderer caps each scene at four seconds, so eight scenes provide a
+  // deterministic 16–32 second safe envelope for every request.
+  const target = Math.min(requestedTarget, 32);
+  const sceneCount = 8;
   const base = Math.floor(target / sceneCount);
   const remainder = target - base * sceneCount;
   const beats = [
@@ -130,7 +139,7 @@ export function buildShortsFallbackPlan(input: ShortsPlanInput): ShortsFallbackP
     ["Payoff", idea.payoff, "Deliver the promised answer with a concrete takeaway.", "camera settles on the clearest final diagram"],
     ["Payoff", `Save this story and verify the sources before sharing ${topic}.`, "End on a question that invites a thoughtful rewatch.", "camera pulls back from the final visual"],
   ];
-  const selected = beats.slice(0, sceneCount);
+  const selected = beats;
   const scenes = selected.map(([title, narration, retention_beat, visual], index) => ({
     scene_number: index + 1,
     title,
@@ -144,6 +153,13 @@ export function buildShortsFallbackPlan(input: ShortsPlanInput): ShortsFallbackP
   }));
   return {
     aspect_ratio: "9:16",
+    title: topic,
+    prompt: `Create a ${input.pillar} short about ${topic}.`,
+    full_script: scenes.map((scene) => scene.narration).join(" "),
+    music_keyword: input.pillar === "african-history" ? "warm documentary pulse" : input.pillar === "unusual-science" ? "curious cinematic minimalism" : "precise energetic synth",
+    total_duration: scenes.reduce((sum, scene) => sum + scene.duration, 0),
+    voiceover_enabled: true,
+    subtitles_style: "bold-readable",
     shorts_metadata: {
       pillar: input.pillar,
       hook_format: idea.hookFormat,
@@ -153,9 +169,5 @@ export function buildShortsFallbackPlan(input: ShortsPlanInput): ShortsFallbackP
       research_note: idea.researchNote,
     },
     scenes,
-    music: {
-      mood: input.pillar === "african-history" ? "warm documentary pulse" : input.pillar === "unusual-science" ? "curious cinematic minimalism" : "precise energetic synth",
-      search_keywords: `${input.pillar.replace("-", " ")} documentary instrumental`,
-    },
   };
 }

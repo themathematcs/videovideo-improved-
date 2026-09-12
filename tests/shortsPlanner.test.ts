@@ -28,3 +28,26 @@ test("African-history fallback begins with a hook and provides rapid visual dire
   assert.ok(plan.scenes.every((scene) => scene.visual_brief.includes("camera")));
   assert.ok(plan.scenes.every((scene) => scene.retention_beat.length > 8));
 });
+
+test("fallback durations stay within renderer-safe bounds across requested lengths", () => {
+  for (const targetDuration of [16, 30, 36, 60]) {
+    const plan = buildShortsFallbackPlan({ topic: "Tardigrade survival", pillar: "unusual-science", targetDuration });
+    const total = plan.scenes.reduce((sum, scene) => sum + scene.duration, 0);
+    assert.ok(plan.scenes.length >= 5 && plan.scenes.length <= 8);
+    assert.ok(plan.scenes.every((scene) => scene.duration >= 2 && scene.duration <= 4));
+    assert.ok(total <= targetDuration);
+    assert.ok(total >= Math.min(targetDuration, 32) * 0.9);
+  }
+});
+
+test("fallback exposes the AutoVideoPlan-compatible top-level fields", () => {
+  const plan = buildShortsFallbackPlan({ topic: "How Great Zimbabwe became a trading center", pillar: "african-history", targetDuration: 30 });
+  assert.equal(typeof plan.title, "string");
+  assert.equal(typeof plan.prompt, "string");
+  assert.equal(typeof plan.full_script, "string");
+  assert.equal(typeof plan.music_keyword, "string");
+  assert.equal(plan.total_duration, 30);
+  assert.equal(plan.voiceover_enabled, true);
+  assert.equal(typeof plan.subtitles_style, "string");
+  assert.equal("music" in plan, false);
+});

@@ -58,3 +58,42 @@ npx tsc --noEmit --pretty false
 
 `npm test` invokes the requested `tsx` script but is currently blocked by the same `uv_os_get_passwd ... ENOMEM` host error; the built-in Node test run above is the passing equivalent.
 
+## Review-fix round
+
+Added RED tests covering target durations 16, 30, 36, and 60 seconds and asserting five-to-eight scenes, two-to-four-second scene durations, bounded total duration, and direct `AutoVideoPlan`-compatible top-level fields.
+
+### RED
+
+Command:
+
+```text
+node --experimental-strip-types --test tests/shortsPlanner.test.ts
+```
+
+Result: tests 1–2 passed; tests 3–4 failed as intended. The duration assertion failed because the previous planner emitted five-second scenes, and the renderer-shape assertion failed because `title` was `undefined`.
+
+### GREEN
+
+Implemented an eight-scene, 16–32-second safe envelope (each scene is always 2–4 seconds), and added `title`, `prompt`, `full_script`, `music_keyword`, `total_duration`, `voiceover_enabled`, and `subtitles_style`. Removed the custom `music` object.
+
+Command:
+
+```text
+node --experimental-strip-types --test tests/shortsPlanner.test.ts
+npx tsc --noEmit --pretty false
+```
+
+Result:
+
+```text
+1..4
+# tests 4
+# pass 4
+# fail 0
+```
+
+TypeScript lint completed with no diagnostics. `npm test` remains blocked by the host-level `tsx`/`uv_os_get_passwd ... ENOMEM` issue documented above; the built-in Node runner is green.
+
+### Self-review
+
+The fallback now returns only renderer-compatible top-level fields plus the existing shorts metadata, keeps every scene within the renderer’s duration cap, and caps impossible 36–60 second requests at the maximum eight-scene safe envelope rather than producing invalid durations or silently dropping scenes.
