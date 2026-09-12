@@ -6,7 +6,7 @@ import {
   Mic, User, Volume1, Settings2, ChevronDown, ChevronUp, Columns, Film, Check,
   Search, X, Upload, Disc, Radio, Filter, FolderOpen, Grid2X2, LayoutGrid
 } from "lucide-react";
-import { AutoVideoPlan, AutoVideoScene, StockMediaItem, AudioTrackItem } from "../types";
+import { AutoVideoPlan, AutoVideoScene, StockMediaItem, AudioTrackItem, ContentPillar, ShortsTopicIdea } from "../types";
 import { EXPANDED_CURATED_MUSIC_LIBRARY, MUSIC_GENRES, MusicGenre } from "../data/musicCatalog";
 import { EXPANDED_CURATED_VIDEO_CATALOG, VIDEO_CATEGORIES } from "../data/videoCatalog";
 
@@ -55,6 +55,12 @@ export const STUDIO_NEURAL_VOICES: StudioNeuralVoice[] = [
 
 export const DEFAULT_CURATED_MUSIC_LIST: AudioTrackItem[] = EXPANDED_CURATED_MUSIC_LIBRARY;
 
+const SHORTS_PILLARS: { id: ContentPillar; label: string; description: string; icon: string }[] = [
+  { id: "tech-ai", label: "Tech / AI", description: "Hidden shifts and surprising tools", icon: "⚡" },
+  { id: "unusual-science", label: "Unusual Science", description: "Counterintuitive discoveries", icon: "🔬" },
+  { id: "african-history", label: "African Stories", description: "Overlooked history with context", icon: "🌍" },
+];
+
 export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   onExportToStoryboard,
 }) => {
@@ -68,6 +74,10 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
   const [targetDuration, setTargetDuration] = useState<number>(30);
   const [mediaSource, setMediaSource] = useState<"all" | "pexels" | "pixabay" | "giphy" | "archive" | "nasa">("all");
   const [vibeStyle, setVibeStyle] = useState<string>("tech");
+  const [selectedPillar, setSelectedPillar] = useState<ContentPillar | null>(null);
+  const [shortsIdeas, setShortsIdeas] = useState<ShortsTopicIdea[]>([]);
+  const [isLoadingShortsIdeas, setIsLoadingShortsIdeas] = useState(false);
+  const [shortsIdeasError, setShortsIdeasError] = useState<string | null>(null);
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
   const [subtitlesStyle, setSubtitlesStyle] = useState<"highlight" | "classic" | "minimal" | "none">("highlight");
   const [musicVolume, setMusicVolume] = useState(0.4);
@@ -612,6 +622,8 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
           aspectRatio,
           pacing,
           targetDuration,
+          pillar: selectedPillar || undefined,
+          shortsMode: Boolean(selectedPillar),
         }),
       });
 
@@ -767,6 +779,31 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
       console.error("Autonomous creation error:", err);
       setErrorMsg(`Autonomous studio error: ${err.message}. Please try again.`);
       setIsGenerating(false);
+    }
+  };
+
+  const handleSelectPillar = (pillar: ContentPillar) => {
+    setSelectedPillar(pillar);
+    setAspectRatio("9:16");
+    setTargetDuration(30);
+    setPacing("fast");
+    setShortsIdeas([]);
+    setShortsIdeasError(null);
+  };
+
+  const handleExploreShortsIdeas = async () => {
+    if (!selectedPillar) return;
+    setIsLoadingShortsIdeas(true);
+    setShortsIdeasError(null);
+    try {
+      const response = await fetch(`/api/shorts/topic-ideas?pillar=${encodeURIComponent(selectedPillar)}`);
+      if (!response.ok) throw new Error("Could not load topic ideas right now.");
+      const data = await response.json();
+      setShortsIdeas(Array.isArray(data.ideas) ? data.ideas : []);
+    } catch (error: any) {
+      setShortsIdeasError(error.message || "Could not load topic ideas right now.");
+    } finally {
+      setIsLoadingShortsIdeas(false);
     }
   };
 
@@ -1419,6 +1456,73 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                 {useRawScript ? "Switch to Prompt Mode" : "Paste Exact Script"}
               </button>
             </div>
+
+            {!useRawScript && (
+              <div className="rounded-xl border border-violet-500/30 bg-violet-950/20 p-3 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold text-violet-100">YouTube Shorts Strategy</p>
+                    <p className="text-[10px] text-stone-400 mt-0.5">Choose a pillar for a faster, retention-first plan.</p>
+                  </div>
+                  {selectedPillar && (
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedPillar(null); setShortsIdeas([]); setShortsIdeasError(null); }}
+                      className="text-[10px] text-stone-400 hover:text-white underline"
+                    >
+                      Freeform mode
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {SHORTS_PILLARS.map((pillar) => {
+                    const active = selectedPillar === pillar.id;
+                    return (
+                      <button
+                        key={pillar.id}
+                        type="button"
+                        onClick={() => handleSelectPillar(pillar.id)}
+                        className={`rounded-lg border p-2 text-left transition-colors ${active ? "border-violet-400 bg-violet-500/20 text-violet-100" : "border-stone-700 bg-stone-900 text-stone-300 hover:border-violet-500/60"}`}
+                      >
+                        <span className="block text-sm">{pillar.icon}</span>
+                        <span className="block mt-1 text-[10px] font-bold leading-tight">{pillar.label}</span>
+                        <span className="block mt-0.5 text-[9px] leading-tight text-stone-400">{pillar.description}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedPillar && (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleExploreShortsIdeas}
+                      disabled={isLoadingShortsIdeas}
+                      className="w-full rounded-lg border border-violet-500/40 bg-violet-500/10 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-500/20 disabled:opacity-50"
+                    >
+                      {isLoadingShortsIdeas ? "Finding distinct ideas…" : "Explore 12 distinct topic ideas"}
+                    </button>
+                    {shortsIdeasError && <p className="text-[10px] text-red-300">{shortsIdeasError}</p>}
+                    {shortsIdeas.length > 0 && (
+                      <div className="max-h-52 space-y-1.5 overflow-y-auto pr-1">
+                        {shortsIdeas.map((idea) => (
+                          <button
+                            type="button"
+                            key={idea.id}
+                            onClick={() => { setCustomPrompt(`${idea.title}. ${idea.hook}`); setShortsIdeas([]); }}
+                            className="w-full rounded-lg border border-stone-700 bg-stone-950 p-2 text-left hover:border-violet-500/70"
+                          >
+                            <span className="block text-[10px] font-bold text-stone-100">{idea.title}</span>
+                            <span className="block mt-0.5 text-[10px] text-violet-200">{idea.hook}</span>
+                            <span className="block mt-1 text-[9px] text-stone-400">{idea.hookFormat.replaceAll("-", " ")} · {idea.payoff}</span>
+                          </button>
+                        ))}
+                        <p className="px-1 text-[9px] text-amber-300/80">Fact-check every claim and source before publishing.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Prompt input */}
             <div>
@@ -2162,6 +2266,18 @@ export const AutonomousVideoCreator: React.FC<AutonomousVideoCreatorProps> = ({
                 </div>
               )}
             </div>
+
+            {videoPlan?.shorts_metadata && (
+              <div className="rounded-xl border border-violet-500/35 bg-violet-950/20 p-3 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-violet-200">Shorts brief · {videoPlan.shorts_metadata.pillar.replaceAll("-", " ")}</span>
+                  <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-violet-200">{videoPlan.shorts_metadata.hook_format.replaceAll("-", " ")}</span>
+                </div>
+                <p className="mt-2 text-stone-100"><span className="font-semibold text-violet-300">Hook:</span> {videoPlan.shorts_metadata.opening_hook}</p>
+                <p className="mt-1 text-stone-300"><span className="font-semibold text-violet-300">Payoff:</span> {videoPlan.shorts_metadata.payoff}</p>
+                <p className="mt-1 text-[10px] text-stone-400">{videoPlan.shorts_metadata.retention_strategy}</p>
+              </div>
+            )}
 
             {/* Rendering Progress Banner if active */}
             {isRenderingCompleteVideo && (
