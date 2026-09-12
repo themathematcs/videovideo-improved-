@@ -29,14 +29,22 @@ test("African-history fallback begins with a hook and provides rapid visual dire
   assert.ok(plan.scenes.every((scene) => scene.retention_beat.length > 8));
 });
 
-test("fallback durations stay within renderer-safe bounds across requested lengths", () => {
-  for (const targetDuration of [16, 30, 36, 60]) {
+test("fallback durations equal each valid requested length", () => {
+  for (const targetDuration of [20, 30, 32]) {
     const plan = buildShortsFallbackPlan({ topic: "Tardigrade survival", pillar: "unusual-science", targetDuration });
     const total = plan.scenes.reduce((sum, scene) => sum + scene.duration, 0);
     assert.ok(plan.scenes.length >= 5 && plan.scenes.length <= 8);
     assert.ok(plan.scenes.every((scene) => scene.duration >= 2 && scene.duration <= 4));
-    assert.ok(total <= targetDuration);
-    assert.ok(total >= Math.min(targetDuration, 32) * 0.9);
+    assert.equal(total, targetDuration);
+  }
+});
+
+test("fallback rejects targets outside the supported duration range", () => {
+  for (const targetDuration of [16, 36, 60]) {
+    assert.throws(
+      () => buildShortsFallbackPlan({ topic: "Tardigrade survival", pillar: "unusual-science", targetDuration }),
+      (error: unknown) => error instanceof RangeError && error.message.includes("Shorts fallback supports 20–32 seconds"),
+    );
   }
 });
 

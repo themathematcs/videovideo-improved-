@@ -122,10 +122,10 @@ function pickIdea(input: ShortsPlanInput): ShortsTopicIdea {
 export function buildShortsFallbackPlan(input: ShortsPlanInput): ShortsFallbackPlan {
   const idea = pickIdea(input);
   const topic = input.topic.trim() || idea.title;
-  const requestedTarget = Math.max(16, Math.min(60, Math.round(input.targetDuration ?? 30)));
-  // The renderer caps each scene at four seconds, so eight scenes provide a
-  // deterministic 16–32 second safe envelope for every request.
-  const target = Math.min(requestedTarget, 32);
+  const target = Math.round(input.targetDuration ?? 30);
+  if (!Number.isFinite(target) || target < 20 || target > 32) {
+    throw new RangeError("Shorts fallback supports 20–32 seconds; provide a targetDuration in that range.");
+  }
   const sceneCount = 8;
   const base = Math.floor(target / sceneCount);
   const remainder = target - base * sceneCount;

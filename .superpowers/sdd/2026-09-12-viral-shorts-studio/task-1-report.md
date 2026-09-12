@@ -97,3 +97,39 @@ TypeScript lint completed with no diagnostics. `npm test` remains blocked by the
 ### Self-review
 
 The fallback now returns only renderer-compatible top-level fields plus the existing shorts metadata, keeps every scene within the renderer’s duration cap, and caps impossible 36–60 second requests at the maximum eight-scene safe envelope rather than producing invalid durations or silently dropping scenes.
+
+## Review-fix round 2
+
+The controller ruling replaces silent clamping with an explicit supported input range. Tests now require exact totals for valid 20, 30, and 32 second requests and actionable `RangeError`s for 16, 36, and 60 second requests.
+
+### RED
+
+Command:
+
+```text
+node --experimental-strip-types --test tests/shortsPlanner.test.ts
+```
+
+Result: 4 tests passed and the new invalid-target test failed with `Missing expected exception`, demonstrating the previous implementation silently accepted out-of-range requests.
+
+### GREEN
+
+Added validation before scene construction. `buildShortsFallbackPlan` now accepts only 20–32 seconds and throws `RangeError("Shorts fallback supports 20–32 seconds; provide a targetDuration in that range.")` otherwise. Valid targets total exactly the requested duration.
+
+Commands:
+
+```text
+node --experimental-strip-types --test tests/shortsPlanner.test.ts
+npx tsc --noEmit --pretty false
+```
+
+Result:
+
+```text
+1..5
+# tests 5
+# pass 5
+# fail 0
+```
+
+TypeScript lint completed with no diagnostics. The existing `npm test`/tsx host ENOMEM limitation remains documented above.
