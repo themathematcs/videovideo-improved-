@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth overflow-x-hidden w-full max-w-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Westlands Executive Chauffeur & Safari Hire | Nairobi, Kenya</title>
   <meta name="description" content="Nairobi's premier fleet of Toyota Land Cruiser Prado TX, V8s, Mercedes-Benz S-Class, and custom pop-up safari cruisers with close-protection trained drivers.">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,61 +11,68 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    *, ::before, ::after { box-sizing: border-box; }
+    html, body { max-width: 100vw; overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
     h1, h2, h3, .font-heading { font-family: 'Space Grotesk', sans-serif; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="bg-white text-slate-900 antialiased selection:bg-slate-900 selection:text-white pb-24">
+<body class="bg-white text-slate-900 antialiased overflow-x-hidden w-full max-w-full selection:bg-slate-900 selection:text-white pb-24">
 
   <!-- Floating Mobile WhatsApp Quick Button -->
   <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." 
      target="_blank" 
      rel="noopener noreferrer" 
-     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-emerald-400">
-    <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
-    <span class="text-sm tracking-wide">Book via WhatsApp</span>
+     class="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 sm:py-3.5 sm:px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-emerald-400">
+    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+    <span class="tracking-wide">Book via WhatsApp</span>
   </a>
 
   <!-- Top Emergency / Direct Line Bar -->
-  <div class="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
-    <div class="flex items-center gap-2">
-      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="font-medium">Direct Inquiries • Mpaka Road, Westlands, Nairobi</span>
-    </div>
-    <div class="flex items-center gap-4">
-      <a href="tel:254721889900" class="hover:text-white font-semibold flex items-center gap-1">
-        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
-        <span>+254721889900</span>
-      </a>
-      <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-        <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
-        <span>WhatsApp Available</span>
-      </a>
+  <div class="bg-slate-900 text-slate-300 text-[11px] sm:text-xs py-2 px-4 w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-1.5 text-center sm:text-left">
+      <div class="flex items-center justify-center gap-1.5 truncate max-w-full">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+        <span class="font-medium truncate">Mpaka Road, Westlands, Nairobi</span>
+      </div>
+      <div class="flex items-center justify-center gap-3 sm:gap-4 text-[11px]">
+        <a href="tel:254721889900" class="hover:text-white font-semibold flex items-center gap-1 shrink-0">
+          <i data-lucide="phone" class="w-3 h-3"></i>
+          <span>+254721889900</span>
+        </a>
+        <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 shrink-0">
+          <i data-lucide="message-circle" class="w-3 h-3 fill-current"></i>
+          <span>WhatsApp Available</span>
+        </a>
+      </div>
     </div>
   </div>
 
   <!-- Navigation Bar -->
-  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      <a href="#" class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md" style="background-color: #D97706">
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
+      <a href="#" class="flex items-center gap-2.5 min-w-0 flex-1 sm:flex-none">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-black text-lg sm:text-xl text-white shadow-md shrink-0" style="background-color: #D97706">
           W
         </div>
-        <div>
-          <span class="block font-black text-lg text-slate-900 leading-tight">Westlands Executive Chauffeur & Safari Hire</span>
-          <span class="block text-xs font-semibold uppercase tracking-wider" style="color: #D97706">Executive Chauffeur & Land Cruiser Prado Car Hire</span>
+        <div class="min-w-0">
+          <span class="block font-black text-sm sm:text-base md:text-lg text-slate-900 leading-tight truncate">Westlands Executive Chauffeur & Safari Hire</span>
+          <span class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate" style="color: #D97706">Executive Chauffeur & Land Cruiser Prado Car Hire</span>
         </div>
       </a>
 
-      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600 shrink-0">
         <a href="#services" class="hover:text-slate-900 transition-colors">Services</a>
         <a href="#why-us" class="hover:text-slate-900 transition-colors">Why Choose Us</a>
         <a href="#reviews" class="hover:text-slate-900 transition-colors">Client Reviews</a>
         <a href="#contact" class="hover:text-slate-900 transition-colors">Location & Hours</a>
       </nav>
 
-      <div class="flex items-center gap-3">
-        <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm shadow-md hover:scale-105 transition-all">
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="sm:hidden w-9 h-9 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-md shrink-0" aria-label="Book on WhatsApp">
+          <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+        </a>
+        <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="hidden sm:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm shadow-md hover:scale-105 transition-all shrink-0">
           <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
           <span>Book via WhatsApp</span>
         </a>
@@ -74,59 +81,59 @@
   </header>
 
   <!-- Hero Section -->
-  <section class="py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+  <section class="py-10 sm:py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100 w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
         
         <!-- Left Content -->
-        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border" style="background-color: #FEF3C7; color: #D97706; border-color: #FDE68A">
-            <i data-lucide="award" class="w-4 h-4"></i>
+        <div class="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left w-full min-w-0">
+          <div class="inline-flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-2xl sm:rounded-full text-[11px] sm:text-xs font-bold border max-w-full" style="background-color: #FEF3C7; color: #D97706; border-color: #FDE68A">
+            <i data-lucide="award" class="w-3.5 h-3.5 shrink-0"></i>
             <span>Diplomatic & Corporate Certified Fleet</span>
-            <span class="text-slate-300">•</span>
-            <span class="text-amber-600 flex items-center gap-1 font-extrabold">★ 4.8 (62+ Reviews)</span>
+            <span class="hidden sm:inline text-slate-300">•</span>
+            <span class="text-amber-600 flex items-center gap-0.5 font-extrabold">★ 4.8 (62+ Reviews)</span>
           </div>
 
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+          <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight break-words max-w-full">
             Armored Comfort & Overland Precision for <span style="color: #D97706">Executives & VIP Expeditions</span>
           </h1>
 
-          <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+          <p class="text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
             Nairobi's premier fleet of Toyota Land Cruiser Prado TX, V8s, Mercedes-Benz S-Class, and custom pop-up safari cruisers with close-protection trained drivers.
           </p>
 
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-            <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-full text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2 w-full">
+            <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-sm sm:text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
               <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
               <span>Book Appointment on WhatsApp</span>
             </a>
-            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-8 py-4 rounded-full text-base shadow-sm transition-all">
+            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-sm sm:text-base shadow-sm transition-all">
               <span>View Services</span>
               <i data-lucide="arrow-down" class="w-4 h-4"></i>
             </a>
           </div>
 
-          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-medium">
-            <div class="flex items-center gap-1.5">
-              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
-              <span>Mpaka Road, Westlands, Nairobi</span>
+          <div class="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-1.5 truncate max-w-full">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              <span class="truncate">Mpaka Road, Westlands, Nairobi</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
-              <span>Prompt Service Delivery</span>
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              <span>Prompt Service</span>
             </div>
           </div>
         </div>
 
         <!-- Right Hero Image Card -->
-        <div class="lg:col-span-5 relative">
-          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative">
+        <div class="lg:col-span-5 relative w-full">
+          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative max-w-md mx-auto lg:max-w-none">
             <img src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=800" alt="Executive 4x4 Fleet in Westlands" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
-            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
-              <span class="inline-block bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">GPS Tracked Fleet</span>
-              <div class="text-xl font-bold">Westlands Executive Chauffeur & Safari Hire</div>
-              <div class="text-xs text-slate-200">⭐ 4.8★ Rated on Google (62 verified reviews)</div>
+            <div class="absolute bottom-5 left-5 right-5 text-white space-y-1">
+              <span class="inline-block bg-white text-slate-900 text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">GPS Tracked Fleet</span>
+              <div class="text-lg sm:text-xl font-bold leading-tight">Westlands Executive Chauffeur & Safari Hire</div>
+              <div class="text-xs text-slate-200">⭐ 4.8★ on Google (62 verified reviews)</div>
             </div>
           </div>
         </div>
@@ -185,60 +192,84 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         
-    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-      <div class="space-y-4">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #FEF3C7; color: #D97706">
-          <i data-lucide="crosshair" class="w-6 h-6"></i>
+    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      
+      <div class="w-full aspect-[16/10] overflow-hidden bg-slate-100 border-b border-slate-100 relative">
+        <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=800" alt="Toyota Land Cruiser Prado TX" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+        <div class="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+          Verified Vehicle
         </div>
-        <h3 class="text-2xl font-bold text-slate-900">Toyota Land Cruiser Prado TX</h3>
-        <p class="text-slate-600 text-sm leading-relaxed">The standard in executive travel for Nairobi corporate meetings, county travel, and site inspections.</p>
-        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
-          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>7-Seater premium leather interior</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Full-time 4WD offroad capability</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>From KES 15,000 / day with driver</span></li>
-        </ul>
       </div>
-      <div class="pt-6 mt-6 border-t border-slate-100">
-        <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #D97706">
-          <span>Book via WhatsApp</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
+      
+      <div class="p-6 sm:p-8 space-y-4 flex-1 flex flex-col justify-between">
+        <div class="space-y-3">
+          
+          <h3 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">Toyota Land Cruiser Prado TX</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">The standard in executive travel for Nairobi corporate meetings, county travel, and site inspections.</p>
+          <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">7-Seater premium leather interior</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Full-time 4WD offroad capability</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">From KES 15,000 / day with driver</span></li>
+          </ul>
+        </div>
+        <div class="pt-4 mt-4 border-t border-slate-100">
+          <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-xs sm:text-sm hover:underline" style="color: #D97706">
+            <span>Book via WhatsApp</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
       </div>
     </div>
   
-    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-      <div class="space-y-4">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #FEF3C7; color: #D97706">
-          <i data-lucide="camera" class="w-6 h-6"></i>
+    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      
+      <div class="w-full aspect-[16/10] overflow-hidden bg-slate-100 border-b border-slate-100 relative">
+        <img src="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&q=80&w=800" alt="Pop-Up 4x4 Safari Cruiser" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+        <div class="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+          Verified Vehicle
         </div>
-        <h3 class="text-2xl font-bold text-slate-900">Pop-Up 4x4 Safari Cruiser</h3>
-        <p class="text-slate-600 text-sm leading-relaxed">Custom heavy-duty overland Land Cruiser fully rigged for national parks and wildlife photography.</p>
-        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
-          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Pop-up game viewing roof</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>High-lift jacks & dual spares</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>From KES 22,000 / day with driver-guide</span></li>
-        </ul>
       </div>
-      <div class="pt-6 mt-6 border-t border-slate-100">
-        <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #D97706">
-          <span>Book via WhatsApp</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
+      
+      <div class="p-6 sm:p-8 space-y-4 flex-1 flex flex-col justify-between">
+        <div class="space-y-3">
+          
+          <h3 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">Pop-Up 4x4 Safari Cruiser</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">Custom heavy-duty overland Land Cruiser fully rigged for national parks and wildlife photography.</p>
+          <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Pop-up game viewing roof</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">High-lift jacks & dual spares</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">From KES 22,000 / day with driver-guide</span></li>
+          </ul>
+        </div>
+        <div class="pt-4 mt-4 border-t border-slate-100">
+          <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-xs sm:text-sm hover:underline" style="color: #D97706">
+            <span>Book via WhatsApp</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
       </div>
     </div>
   
-    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-      <div class="space-y-4">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #FEF3C7; color: #D97706">
-          <i data-lucide="plane" class="w-6 h-6"></i>
+    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      
+      <div class="w-full aspect-[16/10] overflow-hidden bg-slate-100 border-b border-slate-100 relative">
+        <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80&w=800" alt="JKIA VIP Fast-Track & Airport" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+        <div class="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+          Verified Vehicle
         </div>
-        <h3 class="text-2xl font-bold text-slate-900">JKIA VIP Fast-Track & Airport</h3>
-        <p class="text-slate-600 text-sm leading-relaxed">Curbside airport reception with luggage assistance, flight delay tracking, and priority transit.</p>
-        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
-          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Meet & greet at arrival terminal</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Direct transfer to any Nairobi hotel</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Chilled refreshments included</span></li>
-        </ul>
       </div>
-      <div class="pt-6 mt-6 border-t border-slate-100">
-        <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #D97706">
-          <span>Book via WhatsApp</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
+      
+      <div class="p-6 sm:p-8 space-y-4 flex-1 flex flex-col justify-between">
+        <div class="space-y-3">
+          
+          <h3 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">JKIA VIP Fast-Track & Airport</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">Curbside airport reception with luggage assistance, flight delay tracking, and priority transit.</p>
+          <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Meet & greet at arrival terminal</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Direct transfer to any Nairobi hotel</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Chilled refreshments included</span></li>
+          </ul>
+        </div>
+        <div class="pt-4 mt-4 border-t border-slate-100">
+          <a href="https://wa.me/254721889900?text=Hello%20Westlands%20Executive%20Chauffeur%20%26%20Safari%20Hire%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-xs sm:text-sm hover:underline" style="color: #D97706">
+            <span>Book via WhatsApp</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
       </div>
     </div>
   

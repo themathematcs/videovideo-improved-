@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth overflow-x-hidden w-full max-w-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Karen Ridge Spine & Sports Physiotherapy | Nairobi, Kenya</title>
   <meta name="description" content="Evidence-based spine decompression, post-surgical recovery, sports injury rehabilitation, and bespoke ergonomic care in a private Karen clinic.">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,61 +11,68 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    *, ::before, ::after { box-sizing: border-box; }
+    html, body { max-width: 100vw; overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
     h1, h2, h3, .font-heading { font-family: 'Lora', serif; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="bg-white text-slate-900 antialiased selection:bg-slate-900 selection:text-white pb-24">
+<body class="bg-white text-slate-900 antialiased overflow-x-hidden w-full max-w-full selection:bg-slate-900 selection:text-white pb-24">
 
   <!-- Floating Mobile WhatsApp Quick Button -->
   <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." 
      target="_blank" 
      rel="noopener noreferrer" 
-     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-emerald-400">
-    <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
-    <span class="text-sm tracking-wide">Book via WhatsApp</span>
+     class="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 sm:py-3.5 sm:px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-emerald-400">
+    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+    <span class="tracking-wide">Book via WhatsApp</span>
   </a>
 
   <!-- Top Emergency / Direct Line Bar -->
-  <div class="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
-    <div class="flex items-center gap-2">
-      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="font-medium">Direct Inquiries • Karen Plains Road, Karen, Nairobi</span>
-    </div>
-    <div class="flex items-center gap-4">
-      <a href="tel:254723112244" class="hover:text-white font-semibold flex items-center gap-1">
-        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
-        <span>+254723112244</span>
-      </a>
-      <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-        <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
-        <span>WhatsApp Available</span>
-      </a>
+  <div class="bg-slate-900 text-slate-300 text-[11px] sm:text-xs py-2 px-4 w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-1.5 text-center sm:text-left">
+      <div class="flex items-center justify-center gap-1.5 truncate max-w-full">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+        <span class="font-medium truncate">Karen Plains Road, Karen, Nairobi</span>
+      </div>
+      <div class="flex items-center justify-center gap-3 sm:gap-4 text-[11px]">
+        <a href="tel:254723112244" class="hover:text-white font-semibold flex items-center gap-1 shrink-0">
+          <i data-lucide="phone" class="w-3 h-3"></i>
+          <span>+254723112244</span>
+        </a>
+        <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 shrink-0">
+          <i data-lucide="message-circle" class="w-3 h-3 fill-current"></i>
+          <span>WhatsApp Available</span>
+        </a>
+      </div>
     </div>
   </div>
 
   <!-- Navigation Bar -->
-  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      <a href="#" class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md" style="background-color: #15803D">
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
+      <a href="#" class="flex items-center gap-2.5 min-w-0 flex-1 sm:flex-none">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-black text-lg sm:text-xl text-white shadow-md shrink-0" style="background-color: #15803D">
           K
         </div>
-        <div>
-          <span class="block font-black text-lg text-slate-900 leading-tight">Karen Ridge Spine & Sports Physiotherapy</span>
-          <span class="block text-xs font-semibold uppercase tracking-wider" style="color: #15803D">Specialized Physiotherapy & Sports Rehabilitation Clinic</span>
+        <div class="min-w-0">
+          <span class="block font-black text-sm sm:text-base md:text-lg text-slate-900 leading-tight truncate">Karen Ridge Spine & Sports Physiotherapy</span>
+          <span class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate" style="color: #15803D">Specialized Physiotherapy & Sports Rehabilitation Clinic</span>
         </div>
       </a>
 
-      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600 shrink-0">
         <a href="#services" class="hover:text-slate-900 transition-colors">Services</a>
         <a href="#why-us" class="hover:text-slate-900 transition-colors">Why Choose Us</a>
         <a href="#reviews" class="hover:text-slate-900 transition-colors">Client Reviews</a>
         <a href="#contact" class="hover:text-slate-900 transition-colors">Location & Hours</a>
       </nav>
 
-      <div class="flex items-center gap-3">
-        <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm shadow-md hover:scale-105 transition-all">
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="sm:hidden w-9 h-9 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-md shrink-0" aria-label="Book on WhatsApp">
+          <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+        </a>
+        <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="hidden sm:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm shadow-md hover:scale-105 transition-all shrink-0">
           <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
           <span>Book via WhatsApp</span>
         </a>
@@ -74,59 +81,59 @@
   </header>
 
   <!-- Hero Section -->
-  <section class="py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+  <section class="py-10 sm:py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100 w-full overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
         
         <!-- Left Content -->
-        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border" style="background-color: #DCFCE7; color: #15803D; border-color: #BBF7D0">
-            <i data-lucide="award" class="w-4 h-4"></i>
+        <div class="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left w-full min-w-0">
+          <div class="inline-flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-2xl sm:rounded-full text-[11px] sm:text-xs font-bold border max-w-full" style="background-color: #DCFCE7; color: #15803D; border-color: #BBF7D0">
+            <i data-lucide="award" class="w-3.5 h-3.5 shrink-0"></i>
             <span>Physiotherapy Council of Kenya Registered</span>
-            <span class="text-slate-300">•</span>
-            <span class="text-amber-600 flex items-center gap-1 font-extrabold">★ 4.9 (47+ Reviews)</span>
+            <span class="hidden sm:inline text-slate-300">•</span>
+            <span class="text-amber-600 flex items-center gap-0.5 font-extrabold">★ 4.9 (47+ Reviews)</span>
           </div>
 
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+          <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight break-words max-w-full">
             Reclaim Freedom of Movement & <span style="color: #15803D">Live Free from Chronic Pain</span>
           </h1>
 
-          <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+          <p class="text-sm sm:text-base lg:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
             Evidence-based spine decompression, post-surgical recovery, sports injury rehabilitation, and bespoke ergonomic care in a private Karen clinic.
           </p>
 
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-            <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-full text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2 w-full">
+            <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-sm sm:text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
               <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
               <span>Book Appointment on WhatsApp</span>
             </a>
-            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-8 py-4 rounded-full text-base shadow-sm transition-all">
+            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full text-sm sm:text-base shadow-sm transition-all">
               <span>View Services</span>
               <i data-lucide="arrow-down" class="w-4 h-4"></i>
             </a>
           </div>
 
-          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-medium">
-            <div class="flex items-center gap-1.5">
-              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
-              <span>Karen Plains Road, Karen, Nairobi</span>
+          <div class="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-1.5 truncate max-w-full">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              <span class="truncate">Karen Plains Road, Karen, Nairobi</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
-              <span>Prompt Service Delivery</span>
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+              <span>Prompt Service</span>
             </div>
           </div>
         </div>
 
         <!-- Right Hero Image Card -->
-        <div class="lg:col-span-5 relative">
-          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative">
+        <div class="lg:col-span-5 relative w-full">
+          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative max-w-md mx-auto lg:max-w-none">
             <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800" alt="Physiotherapy Clinic in Karen" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
-            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
-              <span class="inline-block bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Clinical Wellness</span>
-              <div class="text-xl font-bold">Karen Ridge Spine & Sports Physiotherapy</div>
-              <div class="text-xs text-slate-200">⭐ 4.9★ Rated on Google (47 verified reviews)</div>
+            <div class="absolute bottom-5 left-5 right-5 text-white space-y-1">
+              <span class="inline-block bg-white text-slate-900 text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Clinical Wellness</span>
+              <div class="text-lg sm:text-xl font-bold leading-tight">Karen Ridge Spine & Sports Physiotherapy</div>
+              <div class="text-xs text-slate-200">⭐ 4.9★ on Google (47 verified reviews)</div>
             </div>
           </div>
         </div>
@@ -185,60 +192,75 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         
-    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-      <div class="space-y-4">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DCFCE7; color: #15803D">
-          <i data-lucide="align-justify" class="w-6 h-6"></i>
+    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      
+      <div class="p-6 sm:p-8 space-y-4 flex-1 flex flex-col justify-between">
+        <div class="space-y-3">
+          
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DCFCE7; color: #15803D">
+            <i data-lucide="align-justify" class="w-6 h-6"></i>
+          </div>
+          
+          <h3 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">Spine & Sciatica Therapy</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">Non-surgical decompression, postural realignment, and core stabilization for chronic back and neck pain.</p>
+          <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Herniated disc management</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Sciatica nerve pain relief</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Ergonomic workspace assessment</span></li>
+          </ul>
         </div>
-        <h3 class="text-2xl font-bold text-slate-900">Spine & Sciatica Therapy</h3>
-        <p class="text-slate-600 text-sm leading-relaxed">Non-surgical decompression, postural realignment, and core stabilization for chronic back and neck pain.</p>
-        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
-          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Herniated disc management</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Sciatica nerve pain relief</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Ergonomic workspace assessment</span></li>
-        </ul>
-      </div>
-      <div class="pt-6 mt-6 border-t border-slate-100">
-        <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #15803D">
-          <span>Book via WhatsApp</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
+        <div class="pt-4 mt-4 border-t border-slate-100">
+          <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-xs sm:text-sm hover:underline" style="color: #15803D">
+            <span>Book via WhatsApp</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
       </div>
     </div>
   
-    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-      <div class="space-y-4">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DCFCE7; color: #15803D">
-          <i data-lucide="target" class="w-6 h-6"></i>
+    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      
+      <div class="p-6 sm:p-8 space-y-4 flex-1 flex flex-col justify-between">
+        <div class="space-y-3">
+          
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DCFCE7; color: #15803D">
+            <i data-lucide="target" class="w-6 h-6"></i>
+          </div>
+          
+          <h3 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">Sports Rehabilitation</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">Accelerated return-to-play programs for golfers, runners, gym athletes, and racquet sports.</p>
+          <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Ligament & tendon rehab (ACL/MCL)</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Rotator cuff shoulder therapy</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Biomechanical gait analysis</span></li>
+          </ul>
         </div>
-        <h3 class="text-2xl font-bold text-slate-900">Sports Rehabilitation</h3>
-        <p class="text-slate-600 text-sm leading-relaxed">Accelerated return-to-play programs for golfers, runners, gym athletes, and racquet sports.</p>
-        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
-          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Ligament & tendon rehab (ACL/MCL)</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Rotator cuff shoulder therapy</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Biomechanical gait analysis</span></li>
-        </ul>
-      </div>
-      <div class="pt-6 mt-6 border-t border-slate-100">
-        <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #15803D">
-          <span>Book via WhatsApp</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
+        <div class="pt-4 mt-4 border-t border-slate-100">
+          <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-xs sm:text-sm hover:underline" style="color: #15803D">
+            <span>Book via WhatsApp</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
       </div>
     </div>
   
-    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-      <div class="space-y-4">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DCFCE7; color: #15803D">
-          <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+    <div class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      
+      <div class="p-6 sm:p-8 space-y-4 flex-1 flex flex-col justify-between">
+        <div class="space-y-3">
+          
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DCFCE7; color: #15803D">
+            <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+          </div>
+          
+          <h3 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">Post-Surgical Recovery</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">Step-by-step mobility restoration following knee/hip replacements and orthopedic procedures.</p>
+          <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Swelling & scar tissue therapy</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Range of motion restoration</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span class="leading-tight">Home exercise protocols</span></li>
+          </ul>
         </div>
-        <h3 class="text-2xl font-bold text-slate-900">Post-Surgical Recovery</h3>
-        <p class="text-slate-600 text-sm leading-relaxed">Step-by-step mobility restoration following knee/hip replacements and orthopedic procedures.</p>
-        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
-          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Swelling & scar tissue therapy</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Range of motion restoration</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Home exercise protocols</span></li>
-        </ul>
-      </div>
-      <div class="pt-6 mt-6 border-t border-slate-100">
-        <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #15803D">
-          <span>Book via WhatsApp</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
+        <div class="pt-4 mt-4 border-t border-slate-100">
+          <a href="https://wa.me/254723112244?text=Hello%20Karen%20Ridge%20Spine%20%26%20Sports%20Physiotherapy%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-xs sm:text-sm hover:underline" style="color: #15803D">
+            <span>Book via WhatsApp</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
       </div>
     </div>
   
