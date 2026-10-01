@@ -3,78 +3,407 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kilimani Orthopedic & Joint Care Centre | Nairobi</title>
+  <title>Kilimani Orthopedic & Joint Care Centre | Nairobi, Kenya</title>
+  <meta name="description" content="Modern outpatient orthopedic clinic delivering compassionate surgical consultations, knee & hip arthroscopy, PRP injections, and trauma care in Kilimani.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+  <style>
+    h1, h2, h3, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
 </head>
-<body class="bg-[#F0F5FA] text-[#0F2238] antialiased pb-24">
+<body class="bg-white text-slate-900 antialiased selection:bg-slate-900 selection:text-white pb-24">
 
-  <!-- Emergency / WhatsApp Topbar -->
-  <div class="bg-[#0284C7] text-white text-xs py-2 px-6 flex justify-between items-center">
-    <span>Direct Outpatient Consultation • Argwings Kodhek Rd, Kilimani</span>
-    <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%2C%20I%20have%20an%20urgent%20inquiry." target="_blank" class="font-bold underline">Immediate Response Hotline</a>
+  <!-- Floating Mobile WhatsApp Quick Button -->
+  <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-emerald-400">
+    <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+    <span class="text-sm tracking-wide">Book via WhatsApp</span>
+  </a>
+
+  <!-- Top Emergency / Direct Line Bar -->
+  <div class="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-medium">Direct Inquiries • Argwings Kodhek Road, Kilimani, Nairobi</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="tel:254724335577" class="hover:text-white font-semibold flex items-center gap-1">
+        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+        <span>+254724335577</span>
+      </a>
+      <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+        <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
+        <span>WhatsApp Available</span>
+      </a>
+    </div>
   </div>
 
-  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-sky-100">
-    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-[#0284C7] text-white rounded-xl flex items-center justify-center font-black text-xl">
-          +
+  <!-- Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md" style="background-color: #0284C7">
+          K
         </div>
         <div>
-          <span class="text-xl font-extrabold text-[#0F2238] tracking-tight block">Kilimani Orthopedic</span>
-          <span class="text-xs text-sky-600 font-semibold">Joint Care & Surgery Consultation</span>
+          <span class="block font-black text-lg text-slate-900 leading-tight">Kilimani Orthopedic & Joint Care Centre</span>
+          <span class="block text-xs font-semibold uppercase tracking-wider" style="color: #0284C7">Orthopedic Surgery & Joint Pain Consultation</span>
         </div>
-      </div>
-
-      <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%2C%20I%20would%20like%20to%20book%20an%20orthopedic%20consultation." 
-         target="_blank" 
-         class="bg-[#0284C7] hover:bg-sky-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow-md shadow-sky-600/20">
-        Book Consultation
       </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+        <a href="#services" class="hover:text-slate-900 transition-colors">Services</a>
+        <a href="#why-us" class="hover:text-slate-900 transition-colors">Why Choose Us</a>
+        <a href="#reviews" class="hover:text-slate-900 transition-colors">Client Reviews</a>
+        <a href="#contact" class="hover:text-slate-900 transition-colors">Location & Hours</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm shadow-md hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+          <span>Book via WhatsApp</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <section class="py-16 px-6 max-w-7xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      <div class="lg:col-span-7 space-y-6">
-        <span class="text-xs uppercase tracking-widest font-extrabold text-sky-600 bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-200">
-          Board-Certified Surgeons & Arthroscopy Specialists
-        </span>
-        <h1 class="text-4xl sm:text-6xl font-black text-[#0F2238] leading-tight">
-          Specialized Joint Replacement, Fracture Care & Sports Surgery.
-        </h1>
-        <p class="text-slate-600 text-lg">
-          State-of-the-art diagnostic evaluations, minimally invasive knee & hip arthroscopy, PRP regenerative joint injections, and personalized rehabilitation.
-        </p>
-        <div class="pt-4">
-          <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%2C%20I%20would%20like%20to%20book%20a%20doctor%20appointment." 
-             target="_blank" 
-             class="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-xl text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
-            <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-            <span>WhatsApp Appointment Desk</span>
-          </a>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Content -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border" style="background-color: #E0F2FE; color: #0284C7; border-color: #BAE6FD">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>Board-Certified Orthopedic Surgeons</span>
+            <span class="text-slate-300">•</span>
+            <span class="text-amber-600 flex items-center gap-1 font-extrabold">★ 4.8 (39+ Reviews)</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+            World-Class Joint Replacement & <span style="color: #0284C7">Minimally Invasive Surgery</span>
+          </h1>
+
+          <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            Modern outpatient orthopedic clinic delivering compassionate surgical consultations, knee & hip arthroscopy, PRP injections, and trauma care in Kilimani.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+            <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-full text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Book Appointment on WhatsApp</span>
+            </a>
+            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-8 py-4 rounded-full text-base shadow-sm transition-all">
+              <span>View Services</span>
+              <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            </a>
+          </div>
+
+          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+              <span>Argwings Kodhek Road, Kilimani, Nairobi</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+              <span>Prompt Service Delivery</span>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="lg:col-span-5">
-        <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5]">
-          <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=800" 
-               alt="Orthopedic Doctor" 
-               class="w-full h-full object-cover">
+
+        <!-- Right Hero Image Card -->
+        <div class="lg:col-span-5 relative">
+          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative">
+            <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=800" alt="Orthopedic Surgeon in Kilimani" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
+              <span class="inline-block bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Kilimani Clinic</span>
+              <div class="text-xl font-bold">Kilimani Orthopedic & Joint Care Centre</div>
+              <div class="text-xs text-slate-200">⭐ 4.8★ Rated on Google (39 verified reviews)</div>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </section>
 
-  <!-- Floating Mobile WhatsApp CTA -->
-  <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%2C%20I%20want%20to%20book%20a%20consultation." 
-     target="_blank" 
-     class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50">
-    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-    <span class="text-sm">Doctor Consultation</span>
-  </a>
+  <!-- Section 2: Why Choose Us -->
+  <section id="why-us" class="py-20 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Excellence Guaranteed</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Why Choose Kilimani Orthopedic & Joint Care Centre</p>
+        <p class="text-slate-600 text-base">Setting the benchmark for professionalism, reliability, and client satisfaction in Nairobi.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #E0F2FE; color: #0284C7">
+        <i data-lucide="award" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Fellowship-Trained Specialists</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Senior surgeons affiliated with top Nairobi hospitals for joint preservation and replacements.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #E0F2FE; color: #0284C7">
+        <i data-lucide="file-text" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Rapid Digital Diagnostics</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">On-site digital X-ray, joint aspiration, and fast ultrasound imaging to diagnose without delays.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #E0F2FE; color: #0284C7">
+        <i data-lucide="clock" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Direct WhatsApp Booking</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Avoid crowded waiting rooms. Instant consultation scheduling with transparent fees.</p>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Detailed Services Grid -->
+  <section id="services" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Tailored Capabilities</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Our Core Services</p>
+        <p class="text-slate-600 text-base">Comprehensive packages designed around your exact needs with transparent pricing.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #E0F2FE; color: #0284C7">
+          <i data-lucide="scissors" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Knee & Shoulder Arthroscopy</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Minimally invasive keyhole surgery for meniscus tears, ACL reconstruction, and rotator cuff repairs.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Minimal postoperative scarring</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Same-day or next-day discharge</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Rapid return to activity</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #0284C7">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #E0F2FE; color: #0284C7">
+          <i data-lucide="droplet" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Joint Preservation & PRP Injections</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Platelet-rich plasma therapy and hyaluronic acid injections for early-stage osteoarthritis.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Cartilage regeneration support</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Long-lasting pain reduction</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>In-clinic 30-minute procedure</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #0284C7">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #E0F2FE; color: #0284C7">
+          <i data-lucide="shield-alert" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Fracture & Trauma Clinic</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Immediate diagnostic assessment and lightweight waterproof casting for sports and accident fractures.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Digital X-ray imaging</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Modern synthetic splints</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Orthopedic follow-up care</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #0284C7">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Social Proof / Testimonials -->
+  <section id="reviews" class="py-20 bg-slate-50 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Client Feedback</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Trusted by Clients Across Kenya</p>
+        <p class="text-slate-600 text-base">Real experiences from verified clients who rely on Kilimani Orthopedic & Joint Care Centre.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Dr. and the team at Kilimani Orthopedic guided me through my knee arthroscopy with immense empathy and technical skill. Walking comfortably within days!"</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #0284C7">
+          G
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Grace Nyambura</div>
+          <div class="text-xs text-slate-500">Kilimani Patient</div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Modern clinic, zero waiting room delays, and super responsive WhatsApp appointment reminders. Highly recommended."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #0284C7">
+          A
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Ahmed Al-Mansoor</div>
+          <div class="text-xs text-slate-500">Patient</div>
+        </div>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Location, Operating Hours & Contact Table -->
+  <section id="contact" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-6 space-y-6">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Convenient Access</h2>
+          <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Operating Hours & Location</p>
+          <p class="text-slate-600 text-base leading-relaxed">
+            Visit us in Nairobi or connect directly through WhatsApp for immediate consultation, booking, and quotes.
+          </p>
+
+          <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Monday - Friday</span>
+              <span class="font-semibold text-slate-900">8:00 AM - 6:00 PM</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Saturday</span>
+              <span class="font-semibold text-slate-900">9:00 AM - 2:00 PM</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-bold text-slate-700">Sunday</span>
+              <span class="font-semibold text-slate-900">Emergency On-Call</span>
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-2 text-sm text-slate-600">
+            <div class="flex items-center gap-3">
+              <i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i>
+              <span>Argwings Kodhek Road, Kilimani, Nairobi</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-lucide="phone" class="w-5 h-5 text-slate-400"></i>
+              <span>+254724335577</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <div class="bg-slate-50 rounded-3xl p-8 border border-slate-200 space-y-6 shadow-sm">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-lg">Instant WhatsApp Desk</h4>
+                <p class="text-xs text-slate-500">Fastest response times for consultations & quotes</p>
+              </div>
+            </div>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Have questions regarding availability, custom pricing, or service specifications? Our team is available on WhatsApp right now.
+            </p>
+            <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 px-8 rounded-2xl text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Start WhatsApp Conversation</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: High-Conversion CTA Banner -->
+  <section class="py-16 text-white relative overflow-hidden" style="background-color: #0284C7">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white">Consult with a Joint Specialist Today</h2>
+      <p class="text-white/90 max-w-2xl mx-auto text-base sm:text-lg font-normal">
+        Book an orthopedic consultation via WhatsApp for expert diagnosis and treatment planning.
+      </p>
+      <div class="pt-2">
+        <a href="https://wa.me/254724335577?text=Hello%20Kilimani%20Orthopedic%20%26%20Joint%20Care%20Centre%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-3 bg-white text-slate-900 hover:bg-slate-100 font-extrabold px-10 py-4 rounded-full text-base shadow-2xl hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-5 h-5 text-emerald-600 fill-current"></i>
+          <span>Chat on WhatsApp Now</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-16 text-sm border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg text-white" style="background-color: #0284C7">
+            K
+          </div>
+          <div>
+            <div class="font-bold text-white text-base">Kilimani Orthopedic & Joint Care Centre</div>
+            <div class="text-xs text-slate-400">Orthopedic Surgery & Joint Pain Consultation</div>
+          </div>
+        </div>
+        <div class="text-center sm:text-right text-xs space-y-1">
+          <div class="text-white font-medium">📍 Argwings Kodhek Road, Kilimani, Nairobi</div>
+          <div class="text-slate-400">📞 +254724335577</div>
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-500">
+        &copy; 2026 Kilimani Orthopedic & Joint Care Centre. All rights reserved. Professional web demo showcase.
+      </div>
+    </div>
+  </footer>
 
   <script>lucide.createIcons();</script>
 </body>

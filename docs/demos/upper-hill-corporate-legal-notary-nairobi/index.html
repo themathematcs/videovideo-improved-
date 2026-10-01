@@ -3,88 +3,407 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upper Hill Corporate Legal & Notary Public | Nairobi</title>
+  <title>Upper Hill Corporate Legal & Notary | Nairobi, Kenya</title>
+  <meta name="description" content="Trusted legal partners in Nairobi's financial district. Comprehensive company structuring, land conveyance, commercial contracts, and fast document notarization.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .font-cinzel { font-family: 'Cinzel', serif; }
+    h1, h2, h3, .font-heading { font-family: 'Cinzel', serif; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="bg-[#0D1821] text-[#E0E1DD] antialiased pb-24">
+<body class="bg-white text-slate-900 antialiased selection:bg-slate-900 selection:text-white pb-24">
 
-  <header class="sticky top-0 z-40 bg-[#0D1821]/95 backdrop-blur-md border-b border-[#1E3042]">
-    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-[#C89B3C] text-[#0D1821] rounded-lg flex items-center justify-center font-bold text-lg">
-          §
+  <!-- Floating Mobile WhatsApp Quick Button -->
+  <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-emerald-400">
+    <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+    <span class="text-sm tracking-wide">Book via WhatsApp</span>
+  </a>
+
+  <!-- Top Emergency / Direct Line Bar -->
+  <div class="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-medium">Direct Inquiries • Hospital Road, Upper Hill Financial District, Nairobi</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="tel:254728779911" class="hover:text-white font-semibold flex items-center gap-1">
+        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+        <span>+254728779911</span>
+      </a>
+      <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+        <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
+        <span>WhatsApp Available</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md" style="background-color: #1E3A8A">
+          U
         </div>
         <div>
-          <span class="font-cinzel text-lg font-bold text-white tracking-wide block">UPPER HILL LEGAL</span>
-          <span class="text-[10px] text-[#C89B3C] font-semibold uppercase tracking-widest">Advocates & Notary Public</span>
+          <span class="block font-black text-lg text-slate-900 leading-tight">Upper Hill Corporate Legal & Notary</span>
+          <span class="block text-xs font-semibold uppercase tracking-wider" style="color: #1E3A8A">Corporate Commercial Law & Conveyancing Notary</span>
         </div>
-      </div>
-
-      <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Legal%2C%20I%20would%20like%20to%20consult%20an%20advocate." 
-         target="_blank" 
-         class="bg-[#C89B3C] hover:bg-[#b08730] text-[#0D1821] font-bold px-5 py-2.5 rounded-lg text-xs uppercase tracking-wider">
-        Consult Counsel
       </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+        <a href="#services" class="hover:text-slate-900 transition-colors">Services</a>
+        <a href="#why-us" class="hover:text-slate-900 transition-colors">Why Choose Us</a>
+        <a href="#reviews" class="hover:text-slate-900 transition-colors">Client Reviews</a>
+        <a href="#contact" class="hover:text-slate-900 transition-colors">Location & Hours</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm shadow-md hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+          <span>Book via WhatsApp</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <section class="py-16 px-6 max-w-7xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      <div class="lg:col-span-7 space-y-6">
-        <span class="text-xs uppercase tracking-widest text-[#C89B3C] font-bold bg-[#1E3042] px-3.5 py-1.5 rounded-md border border-[#C89B3C]/30">
-          Law Society of Kenya Accredited
-        </span>
-        <h1 class="font-cinzel text-4xl sm:text-6xl font-bold text-white leading-tight">
-          Decisive Corporate Counsel & Express Notarization.
-        </h1>
-        <p class="text-slate-300 text-lg leading-relaxed">
-          Trusted legal advisors in Nairobi's financial district. Comprehensive company structuring, land conveyance, fintech regulatory compliance, and same-day notary attestation.
-        </p>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Content -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border" style="background-color: #DBEAFE; color: #1E3A8A; border-color: #BFDBFE">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>Law Society of Kenya Accredited Advocates</span>
+            <span class="text-slate-300">•</span>
+            <span class="text-amber-600 flex items-center gap-1 font-extrabold">★ 4.8 (41+ Reviews)</span>
+          </div>
 
-        <!-- Express Notary Checklist -->
-        <div class="bg-[#152331] border border-[#1E3042] p-5 rounded-xl space-y-3">
-          <span class="text-xs uppercase tracking-widest text-[#C89B3C] font-bold">Same-Day Services</span>
-          <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
-            <div class="flex items-center gap-2">✓ Power of Attorney</div>
-            <div class="flex items-center gap-2">✓ Company Secretarial</div>
-            <div class="flex items-center gap-2">✓ Affidavits & Oaths</div>
-            <div class="flex items-center gap-2">✓ Land Registry Searches</div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+            Decisive Corporate Legal Counsel & <span style="color: #1E3A8A">Same-Day Notary Public</span>
+          </h1>
+
+          <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            Trusted legal partners in Nairobi's financial district. Comprehensive company structuring, land conveyance, commercial contracts, and fast document notarization.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+            <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-full text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Book Appointment on WhatsApp</span>
+            </a>
+            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-8 py-4 rounded-full text-base shadow-sm transition-all">
+              <span>View Services</span>
+              <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            </a>
+          </div>
+
+          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+              <span>Hospital Road, Upper Hill Financial District, Nairobi</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+              <span>Prompt Service Delivery</span>
+            </div>
           </div>
         </div>
 
-        <div class="pt-2">
-          <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Legal%2C%20I%20need%20an%20express%20notary%20or%20legal%20consultation." 
-             target="_blank" 
-             class="inline-flex items-center gap-3 bg-[#C89B3C] hover:bg-[#b08730] text-[#0D1821] font-extrabold px-8 py-4 rounded-xl text-sm uppercase tracking-wider shadow-xl transition-all">
-            <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-            <span>Consult via WhatsApp</span>
-          </a>
+        <!-- Right Hero Image Card -->
+        <div class="lg:col-span-5 relative">
+          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative">
+            <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800" alt="Corporate Law Office in Upper Hill" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
+              <span class="inline-block bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Upper Hill Chambers</span>
+              <div class="text-xl font-bold">Upper Hill Corporate Legal & Notary</div>
+              <div class="text-xs text-slate-200">⭐ 4.8★ Rated on Google (41 verified reviews)</div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="lg:col-span-5">
-        <div class="rounded-2xl overflow-hidden shadow-2xl border-4 border-[#1E3042] aspect-[4/3]">
-          <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800" 
-               alt="Legal Chamber" 
-               class="w-full h-full object-cover">
-        </div>
       </div>
     </div>
   </section>
 
-  <!-- Floating Mobile WhatsApp CTA -->
-  <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Legal%2C%20I%20need%20a%20legal%20consultation." 
-     target="_blank" 
-     class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50">
-    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-    <span class="text-sm">Legal WhatsApp Desk</span>
-  </a>
+  <!-- Section 2: Why Choose Us -->
+  <section id="why-us" class="py-20 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #1E3A8A">Excellence Guaranteed</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Why Choose Upper Hill Corporate Legal & Notary</p>
+        <p class="text-slate-600 text-base">Setting the benchmark for professionalism, reliability, and client satisfaction in Nairobi.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #DBEAFE; color: #1E3A8A">
+        <i data-lucide="award" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Senior Commercial Advocates</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Decades of combined transactional experience in Kenyan corporate, real estate, and finance law.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #DBEAFE; color: #1E3A8A">
+        <i data-lucide="file-text" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Same-Day Express Notarization</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Walk-in and appointment notary attestation for international tenders, affidavits, and powers of attorney.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #DBEAFE; color: #1E3A8A">
+        <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Transparent Retainer Pricing</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Clear fee structures compliant with the Advocates Remuneration Order without hidden disbursements.</p>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Detailed Services Grid -->
+  <section id="services" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #1E3A8A">Tailored Capabilities</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Our Core Services</p>
+        <p class="text-slate-600 text-base">Comprehensive packages designed around your exact needs with transparent pricing.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DBEAFE; color: #1E3A8A">
+          <i data-lucide="briefcase" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Corporate & Commercial Law</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Company formation, shareholder agreements, mergers, intellectual property, and regulatory compliance.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Joint venture agreements</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Employment & vendor contracts</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Fintech licensing compliance</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #1E3A8A">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DBEAFE; color: #1E3A8A">
+          <i data-lucide="home" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Real Estate & Conveyancing</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Rigorous due diligence, land registry search verification, sectional property transfers, and commercial leases.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Title deed transfer processing</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Commercial leasing agreements</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Mortgage & charge documentation</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #1E3A8A">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #DBEAFE; color: #1E3A8A">
+          <i data-lucide="check-circle" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Notary Public & Attestation</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Official verification, apostilles, sworn affidavits, statutory declarations, and international powers of attorney.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Same-day document certification</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Embassy & consular authentications</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Certified true copies of passports</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #1E3A8A">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Social Proof / Testimonials -->
+  <section id="reviews" class="py-20 bg-slate-50 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #1E3A8A">Client Feedback</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Trusted by Clients Across Kenya</p>
+        <p class="text-slate-600 text-base">Real experiences from verified clients who rely on Upper Hill Corporate Legal & Notary.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Handled our cross-border commercial joint venture with precision and speed. The best corporate legal counsel in Upper Hill."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #1E3A8A">
+          A
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Antony Otieno</div>
+          <div class="text-xs text-slate-500">Managing Director</div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Needed emergency notary certification for international tenders. Done within 30 minutes! Highly professional advocates."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #1E3A8A">
+          B
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Beatrice W.</div>
+          <div class="text-xs text-slate-500">Finance Director</div>
+        </div>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Location, Operating Hours & Contact Table -->
+  <section id="contact" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-6 space-y-6">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #1E3A8A">Convenient Access</h2>
+          <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Operating Hours & Location</p>
+          <p class="text-slate-600 text-base leading-relaxed">
+            Visit us in Nairobi or connect directly through WhatsApp for immediate consultation, booking, and quotes.
+          </p>
+
+          <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Monday - Friday</span>
+              <span class="font-semibold text-slate-900">8:00 AM - 5:30 PM</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Saturday</span>
+              <span class="font-semibold text-slate-900">9:00 AM - 1:00 PM (Notary Only)</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-bold text-slate-700">Sunday</span>
+              <span class="font-semibold text-slate-900">Closed</span>
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-2 text-sm text-slate-600">
+            <div class="flex items-center gap-3">
+              <i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i>
+              <span>Hospital Road, Upper Hill Financial District, Nairobi</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-lucide="phone" class="w-5 h-5 text-slate-400"></i>
+              <span>+254728779911</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <div class="bg-slate-50 rounded-3xl p-8 border border-slate-200 space-y-6 shadow-sm">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-lg">Instant WhatsApp Desk</h4>
+                <p class="text-xs text-slate-500">Fastest response times for consultations & quotes</p>
+              </div>
+            </div>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Have questions regarding availability, custom pricing, or service specifications? Our team is available on WhatsApp right now.
+            </p>
+            <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 px-8 rounded-2xl text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Start WhatsApp Conversation</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: High-Conversion CTA Banner -->
+  <section class="py-16 text-white relative overflow-hidden" style="background-color: #1E3A8A">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white">Consult with a Corporate Advocate</h2>
+      <p class="text-white/90 max-w-2xl mx-auto text-base sm:text-lg font-normal">
+        Book a legal consultation or urgent notary appointment directly on WhatsApp.
+      </p>
+      <div class="pt-2">
+        <a href="https://wa.me/254728779911?text=Hello%20Upper%20Hill%20Corporate%20Legal%20%26%20Notary%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-3 bg-white text-slate-900 hover:bg-slate-100 font-extrabold px-10 py-4 rounded-full text-base shadow-2xl hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-5 h-5 text-emerald-600 fill-current"></i>
+          <span>Chat on WhatsApp Now</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-16 text-sm border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg text-white" style="background-color: #1E3A8A">
+            U
+          </div>
+          <div>
+            <div class="font-bold text-white text-base">Upper Hill Corporate Legal & Notary</div>
+            <div class="text-xs text-slate-400">Corporate Commercial Law & Conveyancing Notary</div>
+          </div>
+        </div>
+        <div class="text-center sm:text-right text-xs space-y-1">
+          <div class="text-white font-medium">📍 Hospital Road, Upper Hill Financial District, Nairobi</div>
+          <div class="text-slate-400">📞 +254728779911</div>
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-500">
+        &copy; 2026 Upper Hill Corporate Legal & Notary. All rights reserved. Professional web demo showcase.
+      </div>
+    </div>
+  </footer>
 
   <script>lucide.createIcons();</script>
 </body>

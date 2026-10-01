@@ -3,92 +3,407 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Grand Pavilion Luxury Grounds | Tigoni, Kenya</title>
+  <title>The Grand Pavilion Luxury Grounds | Nairobi, Kenya</title>
+  <meta name="description" content="10 acres of manicured emerald lawns surrounded by cool mist, rolling tea plantations, and century-old indigenous trees. Accommodates up to 1,200 guests.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .font-cormorant { font-family: 'Cormorant Garamond', serif; }
-    body { font-family: 'Montserrat', sans-serif; }
+    h1, h2, h3, .font-heading { font-family: 'Cormorant Garamond', serif; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="bg-[#FBF9F5] text-[#2D2A26] antialiased pb-24">
+<body class="bg-white text-slate-900 antialiased selection:bg-slate-900 selection:text-white pb-24">
 
-  <header class="sticky top-0 z-40 bg-[#FBF9F5]/90 backdrop-blur-md border-b border-[#EAE4D9]">
-    <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="font-cormorant text-3xl font-bold tracking-widest text-[#2D2A26] uppercase">The Grand Pavilion</span>
-      </div>
+  <!-- Floating Mobile WhatsApp Quick Button -->
+  <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-emerald-400">
+    <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+    <span class="text-sm tracking-wide">Book via WhatsApp</span>
+  </a>
 
-      <nav class="hidden md:flex items-center gap-8 text-xs uppercase tracking-widest text-[#666055] font-medium">
-        <a href="#estate">The Grounds</a>
-        <a href="#weddings">Weddings</a>
-        <a href="#packages">Packages</a>
-        <a href="#tours">Private Tours</a>
+  <!-- Top Emergency / Direct Line Bar -->
+  <div class="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-medium">Direct Inquiries • Tigoni Tea Country, Limuru Road, Nairobi</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="tel:254727668800" class="hover:text-white font-semibold flex items-center gap-1">
+        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+        <span>+254727668800</span>
+      </a>
+      <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+        <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
+        <span>WhatsApp Available</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md" style="background-color: #4D7C0F">
+          T
+        </div>
+        <div>
+          <span class="block font-black text-lg text-slate-900 leading-tight">The Grand Pavilion Luxury Grounds</span>
+          <span class="block text-xs font-semibold uppercase tracking-wider" style="color: #4D7C0F">Exclusive Garden Wedding & Corporate Gala Retreat</span>
+        </div>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+        <a href="#services" class="hover:text-slate-900 transition-colors">Services</a>
+        <a href="#why-us" class="hover:text-slate-900 transition-colors">Why Choose Us</a>
+        <a href="#reviews" class="hover:text-slate-900 transition-colors">Client Reviews</a>
+        <a href="#contact" class="hover:text-slate-900 transition-colors">Location & Hours</a>
       </nav>
 
-      <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%2C%20I%20would%20like%20to%20inquire%20about%20booking%20wedding%2Fevent%20grounds." 
-         target="_blank" 
-         class="bg-[#8B7355] hover:bg-[#725E45] text-white px-6 py-2.5 rounded-full text-xs uppercase tracking-widest font-semibold transition-all">
-        Check Dates
-      </a>
+      <div class="flex items-center gap-3">
+        <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm shadow-md hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+          <span>Book via WhatsApp</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <section class="py-16 px-6 max-w-7xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      <div class="lg:col-span-7 space-y-6">
-        <span class="text-xs uppercase tracking-[0.25em] text-[#8B7355] font-semibold">Tigoni Tea Country • Capacity up to 1,200 Guests</span>
-        <h1 class="font-cormorant text-5xl sm:text-7xl font-bold text-[#2D2A26] leading-[1.05]">
-          A Fairytale Backdrop for Unforgettable Vows.
-        </h1>
-        <p class="text-[#666055] text-base leading-relaxed max-w-xl font-light">
-          10 acres of manicured emerald lawns surrounded by cool mist, rolling tea plantations, and century-old indigenous trees in Tigoni.
-        </p>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Content -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border" style="background-color: #ECFCCB; color: #4D7C0F; border-color: #D9F99D">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>Voted Kenya's Top Tea Estate Wedding Venue</span>
+            <span class="text-slate-300">•</span>
+            <span class="text-amber-600 flex items-center gap-1 font-extrabold">★ 4.9 (71+ Reviews)</span>
+          </div>
 
-        <!-- Wedding Package Tier Selector -->
-        <div class="grid grid-cols-3 gap-3 pt-2 text-center text-xs">
-          <div class="bg-white border border-[#EAE4D9] p-3 rounded-xl">
-            <span class="font-cormorant text-lg font-bold block text-[#2D2A26]">Intimate</span>
-            <span class="text-[#8B7355] text-[10px]">Up to 250 Guests</span>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+            A Fairytale Tea Country Setting for <span style="color: #4D7C0F">Unforgettable Wedding Vows</span>
+          </h1>
+
+          <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            10 acres of manicured emerald lawns surrounded by cool mist, rolling tea plantations, and century-old indigenous trees. Accommodates up to 1,200 guests.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+            <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-full text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Book Appointment on WhatsApp</span>
+            </a>
+            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-8 py-4 rounded-full text-base shadow-sm transition-all">
+              <span>View Services</span>
+              <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            </a>
           </div>
-          <div class="bg-white border-2 border-[#8B7355] p-3 rounded-xl shadow-sm">
-            <span class="font-cormorant text-lg font-bold block text-[#2D2A26]">Grand Royal</span>
-            <span class="text-[#8B7355] text-[10px]">Up to 600 Guests</span>
-          </div>
-          <div class="bg-white border border-[#EAE4D9] p-3 rounded-xl">
-            <span class="font-cormorant text-lg font-bold block text-[#2D2A26]">Estate Gala</span>
-            <span class="text-[#8B7355] text-[10px]">Up to 1,200 Guests</span>
+
+          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+              <span>Tigoni Tea Country, Limuru Road, Nairobi</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+              <span>Prompt Service Delivery</span>
+            </div>
           </div>
         </div>
 
-        <div class="pt-4">
-          <a href="https://wa.me/254727668800?text=Hello%20Grand%20Pavilion%2C%20I%20would%20like%20to%20check%20available%20wedding%20dates." 
-             target="_blank" 
-             class="inline-flex items-center gap-3 bg-[#8B7355] hover:bg-[#725E45] text-white font-bold px-8 py-4 rounded-full text-xs uppercase tracking-widest shadow-xl">
-            <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-            <span>Inquire Available Dates on WhatsApp</span>
-          </a>
+        <!-- Right Hero Image Card -->
+        <div class="lg:col-span-5 relative">
+          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative">
+            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=800" alt="Wedding Venue in Tigoni" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
+              <span class="inline-block bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Tea Country Vistas</span>
+              <div class="text-xl font-bold">The Grand Pavilion Luxury Grounds</div>
+              <div class="text-xs text-slate-200">⭐ 4.9★ Rated on Google (71 verified reviews)</div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="lg:col-span-5">
-        <div class="rounded-3xl overflow-hidden shadow-2xl aspect-[4/5] border-4 border-white">
-          <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=800" 
-               alt="Wedding grounds in Tigoni" 
-               class="w-full h-full object-cover">
-        </div>
       </div>
     </div>
   </section>
 
-  <!-- Floating Mobile WhatsApp CTA -->
-  <a href="https://wa.me/254727668800?text=Hello%20Grand%20Pavilion%2C%20I%20would%20like%20to%20book%20a%20venue%20tour." 
-     target="_blank" 
-     class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50">
-    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-    <span class="text-sm">Venue Walkthrough WhatsApp</span>
-  </a>
+  <!-- Section 2: Why Choose Us -->
+  <section id="why-us" class="py-20 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #4D7C0F">Excellence Guaranteed</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Why Choose The Grand Pavilion Luxury Grounds</p>
+        <p class="text-slate-600 text-base">Setting the benchmark for professionalism, reliability, and client satisfaction in Nairobi.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #ECFCCB; color: #4D7C0F">
+        <i data-lucide="camera" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Spectacular Photography Grounds</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Private access to rolling green tea fields, botanical floral arches, and scenic golden-hour vistas.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #ECFCCB; color: #4D7C0F">
+        <i data-lucide="heart" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">VIP Bridal Dressing Chalets</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Luxurious ensuite dressing suites with full vanity stations, lounge seating, and champagne bar.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #ECFCCB; color: #4D7C0F">
+        <i data-lucide="check-circle" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Seamless All-Weather Logistics</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Paved access roads, secure parking for 400+ vehicles, modern luxury executive washrooms, and helipad.</p>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Detailed Services Grid -->
+  <section id="services" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #4D7C0F">Tailored Capabilities</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Our Core Services</p>
+        <p class="text-slate-600 text-base">Comprehensive packages designed around your exact needs with transparent pricing.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #ECFCCB; color: #4D7C0F">
+          <i data-lucide="users" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Garden Wedding Ceremonies</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Manicured main lawns accommodating large marquee domes, banquet dining, and dancing under the stars.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Capacity from 200 to 1,200 guests</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>All-day exclusive venue access</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Outdoor ceremony gazebos</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #4D7C0F">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #ECFCCB; color: #4D7C0F">
+          <i data-lucide="briefcase" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Executive Corporate Retreats</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Fresh highland air, outdoor breakout pavilions, fast Wi-Fi, and open spaces for leadership team building.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Audio-visual stage setups</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Executive catering space</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Helipad landing clearance</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #4D7C0F">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #ECFCCB; color: #4D7C0F">
+          <i data-lucide="image" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Engagement & Bridal Photography</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Dedicated access for pre-wedding photo sessions, video shoots, and intimate vow renewals.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Golden hour tea estate access</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Dressing room access</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Security team support</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #4D7C0F">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Social Proof / Testimonials -->
+  <section id="reviews" class="py-20 bg-slate-50 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #4D7C0F">Client Feedback</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Trusted by Clients Across Kenya</p>
+        <p class="text-slate-600 text-base">Real experiences from verified clients who rely on The Grand Pavilion Luxury Grounds.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"The most picturesque wedding grounds in Kenya. The tea field backdrop during golden hour gave us fairytale photos that our guests still talk about!"</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #4D7C0F">
+          S
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Sharon & Brian</div>
+          <div class="text-xs text-slate-500">Newlyweds</div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Hosted our 300-delegate annual gala here. Seamless logistics, beautiful greenery, and very helpful on-site management."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #4D7C0F">
+          L
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Linda Muthoni</div>
+          <div class="text-xs text-slate-500">Corporate Events Lead</div>
+        </div>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Location, Operating Hours & Contact Table -->
+  <section id="contact" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-6 space-y-6">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #4D7C0F">Convenient Access</h2>
+          <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Operating Hours & Location</p>
+          <p class="text-slate-600 text-base leading-relaxed">
+            Visit us in Nairobi or connect directly through WhatsApp for immediate consultation, booking, and quotes.
+          </p>
+
+          <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Monday - Friday</span>
+              <span class="font-semibold text-slate-900">Venue Tours: 9:00 AM - 5:00 PM</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Saturday</span>
+              <span class="font-semibold text-slate-900">Events & Tours: 8:00 AM - 6:00 PM</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-bold text-slate-700">Sunday</span>
+              <span class="font-semibold text-slate-900">Events: 8:00 AM - 6:00 PM</span>
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-2 text-sm text-slate-600">
+            <div class="flex items-center gap-3">
+              <i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i>
+              <span>Tigoni Tea Country, Limuru Road, Nairobi</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-lucide="phone" class="w-5 h-5 text-slate-400"></i>
+              <span>+254727668800</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <div class="bg-slate-50 rounded-3xl p-8 border border-slate-200 space-y-6 shadow-sm">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-lg">Instant WhatsApp Desk</h4>
+                <p class="text-xs text-slate-500">Fastest response times for consultations & quotes</p>
+              </div>
+            </div>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Have questions regarding availability, custom pricing, or service specifications? Our team is available on WhatsApp right now.
+            </p>
+            <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 px-8 rounded-2xl text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Start WhatsApp Conversation</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: High-Conversion CTA Banner -->
+  <section class="py-16 text-white relative overflow-hidden" style="background-color: #4D7C0F">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white">Book a Private Grounds Walkthrough</h2>
+      <p class="text-white/90 max-w-2xl mx-auto text-base sm:text-lg font-normal">
+        Check open wedding and event dates on WhatsApp and schedule an in-person tour of the tea estate.
+      </p>
+      <div class="pt-2">
+        <a href="https://wa.me/254727668800?text=Hello%20The%20Grand%20Pavilion%20Luxury%20Grounds%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-3 bg-white text-slate-900 hover:bg-slate-100 font-extrabold px-10 py-4 rounded-full text-base shadow-2xl hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-5 h-5 text-emerald-600 fill-current"></i>
+          <span>Chat on WhatsApp Now</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-16 text-sm border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg text-white" style="background-color: #4D7C0F">
+            T
+          </div>
+          <div>
+            <div class="font-bold text-white text-base">The Grand Pavilion Luxury Grounds</div>
+            <div class="text-xs text-slate-400">Exclusive Garden Wedding & Corporate Gala Retreat</div>
+          </div>
+        </div>
+        <div class="text-center sm:text-right text-xs space-y-1">
+          <div class="text-white font-medium">📍 Tigoni Tea Country, Limuru Road, Nairobi</div>
+          <div class="text-slate-400">📞 +254727668800</div>
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-500">
+        &copy; 2026 The Grand Pavilion Luxury Grounds. All rights reserved. Professional web demo showcase.
+      </div>
+    </div>
+  </footer>
 
   <script>lucide.createIcons();</script>
 </body>

@@ -4,95 +4,406 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Solarkraft Commercial Solar & Backup Systems | Nairobi, Kenya</title>
+  <meta name="description" content="Engineered commercial rooftop solar photovoltaic installations and zero-millisecond lithium-ion microgrids for manufacturing plants, hospitals, and commercial facilities.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+    h1, h2, h3, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="bg-[#0B132B] text-slate-100 antialiased pb-24">
+<body class="bg-white text-slate-900 antialiased selection:bg-slate-900 selection:text-white pb-24">
 
-  <header class="sticky top-0 z-40 bg-[#0B132B]/95 backdrop-blur-md border-b border-[#1C2541]">
-    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-cyan-400 text-[#0B132B] rounded-xl flex items-center justify-center font-black">
-          <i data-lucide="zap" class="w-6 h-6 fill-current"></i>
+  <!-- Floating Mobile WhatsApp Quick Button -->
+  <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-emerald-400">
+    <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+    <span class="text-sm tracking-wide">Book via WhatsApp</span>
+  </a>
+
+  <!-- Top Emergency / Direct Line Bar -->
+  <div class="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-medium">Direct Inquiries • Enterprise Road, Industrial Area, Nairobi</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="tel:254726557799" class="hover:text-white font-semibold flex items-center gap-1">
+        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+        <span>+254726557799</span>
+      </a>
+      <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+        <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
+        <span>WhatsApp Available</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md" style="background-color: #0284C7">
+          S
         </div>
         <div>
-          <span class="text-xl font-black text-white tracking-tight">SOLARKRAFT</span>
-          <span class="block text-[10px] text-cyan-400 font-bold uppercase tracking-widest">Commercial Solar & ESS Microgrids</span>
+          <span class="block font-black text-lg text-slate-900 leading-tight">Solarkraft Commercial Solar & Backup Systems</span>
+          <span class="block text-xs font-semibold uppercase tracking-wider" style="color: #0284C7">Commercial Solar Energy & Lithium Battery Backup</span>
         </div>
-      </div>
-
-      <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%2C%20I%20would%20like%20a%20solar%20quote%20for%20our%20facility." 
-         target="_blank" 
-         class="bg-cyan-400 hover:bg-cyan-300 text-[#0B132B] font-extrabold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider">
-        Request Solar Audit
       </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+        <a href="#services" class="hover:text-slate-900 transition-colors">Services</a>
+        <a href="#why-us" class="hover:text-slate-900 transition-colors">Why Choose Us</a>
+        <a href="#reviews" class="hover:text-slate-900 transition-colors">Client Reviews</a>
+        <a href="#contact" class="hover:text-slate-900 transition-colors">Location & Hours</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm shadow-md hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+          <span>Book via WhatsApp</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <section class="py-16 px-6 max-w-7xl mx-auto">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      <div class="lg:col-span-7 space-y-6">
-        <div class="inline-flex items-center gap-2 bg-[#1C2541] text-cyan-400 px-3.5 py-1.5 rounded-full text-xs font-mono-code">
-          <span>EPRA V1 Class Licensed Contractor</span>
-        </div>
-        <h1 class="text-4xl sm:text-6xl font-black text-white leading-tight">
-          Eliminate Factory Downtime. Cut Power Bills by up to 70%.
-        </h1>
-        <p class="text-slate-300 text-lg leading-relaxed">
-          Engineered commercial rooftop solar PV installations and lithium-ion microgrids for manufacturing plants, hospitals, commercial complexes, and luxury estates.
-        </p>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Content -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border" style="background-color: #E0F2FE; color: #0284C7; border-color: #BAE6FD">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>EPRA Class V1 Solar Licensed Contractor</span>
+            <span class="text-slate-300">•</span>
+            <span class="text-amber-600 flex items-center gap-1 font-extrabold">★ 4.8 (58+ Reviews)</span>
+          </div>
 
-        <!-- ROI Calculator Preview Box -->
-        <div class="bg-[#1C2541]/80 border border-cyan-500/30 p-6 rounded-2xl space-y-4">
-          <div class="text-xs uppercase tracking-widest text-cyan-400 font-bold">Estimated Solar Yield</div>
-          <div class="grid grid-cols-3 gap-4 text-center">
-            <div class="bg-[#0B132B] p-3 rounded-xl border border-slate-700">
-              <div class="text-xl font-bold text-white">65%</div>
-              <div class="text-[10px] text-slate-400">Bill Reduction</div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+            Eliminate Factory Blackouts & <span style="color: #0284C7">Cut Power Bills up to 70%</span>
+          </h1>
+
+          <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            Engineered commercial rooftop solar photovoltaic installations and zero-millisecond lithium-ion microgrids for manufacturing plants, hospitals, and commercial facilities.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+            <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-full text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Book Appointment on WhatsApp</span>
+            </a>
+            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-8 py-4 rounded-full text-base shadow-sm transition-all">
+              <span>View Services</span>
+              <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            </a>
+          </div>
+
+          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+              <span>Enterprise Road, Industrial Area, Nairobi</span>
             </div>
-            <div class="bg-[#0B132B] p-3 rounded-xl border border-slate-700">
-              <div class="text-xl font-bold text-emerald-400">0 ms</div>
-              <div class="text-[10px] text-slate-400">UPS Cutover</div>
-            </div>
-            <div class="bg-[#0B132B] p-3 rounded-xl border border-slate-700">
-              <div class="text-xl font-bold text-cyan-400">3.2 Yrs</div>
-              <div class="text-[10px] text-slate-400">Avg ROI Payback</div>
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+              <span>Prompt Service Delivery</span>
             </div>
           </div>
         </div>
 
-        <div>
-          <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%2C%20I%20would%20like%20an%20energy%20quote%20for%20our%20business." 
-             target="_blank" 
-             class="inline-flex items-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-[#0B132B] font-extrabold px-8 py-4 rounded-xl text-base shadow-xl shadow-emerald-500/30 transition-all hover:scale-105">
-            <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-            <span>Get WhatsApp Energy Quote</span>
-          </a>
+        <!-- Right Hero Image Card -->
+        <div class="lg:col-span-5 relative">
+          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative">
+            <img src="https://images.unsplash.com/photo-1497440001374-f26997328c1b?auto=format&fit=crop&q=80&w=800" alt="Commercial Solar Installation" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
+              <span class="inline-block bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Industrial Solar</span>
+              <div class="text-xl font-bold">Solarkraft Commercial Solar & Backup Systems</div>
+              <div class="text-xs text-slate-200">⭐ 4.8★ Rated on Google (58 verified reviews)</div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="lg:col-span-5">
-        <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-[#1C2541] aspect-[4/3]">
-          <img src="https://images.unsplash.com/photo-1497440001374-f26997328c1b?auto=format&fit=crop&q=80&w=800" 
-               alt="Commercial solar plant" 
-               class="w-full h-full object-cover">
-        </div>
       </div>
     </div>
   </section>
 
-  <!-- Floating Mobile WhatsApp CTA -->
-  <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%2C%20I%20would%20like%20a%20quote%20for%20commercial%20solar." 
-     target="_blank" 
-     class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50">
-    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-    <span class="text-sm">Solar WhatsApp Quote</span>
-  </a>
+  <!-- Section 2: Why Choose Us -->
+  <section id="why-us" class="py-20 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Excellence Guaranteed</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Why Choose Solarkraft Commercial Solar & Backup Systems</p>
+        <p class="text-slate-600 text-base">Setting the benchmark for professionalism, reliability, and client satisfaction in Nairobi.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #E0F2FE; color: #0284C7">
+        <i data-lucide="sun" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Tier-1 Hardware Only</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Top-tier monocrystalline solar panels with 25-year performance warranties and industrial smart inverters.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #E0F2FE; color: #0284C7">
+        <i data-lucide="zap" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Zero Downtime UPS Cutover</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">LiFePO4 battery banks cut in within 0 milliseconds, protecting sensitive machinery from grid dips.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #E0F2FE; color: #0284C7">
+        <i data-lucide="file-check" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">EPRA Regulatory Compliance</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Fully certified engineering drawings, grid connection clearance, and energy audit approvals.</p>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Detailed Services Grid -->
+  <section id="services" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Tailored Capabilities</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Our Core Services</p>
+        <p class="text-slate-600 text-base">Comprehensive packages designed around your exact needs with transparent pricing.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #E0F2FE; color: #0284C7">
+          <i data-lucide="sun" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Commercial Grid-Tie Solar PV</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Direct solar power generation during high daytime tariff hours, cutting monthly KPLC bills drastically.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>50kW to 2MW commercial scale</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Net metering compatibility</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>25-year linear power warranty</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #0284C7">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #E0F2FE; color: #0284C7">
+          <i data-lucide="battery-charging" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Lithium Microgrid & ESS</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">High-capacity lithium battery energy storage systems replacing noisy, high-maintenance diesel generators.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>LiFePO4 6000+ cycle lifespan</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Instant automated switchover</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Smart remote cloud telemetry</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #0284C7">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #E0F2FE; color: #0284C7">
+          <i data-lucide="trending-up" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Energy Audit & Feasibility</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Detailed 14-day data-logger load analysis projecting payback schedules, ROI metrics, and CAPEX.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Comprehensive tariff breakdown</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Asset financing options</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Carbon offset certification</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #0284C7">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Social Proof / Testimonials -->
+  <section id="reviews" class="py-20 bg-slate-50 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Client Feedback</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Trusted by Clients Across Kenya</p>
+        <p class="text-slate-600 text-base">Real experiences from verified clients who rely on Solarkraft Commercial Solar & Backup Systems.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Solarkraft installed a 120kWp solar hybrid plant on our pharmaceutical warehouse. Our monthly utility bill slashed by 65% with zero outages."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #0284C7">
+          E
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Eng. Moses Kariuki</div>
+          <div class="text-xs text-slate-500">Operations Director</div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Zero downtime during national power blackouts. The lithium battery banks switch over instantaneously. Solid engineering."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #0284C7">
+          V
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Vikram Shah</div>
+          <div class="text-xs text-slate-500">Plant Manager</div>
+        </div>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Location, Operating Hours & Contact Table -->
+  <section id="contact" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-6 space-y-6">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #0284C7">Convenient Access</h2>
+          <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Operating Hours & Location</p>
+          <p class="text-slate-600 text-base leading-relaxed">
+            Visit us in Nairobi or connect directly through WhatsApp for immediate consultation, booking, and quotes.
+          </p>
+
+          <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Monday - Friday</span>
+              <span class="font-semibold text-slate-900">8:00 AM - 5:30 PM</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Saturday</span>
+              <span class="font-semibold text-slate-900">8:30 AM - 1:00 PM</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-bold text-slate-700">Sunday</span>
+              <span class="font-semibold text-slate-900">Emergency Support 24/7</span>
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-2 text-sm text-slate-600">
+            <div class="flex items-center gap-3">
+              <i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i>
+              <span>Enterprise Road, Industrial Area, Nairobi</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-lucide="phone" class="w-5 h-5 text-slate-400"></i>
+              <span>+254726557799</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <div class="bg-slate-50 rounded-3xl p-8 border border-slate-200 space-y-6 shadow-sm">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-lg">Instant WhatsApp Desk</h4>
+                <p class="text-xs text-slate-500">Fastest response times for consultations & quotes</p>
+              </div>
+            </div>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Have questions regarding availability, custom pricing, or service specifications? Our team is available on WhatsApp right now.
+            </p>
+            <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 px-8 rounded-2xl text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Start WhatsApp Conversation</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: High-Conversion CTA Banner -->
+  <section class="py-16 text-white relative overflow-hidden" style="background-color: #0284C7">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white">Get a Free Solar Feasibility Quote</h2>
+      <p class="text-white/90 max-w-2xl mx-auto text-base sm:text-lg font-normal">
+        Send a photo of your monthly electricity bill on WhatsApp for an immediate solar savings estimate.
+      </p>
+      <div class="pt-2">
+        <a href="https://wa.me/254726557799?text=Hello%20Solarkraft%20Commercial%20Solar%20%26%20Backup%20Systems%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-3 bg-white text-slate-900 hover:bg-slate-100 font-extrabold px-10 py-4 rounded-full text-base shadow-2xl hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-5 h-5 text-emerald-600 fill-current"></i>
+          <span>Chat on WhatsApp Now</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-16 text-sm border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg text-white" style="background-color: #0284C7">
+            S
+          </div>
+          <div>
+            <div class="font-bold text-white text-base">Solarkraft Commercial Solar & Backup Systems</div>
+            <div class="text-xs text-slate-400">Commercial Solar Energy & Lithium Battery Backup</div>
+          </div>
+        </div>
+        <div class="text-center sm:text-right text-xs space-y-1">
+          <div class="text-white font-medium">📍 Enterprise Road, Industrial Area, Nairobi</div>
+          <div class="text-slate-400">📞 +254726557799</div>
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-500">
+        &copy; 2026 Solarkraft Commercial Solar & Backup Systems. All rights reserved. Professional web demo showcase.
+      </div>
+    </div>
+  </footer>
 
   <script>lucide.createIcons();</script>
 </body>

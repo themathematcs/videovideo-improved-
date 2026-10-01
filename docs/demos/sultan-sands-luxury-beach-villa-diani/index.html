@@ -4,170 +4,406 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sultan Sands Luxury Beach Villa | Diani Beach, Kenya</title>
+  <meta name="description" content="Experience barefoot coastal elegance on Kenya's south coast. 5 private suites with infinity pool, personalized seafood dining, and direct white-sand beach access.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .font-serif-luxury { font-family: 'Playfair Display', serif; }
+    h1, h2, h3, .font-heading { font-family: 'Playfair Display', serif; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="bg-[#FAF7F2] text-[#2C241D] antialiased selection:bg-[#C28E58] selection:text-white pb-24">
+<body class="bg-white text-slate-900 antialiased selection:bg-slate-900 selection:text-white pb-24">
 
-  <!-- Top Announcement Bar -->
-  <div class="bg-[#1C1713] text-[#E8DFD3] text-xs py-2.5 px-4 text-center tracking-widest uppercase font-medium flex items-center justify-center gap-2">
-    <span>Private Oceanfront Estate • 5 Suites • Dedicated Butler & Private Chef</span>
-    <span class="hidden sm:inline">• Diani Beach, South Coast</span>
+  <!-- Floating Mobile WhatsApp Quick Button -->
+  <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-emerald-400">
+    <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+    <span class="text-sm tracking-wide">Book via WhatsApp</span>
+  </a>
+
+  <!-- Top Emergency / Direct Line Bar -->
+  <div class="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-medium">Direct Inquiries • Galu Kinondo Road, Diani Beach, South Coast</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="tel:254722667788" class="hover:text-white font-semibold flex items-center gap-1">
+        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+        <span>+254722667788</span>
+      </a>
+      <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+        <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
+        <span>WhatsApp Available</span>
+      </a>
+    </div>
   </div>
 
-  <!-- Navbar -->
-  <header class="sticky top-0 z-40 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#E8DFD3]">
-    <div class="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 bg-[#C28E58] text-white rounded-full flex items-center justify-center font-serif-luxury font-bold text-xl shadow-md">
+  <!-- Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-md" style="background-color: #B45309">
           S
         </div>
         <div>
-          <span class="font-serif-luxury text-2xl font-bold tracking-tight text-[#1C1713]">Sultan Sands</span>
-          <span class="block text-[10px] tracking-[0.25em] uppercase text-[#8C7A6B] font-semibold">Luxury Beach Villa • Diani</span>
+          <span class="block font-black text-lg text-slate-900 leading-tight">Sultan Sands Luxury Beach Villa</span>
+          <span class="block text-xs font-semibold uppercase tracking-wider" style="color: #B45309">Luxury Beachfront Villa & Private Chef Retreat</span>
         </div>
-      </div>
+      </a>
 
-      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-[#5C4F44]">
-        <a href="#estate" class="hover:text-[#C28E58] transition-colors">The Estate</a>
-        <a href="#chef" class="hover:text-[#C28E58] transition-colors">Private Dining</a>
-        <a href="#suites" class="hover:text-[#C28E58] transition-colors">Suites & Amenities</a>
-        <a href="#reviews" class="hover:text-[#C28E58] transition-colors">Guest Stories</a>
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+        <a href="#services" class="hover:text-slate-900 transition-colors">Services</a>
+        <a href="#why-us" class="hover:text-slate-900 transition-colors">Why Choose Us</a>
+        <a href="#reviews" class="hover:text-slate-900 transition-colors">Client Reviews</a>
+        <a href="#contact" class="hover:text-slate-900 transition-colors">Location & Hours</a>
       </nav>
 
-      <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%2C%20I%20would%20like%20to%20inquire%20about%20villa%20availability%20and%20rates." 
-         target="_blank" 
-         class="inline-flex items-center gap-2.5 bg-[#C28E58] hover:bg-[#A97441] text-white px-6 py-3 rounded-full text-sm font-semibold tracking-wide transition-all shadow-lg shadow-[#C28E58]/30 hover:scale-105">
-        <i data-lucide="calendar" class="w-4 h-4"></i>
-        <span>Reserve Dates</span>
-      </a>
+      <div class="flex items-center gap-3">
+        <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm shadow-md hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+          <span>Book via WhatsApp</span>
+        </a>
+      </div>
     </div>
   </header>
 
-  <!-- Hero with Overlapping Booking Bar -->
-  <section class="relative pt-8 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="relative rounded-3xl overflow-hidden shadow-2xl h-[560px] sm:h-[620px]">
-      <img src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&q=80&w=1600" 
-           alt="Sultan Sands Diani Villa" 
-           class="w-full h-full object-cover">
-      <div class="absolute inset-0 bg-gradient-to-t from-[#1C1713]/80 via-[#1C1713]/25 to-transparent"></div>
-      
-      <div class="absolute bottom-12 left-6 right-6 sm:left-12 sm:right-12 text-white max-w-3xl space-y-4">
-        <span class="inline-block bg-[#C28E58]/90 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">
-          Barefoot Oceanfront Luxury
-        </span>
-        <h1 class="font-serif-luxury text-4xl sm:text-6xl font-bold leading-tight">
-          Where the Indian Ocean meets bespoke Kenyan hospitality.
-        </h1>
-        <p class="text-[#E8DFD3] text-base sm:text-lg max-w-2xl font-light">
-          A secluded beachfront compound designed for private family gatherings, executive retreats, and unforgettable sunset celebrations on Diani's powder-white sands.
-        </p>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 bg-gradient-to-b from-slate-50 via-white to-white border-b border-slate-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Content -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold border" style="background-color: #FEF3C7; color: #B45309; border-color: #FDE68A">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>5-Star Oceanfront Private Compound</span>
+            <span class="text-slate-300">•</span>
+            <span class="text-amber-600 flex items-center gap-1 font-extrabold">★ 4.9 (54+ Reviews)</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+            Private Oceanfront Sanctuary with <span style="color: #B45309">Dedicated Butler & Chef</span>
+          </h1>
+
+          <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            Experience barefoot coastal elegance on Kenya's south coast. 5 private suites with infinity pool, personalized seafood dining, and direct white-sand beach access.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+            <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-4 rounded-full text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Book Appointment on WhatsApp</span>
+            </a>
+            <a href="#services" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-8 py-4 rounded-full text-base shadow-sm transition-all">
+              <span>View Services</span>
+              <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            </a>
+          </div>
+
+          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-medium">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+              <span>Galu Kinondo Road, Diani Beach, South Coast</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+              <span>Prompt Service Delivery</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Hero Image Card -->
+        <div class="lg:col-span-5 relative">
+          <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-slate-100 relative">
+            <img src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&q=80&w=800" alt="Luxury Beach Villa in Diani" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
+              <span class="inline-block bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Galu Beachfront</span>
+              <div class="text-xl font-bold">Sultan Sands Luxury Beach Villa</div>
+              <div class="text-xs text-slate-200">⭐ 4.9★ Rated on Google (54 verified reviews)</div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
+  </section>
 
-    <!-- Floating Reservation Widget -->
-    <div class="relative -mt-10 max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border border-[#E8DFD3] p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-      <div class="border-b sm:border-b-0 sm:border-r border-[#E8DFD3] pb-3 sm:pb-0 sm:pr-4">
-        <label class="text-[10px] uppercase tracking-widest text-[#8C7A6B] font-bold block mb-1">Check In</label>
-        <div class="flex items-center gap-2 text-sm font-semibold text-[#1C1713]">
-          <i data-lucide="calendar" class="w-4 h-4 text-[#C28E58]"></i>
-          <span>Select Dates</span>
+  <!-- Section 2: Why Choose Us -->
+  <section id="why-us" class="py-20 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #B45309">Excellence Guaranteed</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Why Choose Sultan Sands Luxury Beach Villa</p>
+        <p class="text-slate-600 text-base">Setting the benchmark for professionalism, reliability, and client satisfaction in Diani Beach.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #FEF3C7; color: #B45309">
+        <i data-lucide="waves" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Direct Oceanfront Access</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Step directly onto the secluded white sands of Galu Beach with private sun loungers and cabanas.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #FEF3C7; color: #B45309">
+        <i data-lucide="utensils" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Executive Private Chef</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Customized Swahili fusion cuisine, fresh crab, prawns, and tropical fruit breakfasts cooked daily.</p>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-all">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style="background-color: #FEF3C7; color: #B45309">
+        <i data-lucide="shield-check" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-3">Full Privacy & Gated Security</h3>
+      <p class="text-slate-600 text-sm leading-relaxed">Private compound reserved exclusively for your family with 24/7 security and butler service.</p>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Detailed Services Grid -->
+  <section id="services" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #B45309">Tailored Capabilities</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Our Core Services</p>
+        <p class="text-slate-600 text-base">Comprehensive packages designed around your exact needs with transparent pricing.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #FEF3C7; color: #B45309">
+          <i data-lucide="home" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Exclusive Whole-Villa Buyout</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Full access to all 5 en-suite suites, private infinity pool, and landscaped tropical gardens.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Accommodates up to 12 guests</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Daily housekeeping & laundry</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Air-conditioned oceanview suites</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #B45309">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #FEF3C7; color: #B45309">
+          <i data-lucide="coffee" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">Bespoke Chef Dining Service</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">Gourmet breakfasts, poolside barbecue lunches, and candlelit seafood dinners under the stars.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Fresh seafood from local fishermen</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Tailored dietary menus</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Full cocktail & beverage service</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #B45309">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+      <div class="space-y-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #FEF3C7; color: #B45309">
+          <i data-lucide="compass" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900">VIP Coastal Concierge</h3>
+        <p class="text-slate-600 text-sm leading-relaxed">End-to-end transport and activity coordination throughout your coastal Kenya getaway.</p>
+        <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-700">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Ukunda Airstrip VIP pickup</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Wasini Island dolphin dhow tours</span></li><li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 shrink-0"></i><span>Deep sea game fishing charters</span></li>
+        </ul>
+      </div>
+      <div class="pt-6 mt-6 border-t border-slate-100">
+        <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-2 font-bold text-sm hover:underline" style="color: #B45309">
+          <span>Book via WhatsApp</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+    </div>
+  
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Social Proof / Testimonials -->
+  <section id="reviews" class="py-20 bg-slate-50 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #B45309">Client Feedback</h2>
+        <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Trusted by Clients Across Kenya</p>
+        <p class="text-slate-600 text-base">Real experiences from verified clients who rely on Sultan Sands Luxury Beach Villa.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Our two weeks at Sultan Sands were the absolute highlight of our year. Waking up to ocean waves, having Chef Ali prepare fresh garlic lobster by the pool, and direct beach strolls—pure magic."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #B45309">
+          J
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Julian & Sophie Von Berg</div>
+          <div class="text-xs text-slate-500">Guests from Switzerland</div>
         </div>
       </div>
-      <div class="border-b sm:border-b-0 sm:border-r border-[#E8DFD3] pb-3 sm:pb-0 sm:pr-4">
-        <label class="text-[10px] uppercase tracking-widest text-[#8C7A6B] font-bold block mb-1">Guests</label>
-        <div class="flex items-center gap-2 text-sm font-semibold text-[#1C1713]">
-          <i data-lucide="users" class="w-4 h-4 text-[#C28E58]"></i>
-          <span>Up to 12 Guests</span>
+    </div>
+  
+    <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm relative space-y-4">
+      <div class="flex items-center gap-1 text-amber-500">
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+      </div>
+      <p class="text-slate-700 italic text-base leading-relaxed">"Direct WhatsApp booking was so easy! Best family reunion stay in Diani with top-tier security and butler service. We will definitely return."</p>
+      <div class="pt-4 border-t border-slate-100 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white" style="background-color: #B45309">
+          W
+        </div>
+        <div>
+          <div class="font-bold text-slate-900 text-sm">Wanjiku Muthoni</div>
+          <div class="text-xs text-slate-500">Nairobi Guest</div>
         </div>
       </div>
-      <div class="border-b sm:border-b-0 sm:border-r border-[#E8DFD3] pb-3 sm:pb-0 sm:pr-4">
-        <label class="text-[10px] uppercase tracking-widest text-[#8C7A6B] font-bold block mb-1">Inclusions</label>
-        <div class="flex items-center gap-2 text-sm font-semibold text-[#1C1713]">
-          <i data-lucide="utensils" class="w-4 h-4 text-[#C28E58]"></i>
-          <span>Chef & Butler</span>
-        </div>
+    </div>
+  
       </div>
-      <div>
-        <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%2C%20I%20would%20like%20to%20check%20rates%20and%20reserve%20dates%20for%20a%20private%20villa%20stay." 
-           target="_blank" 
-           class="w-full bg-[#1C1713] hover:bg-[#C28E58] text-white py-3.5 px-6 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 transition-all">
-          <i data-lucide="message-circle" class="w-4 h-4 text-emerald-400"></i>
-          <span>Direct WhatsApp Quote</span>
+    </div>
+  </section>
+
+  <!-- Section 5: Location, Operating Hours & Contact Table -->
+  <section id="contact" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-6 space-y-6">
+          <h2 class="text-xs font-extrabold uppercase tracking-widest" style="color: #B45309">Convenient Access</h2>
+          <p class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Operating Hours & Location</p>
+          <p class="text-slate-600 text-base leading-relaxed">
+            Visit us in Diani Beach or connect directly through WhatsApp for immediate consultation, booking, and quotes.
+          </p>
+
+          <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Monday - Friday</span>
+              <span class="font-semibold text-slate-900">Guest Services: 24/7</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200 text-sm">
+              <span class="font-bold text-slate-700">Saturday</span>
+              <span class="font-semibold text-slate-900">Guest Services: 24/7</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-bold text-slate-700">Sunday</span>
+              <span class="font-semibold text-slate-900">Guest Services: 24/7</span>
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-2 text-sm text-slate-600">
+            <div class="flex items-center gap-3">
+              <i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i>
+              <span>Galu Kinondo Road, Diani Beach, South Coast</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i data-lucide="phone" class="w-5 h-5 text-slate-400"></i>
+              <span>+254722667788</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <div class="bg-slate-50 rounded-3xl p-8 border border-slate-200 space-y-6 shadow-sm">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+              <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 text-lg">Instant WhatsApp Desk</h4>
+                <p class="text-xs text-slate-500">Fastest response times for consultations & quotes</p>
+              </div>
+            </div>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Have questions regarding availability, custom pricing, or service specifications? Our team is available on WhatsApp right now.
+            </p>
+            <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="w-full inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 px-8 rounded-2xl text-base shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all">
+              <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+              <span>Start WhatsApp Conversation</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: High-Conversion CTA Banner -->
+  <section class="py-16 text-white relative overflow-hidden" style="background-color: #B45309">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+      <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white">Reserve Your Private Oceanfront Escape</h2>
+      <p class="text-white/90 max-w-2xl mx-auto text-base sm:text-lg font-normal">
+        Check availability, custom chef menu options, and special seasonal rates directly on WhatsApp.
+      </p>
+      <div class="pt-2">
+        <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%20Luxury%20Beach%20Villa%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment%20%2F%20inquire%20about%20services." target="_blank" class="inline-flex items-center gap-3 bg-white text-slate-900 hover:bg-slate-100 font-extrabold px-10 py-4 rounded-full text-base shadow-2xl hover:scale-105 transition-all">
+          <i data-lucide="message-circle" class="w-5 h-5 text-emerald-600 fill-current"></i>
+          <span>Chat on WhatsApp Now</span>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- Villa Highlights Section -->
-  <section id="estate" class="py-20 max-w-7xl mx-auto px-6">
-    <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
-      <span class="text-xs uppercase tracking-[0.3em] text-[#C28E58] font-bold">Sanctuary On The Shore</span>
-      <h2 class="font-serif-luxury text-3xl sm:text-5xl font-bold text-[#1C1713]">Crafted for Effortless Indulgence</h2>
-      <p class="text-[#5C4F44] text-base leading-relaxed">Everything at Sultan Sands is curated around privacy, coastal serenity, and culinary delight.</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="bg-white rounded-3xl p-8 border border-[#E8DFD3] shadow-sm space-y-4">
-        <div class="w-12 h-12 rounded-2xl bg-[#FAF7F2] text-[#C28E58] flex items-center justify-center">
-          <i data-lucide="waves" class="w-6 h-6"></i>
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-16 text-sm border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pb-8 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg text-white" style="background-color: #B45309">
+            S
+          </div>
+          <div>
+            <div class="font-bold text-white text-base">Sultan Sands Luxury Beach Villa</div>
+            <div class="text-xs text-slate-400">Luxury Beachfront Villa & Private Chef Retreat</div>
+          </div>
         </div>
-        <h3 class="font-serif-luxury text-2xl font-bold text-[#1C1713]">Private Infinity Pool</h3>
-        <p class="text-[#5C4F44] text-sm leading-relaxed">Overlooking the turquoise reef of Galu beach. Sun loungers, poolside cocktail service, and outdoor rain showers.</p>
+        <div class="text-center sm:text-right text-xs space-y-1">
+          <div class="text-white font-medium">📍 Galu Kinondo Road, Diani Beach, South Coast</div>
+          <div class="text-slate-400">📞 +254722667788</div>
+        </div>
       </div>
-
-      <div class="bg-white rounded-3xl p-8 border border-[#E8DFD3] shadow-sm space-y-4">
-        <div class="w-12 h-12 rounded-2xl bg-[#FAF7F2] text-[#C28E58] flex items-center justify-center">
-          <i data-lucide="utensils-crossed" class="w-6 h-6"></i>
-        </div>
-        <h3 class="font-serif-luxury text-2xl font-bold text-[#1C1713]">Executive Private Chef</h3>
-        <p class="text-[#5C4F44] text-sm leading-relaxed">Daily fresh seafood markets: jumbo prawns, red snapper, and coconut Swahili curries cooked to your family's exact tastes.</p>
-      </div>
-
-      <div class="bg-white rounded-3xl p-8 border border-[#E8DFD3] shadow-sm space-y-4">
-        <div class="w-12 h-12 rounded-2xl bg-[#FAF7F2] text-[#C28E58] flex items-center justify-center">
-          <i data-lucide="shield-check" class="w-6 h-6"></i>
-        </div>
-        <h3 class="font-serif-luxury text-2xl font-bold text-[#1C1713]">Discreet VIP Concierge</h3>
-        <p class="text-[#5C4F44] text-sm leading-relaxed">Ukunda airstrip transfers, deep-sea fishing charters, private dhow sunset cruises, and 24/7 gated security.</p>
+      <div class="text-center text-xs text-slate-500">
+        &copy; 2026 Sultan Sands Luxury Beach Villa. All rights reserved. Professional web demo showcase.
       </div>
     </div>
-  </section>
-
-  <!-- Testimonials -->
-  <section id="reviews" class="py-20 bg-[#F0EBE1] border-y border-[#E8DFD3]">
-    <div class="max-w-4xl mx-auto px-6 text-center space-y-8">
-      <div class="flex justify-center gap-1 text-amber-500">
-        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
-        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
-        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
-        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
-        <i data-lucide="star" class="w-5 h-5 fill-current"></i>
-      </div>
-      <blockquote class="font-serif-luxury text-2xl sm:text-3xl italic text-[#1C1713] leading-relaxed">
-        "Our two weeks at Sultan Sands were the absolute highlight of our year. Waking up to ocean waves, having Chef Ali prepare garlic lobster by the pool, and direct beach strolls—pure magic."
-      </blockquote>
-      <div>
-        <div class="font-bold text-[#1C1713]">Julian & Sophie Von Berg</div>
-        <div class="text-xs uppercase tracking-widest text-[#8C7A6B]">Zurich, Switzerland • Family Holiday</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Floating Mobile WhatsApp CTA -->
-  <a href="https://wa.me/254722667788?text=Hello%20Sultan%20Sands%2C%20I%20would%20like%20to%20inquire%20about%20villa%20availability%20and%20rates." 
-     target="_blank" 
-     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-2xl shadow-emerald-600/50 hover:scale-105 transition-all">
-    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
-    <span class="text-sm">Inquire on WhatsApp</span>
-  </a>
+  </footer>
 
   <script>lucide.createIcons();</script>
 </body>
