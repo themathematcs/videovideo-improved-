@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mara Crest Expeditions | Luxury Kenya Safari & Wildlife Tours</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        safari: {
+                            50: '#fdfbf7',
+                            100: '#f7f0e2',
+                            600: '#b45309',
+                            700: '#92400e',
+                            800: '#78350f',
+                            900: '#451a03',
+                        },
+                        earth: {
+                            800: '#292524',
+                            900: '#1c1917',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-safari-50 text-earth-900 font-sans antialiased selection:bg-safari-600 selection:text-white">
+
+    <!-- Sticky Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-safari-100 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo / Brand Name -->
+                <a href="#" class="flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-safari-800 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                        <i data-lucide="compass" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold tracking-tight text-earth-900 block leading-none">Mara Crest</span>
+                        <span class="text-xs font-medium tracking-widest text-safari-700 uppercase mt-1 block">Expeditions</span>
+                    </div>
+                </a>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex items-center gap-8 font-medium text-sm text-earth-800">
+                    <a href="#services" class="hover:text-safari-600 transition-colors">Safaris</a>
+                    <a href="#about" class="hover:text-safari-600 transition-colors">Why Us</a>
+                    <a href="#reviews" class="hover:text-safari-600 transition-colors">Reviews</a>
+                    <a href="#location" class="hover:text-safari-600 transition-colors">Location</a>
+                </nav>
+
+                <!-- WhatsApp CTA Button -->
+                <div class="flex items-center gap-4">
+                    <a href="https://wa.me/254722456789?text=Hello%20Mara%20Crest%20Expeditions%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-full font-medium text-sm shadow-md hover:shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5">
+                        <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+                        <span>Book via WhatsApp</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[90vh] flex items-center justify-center bg-earth-900 overflow-hidden">
+        <!-- Background Image with Overlay -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=2000&q=80" 
+                 alt="Kenya Safari Wildlife" 
+                 class="w-full h-full object-cover object-center opacity-40 scale-105 animate-pulse duration-[10000ms]">
+            <div class="absolute inset-0 bg-gradient-to-t from-earth-900 via-earth-900/50 to-transparent"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+            <!-- Trust Badge -->
+            <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-8 shadow-inner">
+                <div class="flex items-center text-amber-400">
+                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                </div>
+                <span class="text-white/90">Rated 4.7 ★ on Google (28 Reviews)</span>
+            </div>
+
+            <!-- Main Heading -->
+            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-tight mb-6">
+                Discover Untamed Kenya with <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">Ultimate Luxury</span>
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-10 font-light leading-relaxed">
+                Headquartered in Nairobi CBD. Curating bespoke wildlife expeditions, Masai Mara migrations, and exclusive African wilderness adventures tailored to perfection.
+            </p>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="https://wa.me/254722456789?text=Hello%20Mara%20Crest%20Expeditions%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-xl font-semibold text-base shadow-xl shadow-emerald-900/40 transition-all transform hover:-translate-y-1">
+                    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+                    <span>Plan Your Safari via WhatsApp</span>
+                </a>
+                <a href="#services" 
+                   class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-xl font-semibold text-base backdrop-blur-sm transition-all">
+                    <span>Explore Expeditions</span>
+                    <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                </a>
+            </div>
+
+            <!-- Quick Trust Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-3xl mx-auto mt-20 pt-10 border-t border-white/10 text-white">
+                <div class="text-center">
+                    <span class="block text-3xl font-bold text-amber-400">100%</span>
+                    <span class="text-xs uppercase tracking-wider text-gray-400 mt-1 block">Tailor-Made Itineraries</span>
+                </div>
+                <div class="text-center">
+                    <span class="block text-3xl font-bold text-amber-400">Nairobi CBD</span>
+                    <span class="text-xs uppercase tracking-wider text-gray-400 mt-1 block">Kimathi Street Office</span>
+                </div>
+                <div class="col-span-2 md:col-span-1 text-center">
+                    <span class="block text-3xl font-bold text-amber-400">24/7</span>
+                    <span class="text-xs uppercase tracking-wider text-gray-400 mt-1 block">Concierge Support</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Services / Value Propositions -->
+    <section id="services" class="py-24 bg-safari-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-safari-700 font-semibold text-sm uppercase tracking-widest mb-3">Exceptional Offerings</h2>
+                <p class="text-3xl sm:text-4xl font-bold text-earth-900 tracking-tight">Crafted for the Discerning Traveler</p>
+                <p class="text-gray-600 mt-4">Experience Kenya's breathtaking landscapes and rich wildlife with our premium expedition packages.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-safari-100 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 bg-amber-50 rounded-xl flex items-center justify-center text-safari-600 mb-6 group-hover:bg-safari-600 group-hover:text-white transition-colors">
+                            <i data-lucide="binoculars" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-earth-900 mb-3">Masai Mara Safaris</h3>
+                        <p class="text-gray-600 leading-relaxed text-sm">Witness the Great Wildebeest Migration, big cat sightings, and stay in ultra-luxury tented camps with expert private guides.</p>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-gray-100">
+                        <a href="https://wa.me/254722456789?text=Hello%2C%20I%20am%20interested%20in%20your%20Masai%20Mara%20Safaris." 
+                           target="_blank" 
+                           class="inline-flex items-center gap-2 text-safari-700 font-semibold text-sm hover:text-safari-900">
+                            <span>Inquire via WhatsApp</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-safari-100 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 bg-amber-50 rounded-xl flex items-center justify-center text-safari-600 mb-6 group-hover:bg-safari-600 group-hover:text-white transition-colors">
+                            <i data-lucide="compass" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-earth-900 mb-3">Custom Wilderness Tours</h3>
+                        <p class="text-gray-600 leading-relaxed text-sm">Amboseli, Samburu, Tsavo, and Lake Nakuru. Fully customized itineraries designed around your precise schedule and preferences.</p>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-gray-100">
+                        <a href="https://wa.me/254722456789?text=Hello%2C%20I%20am%20interested%20in%20Custom%20Wilderness%20Tours." 
+                           target="_blank" 
+                           class="inline-flex items-center gap-2 text-safari-700 font-semibold text-sm hover:text-safari-900">
+                            <span>Inquire via WhatsApp</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-safari-100 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 bg-amber-50 rounded-xl flex items-center justify-center text-safari-600 mb-6 group-hover:bg-safari-600 group-hover:text-white transition-colors">
+                            <i data-lucide="shield-check" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-earth-900 mb-3">VIP Concierge & Logistics</h3>
+                        <p class="text-gray-600 leading-relaxed text-sm">Airport transfers, 4x4 Land Cruiser safari vehicles, luxury lodge bookings, and seamless end-to-end travel management.</p>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-gray-100">
+                        <a href="https://wa.me/254722456789?text=Hello%2C%20I%20am%20interested%20in%20VIP%20Concierge%20Services." 
+                           target="_blank" 
+                           class="inline-flex items-center gap-2 text-safari-700 font-semibold text-sm hover:text-safari-900">
+                            <span>Inquire via WhatsApp</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof / Testimonials -->
+    <section id="reviews" class="py-24 bg-white border-y border-safari-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-1 text-amber-500 mb-3">
+                    <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-bold text-earth-900 tracking-tight">Loved by Adventurers Worldwide</h2>
+                <p class="text-gray-600 mt-2">Read authentic experiences from travelers who journeyed with Mara Crest Expeditions.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Review 1 -->
+                <div class="bg-safari-50 rounded-2xl p-8 border border-safari-100 relative shadow-sm">
+                    <div class="flex items-center gap-1 text-amber-500 mb-4">
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    </div>
+                    <p class="text-earth-800 italic mb-6 leading-relaxed">
+                        "Mara Crest Expeditions made our Masai Mara trip absolutely unforgettable! From their Nairobi office on Kimathi Street to the breathtaking game drives in custom 4x4s, everything was flawless. Highly professional team!"
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-safari-600 text-white rounded-full flex items-center font-bold justify-center text-lg">
+                            JK
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-earth-900">James Kamau</h4>
+                            <span class="text-xs text-gray-500">Google Local Guide • Nairobi</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="bg-safari-50 rounded-2xl p-8 border border-safari-100 relative shadow-sm">
+                    <div class="flex items-center gap-1 text-amber-500 mb-4">
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    </div>
+                    <p class="text-earth-800 italic mb-6 leading-relaxed">
+                        "Exceptional customer service and unmatched expertise. Booking via WhatsApp was seamless, and they accommodated all our custom requests for our Amboseli safari. Truly 5-star standard!"
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-safari-600 text-white rounded-full flex items-center font-bold justify-center text-lg">
+                            SM
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-earth-900">Sarah Mutua</h4>
+                            <span class="text-xs text-gray-500">Verified Client • Mombasa</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Operating Hours & Location Map Placeholder -->
+    <section id="location" class="py-24 bg-safari-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Info Column -->
+                <div>
+                    <h2 class="text-safari-700 font-semibold text-sm uppercase tracking-widest mb-3">Visit Our Office</h2>
+                    <p class="text-3xl font-bold text-earth-900 tracking-tight mb-6">Conveniently Located in Nairobi CBD</p>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        Drop by our offices for a coffee and personalized consultation with our senior safari designers to plan your dream African holiday.
+                    </p>
+
+                    <div class="space-y-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-safari-700 shrink-0 mt-1">
+                                <i data-lucide="map-pin" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-earth-900">Office Address</h4>
+                                <p class="text-gray-600 text-sm mt-1">Kimathi Street, Nairobi CBD, Nairobi, Kenya</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-safari-700 shrink-0 mt-1">
+                                <i data-lucide="phone" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-earth-900">Direct Contact / WhatsApp</h4>
+                                <p class="text-gray-600 text-sm mt-1">+254 722 456 789</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-safari-700 shrink-0 mt-1">
+                                <i data-lucide="clock" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-earth-900">Operating Hours</h4>
+                                <p class="text-gray-600 text-sm mt-1">Monday – Saturday: 8:00 AM – 6:00 PM<br>Sunday: Closed (WhatsApp Support Active)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Placeholder / Card -->
+                <div class="bg-white rounded-3xl p-4 shadow-md border border-safari-100 overflow-hidden">
+                    <div class="relative w-full h-[400px] rounded-2xl bg-gray-200 overflow-hidden flex flex-col items-center justify-center text-center p-6">
+                        <!-- Simulated Map Background Image -->
+                        <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1000&q=80" 
+                             alt="Nairobi CBD Map Location" 
+                             class="absolute inset-0 w-full h-full object-cover opacity-50">
+                        <div class="absolute inset-0 bg-earth-900/40"></div>
+                        
+                        <!-- Map Pin Content -->
+                        <div class="relative z-10 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-2xl max-w-xs border border-white">
+                            <div class="w-12 h-12 bg-safari-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                                <i data-lucide="map-pin" class="w-6 h-6"></i>
+                            </div>
+                            <h4 class="font-bold text-earth-900 text-base">Mara Crest Expeditions</h4>
+                            <p class="text-xs text-gray-600 mt-1 mb-4">Kimathi Street, Nairobi CBD</p>
+                            <a href="https://wa.me/254722456789?text=Hello%2C%20I%20would%20like%20directions%20to%20your%20Kimathi%20Street%20office." 
+                               target="_blank" 
+                               class="inline-flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-semibold shadow">
+                                <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                                Get Directions via WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <section class="relative py-20 bg-gradient-to-br from-safari-800 to-earth-900 text-white overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <img src="https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1500&q=80" alt="Safari Pattern" class="w-full h-full object-cover">
+        </div>
+        <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl sm:text-5xl font-bold tracking-tight mb-6">Ready for Your African Adventure?</h2>
+            <p class="text-lg text-safari-100 max-w-2xl mx-auto mb-10 font-light">
+                Connect with our expert safari curators instantly on WhatsApp. Let’s plan a journey you will cherish forever.
+            </p>
+            <a href="https://wa.me/254722456789?text=Hello%20Mara%20Crest%20Expeditions%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-2xl shadow-black/40 transition-all transform hover:-translate-y-1">
+                <i data-lucide="message-circle" class="w-6 h-6 fill-current"></i>
+                <span>Book via WhatsApp Now</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Professional Footer -->
+    <footer class="bg-earth-900 text-gray-400 py-16 border-t border-earth-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+                <!-- Col 1 -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-safari-800 flex items-center justify-center text-white">
+                            <i data-lucide="compass" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight text-white">Mara Crest Expeditions</span>
+                    </div>
+                    <p class="text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
+                        Your trusted luxury partner for unforgettable wildlife tours and customized safari expeditions across Kenya.
+                    </p>
+                    <div class="flex items-center gap-3 text-white text-sm">
+                        <div class="flex items-center text-amber-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <span>4.7 Star Rating (28 Google Reviews)</span>
+                    </div>
+                </div>
+
+                <!-- Col 2 -->
+                <div>
+                    <h4 class="text-white font-semibold text-sm uppercase tracking-wider mb-4">Quick Links</h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="#services" class="hover:text-white transition-colors">Safaris & Tours</a></li>
+                        <li><a href="#about" class="hover:text-white transition-colors">Why Choose Us</a></li>
+                        <li><a href="#reviews" class="hover:text-white transition-colors">Client Reviews</a></li>
+                        <li><a href="#location" class="hover:text-white transition-colors">Office Location</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3 -->
+                <div>
+                    <h4 class="text-white font-semibold text-sm uppercase tracking-wider mb-4">Contact Info</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-amber-500 shrink-0 mt-1"></i>
+                            <span>Kimathi Street, Nairobi CBD, Nairobi, Kenya</span>
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <i data-lucide="phone" class="w-4 h-4 text-amber-500 shrink-0"></i>
+                            <span>+254 722 456 789</span>
+                        </li>
+                        <li class="pt-2">
+                            <a href="https://wa.me/254722456789?text=Hello%20Mara%20Crest%20Expeditions%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                               target="_blank"
+                               class="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-semibold text-xs bg-emerald-950/50 border border-emerald-800/50 px-3 py-2 rounded-lg">
+                                <i data-lucide="message-circle" class="w-3.5 h-3.5 fill-current"></i>
+                                WhatsApp Chat Available
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-earth-800 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500">
+                <p>&copy; <span id="current-year"></span> Mara Crest Expeditions. All rights reserved.</p>
+                <p class="mt-4 sm:mt-0">Luxury Kenya Safari & Wildlife Expeditions</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Lucide Icons & Dynamic Year -->
+    <script>
+        lucide.createIcons();
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

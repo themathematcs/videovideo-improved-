@@ -17,6 +17,8 @@ import {
   isContentPillar,
   normalizeShortsPlanRequest,
 } from "./shortsPlanner.ts";
+import { startWhatsAppService, getWhatsAppState, requestPairingCode, disconnectWhatsApp, getWhatsAppSocket, initializeMessageHandler } from "./whatsappService.ts";
+import { searchStockMedia, searchStockAudio, getRateLimits } from "./stockMedia.ts";
 
 let _filename = "";
 let _dirname = "";
@@ -36,6 +38,41 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: '200mb' }));
+
+// Network diagnostics endpoint
+app.get("/api/network/test", async (req, res) => {
+  const tests = {
+    pexels: false,
+    pixabay: false,
+    giphy: false,
+    nasa: false,
+    archive: false
+  };
+
+  const testUrl = async (url: string) => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      await fetch(url, { method: "HEAD", signal: controller.signal });
+      clearTimeout(timeout);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  tests.pexels = await testUrl("https://api.pexels.com");
+  tests.pixabay = await testUrl("https://pixabay.com");
+  tests.giphy = await testUrl("https://api.giphy.com");
+  tests.nasa = await testUrl("https://images-api.nasa.gov");
+  tests.archive = await testUrl("https://archive.org");
+
+  res.json({
+    status: "Network connectivity test",
+    tests,
+    summary: `${Object.values(tests).filter(Boolean).length}/5 APIs reachable`
+  });
+});
 
 // API Keys with defaults from user configuration
 const PEXELS_KEY = process.env.PEXELS_API_KEY || "h1r1DWw3EyuEcP8pFXl6e9jo76I0RfxUoG3d18kvEliS6pH6eEyHbmNo";
@@ -1319,6 +1356,51 @@ app.post("/api/youtube/optimization", optimizeContentHandler);
 // -------------------------------------------------------------
 
 // Health check
+app.get("/api/whatsapp/status", (req, res) => {
+  const state = getWhatsAppState();
+  console.log("[whatsapp] Status requested:", state.status, "QR URL present:", !!state.qrCodeUrl);
+  res.json(state);
+});
+
+app.post("/api/whatsapp/pairing-code", async (req, res) => {
+  try {
+    const rawPhone = String(req.body?.phoneNumber || "").replace(/\D/g, "");
+    let phoneNumber = rawPhone;
+
+    // Handle Kenyan numbers that start with 0
+    if (/^0\d{9}$/.test(phoneNumber)) {
+      phoneNumber = `254${phoneNumber.slice(1)}`;
+    }
+
+    // If user enters just 9 digits (without country code or leading 0), try both formats
+    if (/^\d{9}$/.test(phoneNumber)) {
+      // Try with Kenyan country code first
+      phoneNumber = `254${phoneNumber}`;
+    }
+
+    if (!/^\d{10,15}$/.test(phoneNumber)) {
+      return res.status(400).json({ error: "phoneNumber must be 10-15 digits with country code, e.g. 254743269133 or 447432691333" });
+    }
+    
+    console.log("[whatsapp] Requesting pairing code for phone:", phoneNumber);
+    console.log("[whatsapp] IMPORTANT: Ensure your WhatsApp account is registered with this exact number format:", phoneNumber);
+    const code = await requestPairingCode(phoneNumber);
+    return res.json({ ok: true, pairingCode: code, usedNumber: phoneNumber });
+  } catch (err: any) {
+    console.error("[whatsapp] Pairing code error:", err);
+    return res.status(500).json({ error: err?.message || "Unable to request pairing code" });
+  }
+});
+
+app.post("/api/whatsapp/disconnect", async (req, res) => {
+  try {
+    await disconnectWhatsApp();
+    return res.json({ ok: true, status: getWhatsAppState() });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || "Unable to disconnect WhatsApp" });
+  }
+});
+
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -1461,8 +1543,8 @@ OUTPUT FORMAT:
 function hasStructuredScriptFormatting(text: string): boolean {
   return (
     /\d{1,2}:\d{2}\s*[-–—to]\s*\d{1,2}:\d{2}/i.test(text) ||
-    /(?:visual|video|scene)\s*:\s*/i.test(text) ||
-    /(?:audio|narration|voice)\s*:\s*/i.test(text) ||
+    /(?:\[?\s*(?:visual|video|scene)\s*:?\s*\]?)/i.test(text) ||
+    /(?:\[?\s*(?:audio|narration|voice)\s*:?\s*\]?)/i.test(text) ||
     /^scene\s*\d+[:\s-]/im.test(text)
   );
 }
@@ -1484,8 +1566,8 @@ function parseStructuredScriptDraft(scriptText: string, defaultAspect = "16:9") 
     title = "Autonomous Video";
   }
 
-  // Split into timestamp or scene blocks
-  const blocks = scriptText.split(/(?=(?:^|\n)(?:(?:scene\s*\d+[:\s]*)?\d{1,2}:\d{2}\s*[-–—to]\s*\d{1,2}:\d{2}|scene\s*\d+[:\s-]))/gi);
+  // Split into timestamp or scene blocks (also handle bracketed visual/audio blocks without timestamps)
+  const blocks = scriptText.split(/(?=(?:^|\n)(?:(?:scene\s*\d+[:\s]*)?\d{1,2}:\d{2}\s*[-–—to]\s*\d{1,2}:\d{2}|scene\s*\d+[:\s-]|\[?\s*visual\s*:?\s*\]?))/gi);
   
   const parsedScenes: any[] = [];
   
@@ -1494,14 +1576,16 @@ function parseStructuredScriptDraft(scriptText: string, defaultAspect = "16:9") 
     if (!trimmed) continue;
     
     // Check for timestamp header: e.g. "0:00 - 0:02 (Hook):" or "Scene 1: 0:02 - 0:15 (Pacing & Setup):"
+    // Also handle bracketed blocks: "[Visual: ...]"
     const tsMatch = trimmed.match(/^(?:scene\s*\d+[:\s-]*)?(\d{1,2}:\d{2})\s*[-–—to]\s*(\d{1,2}:\d{2})(?:\s*\(([^)]+)\))?/i);
     const sceneNumMatch = trimmed.match(/^scene\s*(\d+)[:\s-]*([^\n]*)/i);
-    
+    const bracketMatch = trimmed.match(/^\[?\s*(visual|audio|narration)\s*:?\s*\]?/i);
+
     let startSec: number | undefined;
     let endSec: number | undefined;
     let tag = "";
     let content = trimmed;
-    
+
     if (tsMatch) {
       const [_, sStr, eStr, t] = tsMatch;
       const parseT = (str: string) => {
@@ -1515,20 +1599,24 @@ function parseStructuredScriptDraft(scriptText: string, defaultAspect = "16:9") 
     } else if (sceneNumMatch) {
       tag = sceneNumMatch[2]?.trim() || "";
       content = trimmed.replace(/^[^\n]+\n?/, "");
+    } else if (bracketMatch) {
+      // This is a bracketed block without timestamps, treat entire block as content
+      tag = "Scene";
+      content = trimmed;
     } else {
-      if (!/(?:visual|audio|narration)\s*:/i.test(trimmed)) {
+      if (!/(?:\[?\s*(?:visual|audio|narration)\s*:?\s*\]?)/i.test(trimmed)) {
         continue; // skip title preamble
       }
     }
     
-    // Extract Visual and Audio
+    // Extract Visual and Audio (handle both [Visual: and Visual: formats)
     let visualText = "";
     let audioText = "";
-    
-    const vMatch = content.match(/(?:visual|video|scene|screen|b-roll)\s*:\s*([^\n]+(?:\n(?!(?:audio|narration|voice|sound|sfx)\s*:)[^\n]+)*)/i);
+
+    const vMatch = content.match(/(?:\[?\s*(?:visual|video|scene|screen|b-roll)\s*:?\s*\]?\s*)([^\n]+(?:\n(?!(?:\[?\s*(?:audio|narration|voice|sound|sfx)\s*:?\s*\]?))[^\n]+)*)/i);
     if (vMatch) visualText = vMatch[1].trim();
-    
-    const aMatch = content.match(/(?:audio|narration|voice|dialogue|spoken|speech)\s*:\s*([^\n]+(?:\n(?!(?:visual|video|scene|screen)\s*:)[^\n]+)*)/i);
+
+    const aMatch = content.match(/(?:\[?\s*(?:audio|narration|voice|dialogue|spoken|speech)\s*:?\s*\]?\s*)([^\n]+(?:\n(?!(?:\[?\s*(?:visual|video|scene|screen)\s*:?\s*\]?))[^\n]+)*)/i);
     if (aMatch) audioText = aMatch[1].trim();
     
     if (!visualText && !audioText) {
@@ -1539,8 +1627,9 @@ function parseStructuredScriptDraft(scriptText: string, defaultAspect = "16:9") 
       }
     }
     
-    // Clean audio text
-    audioText = audioText.replace(/^["\x27\s]+|["\x27\s]+$/g, "");
+    // Clean audio text (remove brackets and quotes)
+    audioText = audioText.replace(/^["\x27\s\[\]]+|["\x27\s\[\]]+$/g, "");
+    visualText = visualText.replace(/^["\x27\s\[\]]+|["\x27\s\[\]]+$/g, "");
     
     if (!audioText && !visualText) continue;
     
@@ -1554,8 +1643,8 @@ function parseStructuredScriptDraft(scriptText: string, defaultAspect = "16:9") 
     }
     
     // Detect split screen or zoom
-    const isSplit = /split\s*screen|side\s*by\s*side|compare|reaction|two\s*screens|split\s*view/i.test(visualText) || /split\s*screen/i.test(tag);
-    const isZoom = /zoom|close\s*up|fast\s*zoom|focus/i.test(visualText);
+    const isSplit = /split\s*screen|side\s*by\s*side|compare|reaction|two\s*screens|split\s*view|montage/i.test(visualText) || /split\s*screen/i.test(tag);
+    const isZoom = /zoom|close\s*up|fast\s*zoom|focus|overlay/i.test(visualText);
     
     // Clean keywords for stock search (smart angle extraction for split screen)
     let primaryKw = "";
@@ -2422,6 +2511,30 @@ app.post("/api/render-complete-video", async (req, res) => {
     for (let i = 0; i < scenes.length; i++) {
       const sc = scenes[i];
       let videoUrl = sc.videoUrl;
+
+      // If no videoUrl provided, use search_keywords to find one first
+      if (!videoUrl && sc.search_keywords) {
+        try {
+          const fallbackQ = encodeURIComponent(sc.search_keywords);
+          const pexUrl = `https://api.pexels.com/videos/search?query=${fallbackQ}&per_page=3&orientation=${isPortrait ? 'portrait' : 'landscape'}`;
+          const pexRes = await fetch(pexUrl, {
+            headers: { Authorization: process.env.PEXELS_API_KEY || "h1r1DWw3EyuEcP8pFXl6e9jo76I0RfxUoG3d18kvEliS6pH6eEyHbmNo" }
+          });
+          if (pexRes.ok) {
+            const data = await pexRes.json();
+            if (data.videos && data.videos.length > 0) {
+              const randomIdx = Math.floor(Math.random() * Math.min(3, data.videos.length));
+              const bestFile = data.videos[randomIdx].video_files.find((f: any) => f.quality === "hd" || f.quality === "sd") || data.videos[randomIdx].video_files[0];
+              if (bestFile?.link) {
+                videoUrl = bestFile.link;
+              }
+            }
+          }
+        } catch (e) {
+          console.log(`Initial search for scene ${i} failed, will use fallback`);
+        }
+      }
+
       if (!videoUrl) videoUrl = "https://invalid.local/force-fallback";
 
       const rawClipPath = path.join(tmpDir, `raw_clip_${i}.mp4`);
@@ -3785,7 +3898,7 @@ app.get("/api/stock/search", async (req, res) => {
       const iaLimit = source === "archive" ? 16 : 6;
       const mediaFilter = mediaType === "image" ? "mediatype:image" : "mediatype:movies";
       const iaSearchUrl = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}+AND+${mediaFilter}&fl[]=identifier,title,description,duration,downloads&sort[]=downloads+desc&rows=${iaLimit}&page=1&output=json`;
-      const iaRes = await fetch(iaSearchUrl, { signal: AbortSignal.timeout(4000) });
+      const iaRes = await fetch(iaSearchUrl, { signal: AbortSignal.timeout(15000) });
       
       if (iaRes.ok) {
         const iaData: any = await iaRes.json();
@@ -3859,9 +3972,8 @@ app.get("/api/stock/search", async (req, res) => {
         rateLimitState.archive.status = 'healthy';
         rateLimitState.archive.lastUpdated = new Date().toISOString();
       }
-    } catch (iaErr: any) {
-      console.log("Internet Archive search error:", iaErr?.message);
-      errors.push(`Internet Archive: ${iaErr?.message}`);
+    } catch {
+      // Internet Archive is optional and should not emit noisy timeout logs.
     }
   }
 
@@ -4295,8 +4407,14 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(PORT, "0.0.0.0", async () => {
     console.log(`AI Video B-Roll Assistant running on port ${PORT}`);
+    try {
+      await startWhatsAppService();
+      await initializeMessageHandler();
+    } catch (err) {
+      console.warn("[whatsapp] service started with warning:", err);
+    }
   });
 }
 

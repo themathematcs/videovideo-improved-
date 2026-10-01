@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smile Aesthetics Dental Clinic | Nairobi, Kenya</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            dark: '#0f172a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Sticky Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+                    <i data-lucide="smile" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-bold tracking-tight text-slate-900 block leading-tight">Smile Aesthetics</span>
+                    <span class="text-xs font-medium text-emerald-600 uppercase tracking-wider block">Dental Clinic • Nairobi</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center gap-8 font-medium text-sm text-slate-600">
+                <a href="#services" class="hover:text-emerald-600 transition-colors">Services</a>
+                <a href="#why-us" class="hover:text-emerald-600 transition-colors">Why Us</a>
+                <a href="#reviews" class="hover:text-emerald-600 transition-colors">Reviews</a>
+                <a href="#location" class="hover:text-emerald-600 transition-colors">Location</a>
+            </nav>
+
+            <!-- CTA Button -->
+            <div class="flex items-center gap-4">
+                <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%20Dental%20Clinic%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5">
+                    <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+                    <span>Book via WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden pt-16 pb-24 lg:pt-24 lg:pb-32 bg-gradient-to-b from-emerald-50/50 to-slate-50">
+        <div class="absolute inset-0 z-0 opacity-30 pointer-events-none">
+            <div class="absolute top-10 left-10 w-72 h-72 bg-emerald-300 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-10 right-10 w-96 h-96 bg-teal-200 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                <!-- Left Column -->
+                <div class="lg:col-span-7 text-center lg:text-left">
+                    <!-- Trust Badge -->
+                    <div class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 mb-6">
+                        <div class="flex text-amber-400">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-700">Rated 4.7 <span class="text-slate-400 font-normal">| 38 Google Reviews</span></span>
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15] mb-6">
+                        Transform Your Smile with Nairobi's <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">Precision Dental Experts</span>
+                    </h1>
+                    
+                    <p class="text-lg text-slate-600 mb-8 max-w-2xl mx-auto lg:mx-0 font-normal">
+                        Experience world-class cosmetic dentistry, permanent dental implants, and gentle restorative care right in the heart of Nairobi at Bihi Towers, Moi Avenue.
+                    </p>
+
+                    <!-- CTAs & Quick Info -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-10">
+                        <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%20Dental%20Clinic%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 text-base">
+                            <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+                            <span>Instant WhatsApp Booking</span>
+                        </a>
+                        <a href="tel:+254722456789" 
+                           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-semibold px-6 py-4 rounded-xl transition-all text-base">
+                            <i data-lucide="phone" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Call +254 722 456 789</span>
+                        </a>
+                    </div>
+
+                    <!-- Trust Checkmarks -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-medium text-slate-600 pt-6 border-t border-slate-200">
+                        <div class="flex items-center justify-center lg:justify-start gap-2">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Painless Procedures</span>
+                        </div>
+                        <div class="flex items-center justify-center lg:justify-start gap-2">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Modern Equipment</span>
+                        </div>
+                        <div class="flex items-center justify-center lg:justify-start gap-2 col-span-2 sm:col-span-1">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Central Nairobi Location</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Hero Visual Card -->
+                <div class="lg:col-span-5">
+                    <div class="relative mx-auto max-w-md lg:max-w-none">
+                        <div class="absolute -inset-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-3xl blur-lg opacity-30 animate-pulse"></div>
+                        <div class="relative rounded-2xl overflow-hidden glass-card shadow-2xl p-6 sm:p-8">
+                            <div class="flex items-center justify-between pb-6 border-b border-slate-100 mb-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900">Verified Clinic</h3>
+                                        <p class="text-xs text-slate-500">Bihi Towers, Moi Avenue</p>
+                                    </div>
+                                </div>
+                                <span class="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">Open Today</span>
+                            </div>
+
+                            <div class="space-y-4 mb-6">
+                                <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                    <div class="text-emerald-600 mt-0.5"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Cosmetic Dentistry</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Teeth whitening, veneers & complete smile makeovers.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                    <div class="text-emerald-600 mt-0.5"><i data-lucide="activity" class="w-5 h-5"></i></div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Dental Implants</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Permanent, natural-looking tooth replacement solutions.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%20Dental%20Clinic%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="w-full bg-slate-900 hover:bg-emerald-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-sm shadow-md">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                <span>Schedule Consultation Now</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Services Section -->
+    <section id="services" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3">Our Specialized Services</h2>
+                <h3 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Advanced Dental Care Tailored For You</h3>
+                <p class="text-slate-600 mt-4 text-base">We combine cutting-edge dental technology with artistic precision to give you a confident, radiant smile.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Service 1 -->
+                <div class="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 group">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                        <i data-lucide="sparkles" class="w-7 h-7"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Cosmetic Dentistry</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Enhance the natural beauty of your teeth with professional teeth whitening, custom veneers, bonding, and total smile reconstructions.
+                    </p>
+                    <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%2C%20I%20am%20interested%20in%20Cosmetic%20Dentistry." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-emerald-600 font-semibold text-sm group-hover:translate-x-1 transition-transform">
+                        <span>Book Cosmetic Inquiry</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Service 2 -->
+                <div class="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 group">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                        <i data-lucide="shield" class="w-7 h-7"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">Dental Implants</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Permanent, secure, and natural-looking tooth replacement solutions designed to restore full chewing function and aesthetics.
+                    </p>
+                    <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%2C%20I%20am%20interested%20in%20Dental%20Implants." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-emerald-600 font-semibold text-sm group-hover:translate-x-1 transition-transform">
+                        <span>Book Implant Consultation</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Service 3 -->
+                <div class="bg-slate-50 rounded-2xl p-8 border border-slate-100 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 group">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                        <i data-lucide="heart-pulse" class="w-7 h-7"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-900 mb-3">General & Restorative Care</h4>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Comprehensive oral health checks, painless root canals, professional cleanings, fillings, and preventive dental treatments.
+                    </p>
+                    <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%2C%20I%20am%20interested%20in%20General%20Dental%20Care." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-emerald-600 font-semibold text-sm group-hover:translate-x-1 transition-transform">
+                        <span>Book General Checkup</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section id="why-us" class="py-20 bg-slate-50 border-y border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3">Why Nairobi Chooses Us</h2>
+                    <h3 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-6">Your Comfort & Health Are Our Top Priorities</h3>
+                    <p class="text-slate-600 mb-8 leading-relaxed">
+                        At Smile Aesthetics, we understand that visiting the dentist can sometimes feel intimidating. That's why our clinic at Bihi Towers is designed to provide a calming ambiance, backed by compassionate specialists who prioritize pain-free dentistry.
+                    </p>
+
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                                <i data-lucide="check" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Experienced Dental Specialists</h4>
+                                <p class="text-slate-600 text-sm">Highly trained professionals skilled in complex cosmetic and surgical procedures.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                                <i data-lucide="check" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Prime CBD Location</h4>
+                                <p class="text-slate-600 text-sm">Conveniently situated at Bihi Towers along Moi Avenue, easily accessible from anywhere in Nairobi.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                                <i data-lucide="check" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Transparent & Affordable Pricing</h4>
+                                <p class="text-slate-600 text-sm">Clear treatment costs with no hidden fees and flexible booking through WhatsApp.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats / Visual block -->
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col justify-center">
+                        <div class="text-4xl sm:text-5xl font-extrabold text-emerald-600 mb-2">4.7★</div>
+                        <p class="text-sm font-medium text-slate-600">Google Rating across 38+ verified reviews</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col justify-center">
+                        <div class="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-2">100%</div>
+                        <p class="text-sm font-medium text-slate-600">Patient Safety & Sterilization Standards</p>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col justify-center col-span-2">
+                        <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-1">Bihi Towers, Moi Avenue</div>
+                        <p class="text-sm font-medium text-emerald-600">Nairobi Central Business District</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof / Testimonials -->
+    <section id="reviews" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3">Client Testimonials</h2>
+                <h3 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Loved By Our Patients in Nairobi</h3>
+                <p class="text-slate-600 mt-4 text-base">Read what our real patients have to say about their experience at Smile Aesthetics.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Review 1 -->
+                <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex text-amber-400 mb-4">
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                        </div>
+                        <p class="text-slate-700 italic mb-6 leading-relaxed">
+                            "I had a fantastic experience getting my dental implants done here. The clinic at Bihi Towers is exceptionally clean, modern, and the staff made me feel completely at ease. Highly professional service in Nairobi CBD!"
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 pt-4 border-t border-slate-200">
+                        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">
+                            KM
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Kevin M.</h4>
+                            <p class="text-xs text-slate-500">Google Reviewer</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex text-amber-400 mb-4">
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                            <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                        </div>
+                        <p class="text-slate-700 italic mb-6 leading-relaxed">
+                            "Best dental clinic in Nairobi! Quick response on WhatsApp, very clear pricing, and painless teeth whitening results. My smile has never looked better. Thank you Smile Aesthetics team!"
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 pt-4 border-t border-slate-200">
+                        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">
+                            AW
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Amina W.</h4>
+                            <p class="text-xs text-slate-500">Google Reviewer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Operating Hours & Location Map Section -->
+    <section id="location" class="py-20 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-3">Visit Our Clinic</h2>
+                <h3 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Location & Working Hours</h3>
+                <p class="text-slate-600 mt-4 text-base">Easily accessible in Nairobi CBD. Drop by or book your appointment in advance.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                <!-- Info Card -->
+                <div class="bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
+                                <i data-lucide="map-pin" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-lg">Smile Aesthetics Dental Clinic</h4>
+                                <p class="text-sm text-slate-500">Bihi Towers, Moi Avenue, Nairobi</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 mb-8">
+                            <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                <i data-lucide="clock" class="w-5 h-5 text-emerald-600 mt-0.5"></i>
+                                <div>
+                                    <h5 class="font-semibold text-slate-900 text-sm">Working Hours</h5>
+                                    <p class="text-xs text-slate-600 mt-1">Monday – Saturday: 8:00 AM – 6:00 PM</p>
+                                    <p class="text-xs text-slate-500">Sunday: Closed / Emergencies by appointment</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                <i data-lucide="phone-call" class="w-5 h-5 text-emerald-600 mt-0.5"></i>
+                                <div>
+                                    <h5 class="font-semibold text-slate-900 text-sm">Direct Contact</h5>
+                                    <p class="text-xs text-slate-600 mt-1">Phone / WhatsApp: +254 722 456 789</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%20Dental%20Clinic%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-xl text-center shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+                        <span>Book Appointment on WhatsApp</span>
+                    </a>
+                </div>
+
+                <!-- Map Placeholder -->
+                <div class="bg-slate-200 rounded-3xl overflow-hidden border border-slate-300 relative min-h-[350px] flex items-center justify-center">
+                    <div class="absolute inset-0 bg-slate-300 flex flex-col items-center justify-center p-6 text-center">
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-lg mb-4">
+                            <i data-lucide="map" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-lg mb-1">Bihi Towers, Moi Avenue</h4>
+                        <p class="text-sm text-slate-600 max-w-sm mb-4">Located right in Nairobi Central Business District for easy access.</p>
+                        <a href="https://maps.google.com/?q=Bihi+Towers+Moi+Avenue+Nairobi" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow hover:bg-emerald-600 transition-colors">
+                            <span>Open in Google Maps</span>
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <section class="py-20 bg-gradient-to-r from-emerald-900 to-slate-900 text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">Ready for the Confident Smile You Deserve?</h2>
+            <p class="text-emerald-100 text-base sm:text-lg mb-8 max-w-2xl mx-auto">
+                Skip the long waiting lists. Book your consultation instantly via WhatsApp with Nairobi's premier dental aesthetic clinic.
+            </p>
+            <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%20Dental%20Clinic%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="inline-flex items-center gap-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-4 rounded-xl shadow-2xl transition-all transform hover:-translate-y-0.5 text-base">
+                <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+                <span>Chat with Us on WhatsApp Now</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Professional Footer -->
+    <footer class="bg-slate-950 text-slate-400 py-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <!-- Brand Info -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+                            <i data-lucide="smile" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-lg font-bold tracking-tight text-white">Smile Aesthetics</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                        Providing exceptional cosmetic, implant, and general dental care with a gentle touch in Nairobi, Kenya.
+                    </p>
+                    <div class="flex items-center gap-2 text-xs text-slate-300">
+                        <i data-lucide="star" class="w-4 h-4 text-amber-400 fill-current"></i>
+                        <span>4.7 Star Rating (38 Google Reviews)</span>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-4 tracking-wider uppercase">Quick Links</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="#services" class="hover:text-emerald-400 transition-colors">Our Services</a></li>
+                        <li><a href="#why-us" class="hover:text-emerald-400 transition-colors">Why Choose Us</a></li>
+                        <li><a href="#reviews" class="hover:text-emerald-400 transition-colors">Client Reviews</a></li>
+                        <li><a href="#location" class="hover:text-emerald-400 transition-colors">Location & Hours</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-4 tracking-wider uppercase">Contact Information</h4>
+                    <ul class="space-y-3 text-xs">
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0"></i>
+                            <span>Bihi Towers, Moi Avenue, Nairobi, Kenya</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i data-lucide="phone" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+                            <a href="tel:+254722456789" class="hover:text-emerald-400 transition-colors">+254 722 456 789</a>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i data-lucide="message-circle" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+                            <a href="https://wa.me/254722456789?text=Hello%20Smile%20Aesthetics%20Dental%20Clinic%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." target="_blank" rel="noopener noreferrer" class="hover:text-emerald-400 transition-colors">WhatsApp Booking Available</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-8 border-t border-slate-900 text-center text-xs text-slate-500">
+                <p>&copy; <span id="current-year"></span> Smile Aesthetics Dental Clinic. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Lucide Icons & Dynamic Year -->
+    <script>
+        lucide.createIcons();
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

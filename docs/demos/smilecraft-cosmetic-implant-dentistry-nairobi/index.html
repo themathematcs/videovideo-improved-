@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smilecraft Cosmetic & Implant Dentistry | Parklands, Nairobi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                            dark: '#0f172a',
+                            teal: '#0d9488'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Sticky Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-teal flex items-center justify-center text-white shadow-md shadow-brand-600/20 group-hover:scale-105 transition-transform">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="block font-bold text-slate-900 text-lg leading-tight tracking-tight">Smilecraft</span>
+                    <span class="block text-xs font-medium text-brand-teal tracking-wider uppercase">Cosmetic & Implant Dentistry</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center gap-8 font-medium text-sm text-slate-600">
+                <a href="#services" class="hover:text-brand-600 transition-colors">Services</a>
+                <a href="#why-us" class="hover:text-brand-600 transition-colors">Why Us</a>
+                <a href="#reviews" class="hover:text-brand-600 transition-colors">Reviews</a>
+                <a href="#contact" class="hover:text-brand-600 transition-colors">Location & Hours</a>
+            </nav>
+
+            <!-- CTA Button -->
+            <div class="flex items-center gap-4">
+                <a href="https://wa.me/254722987654?text=Hello%20Smilecraft%20Cosmetic%20%26%20Implant%20Dentistry%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="hidden sm:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-5 py-2.5 rounded-full shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <i data-lucide="message-circle" class="w-4 h-4 fill-current"></i>
+                    Book via WhatsApp
+                </a>
+                
+                <!-- Mobile Menu Toggle Button (Visual only for single-file mockup) -->
+                <button class="md:hidden p-2 text-slate-600 hover:text-slate-900">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden pt-16 pb-24 lg:pt-24 lg:pb-32 bg-gradient-to-b from-slate-900 via-slate-900 to-brand-dark text-white">
+        <!-- Background Glow Accents -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-teal/20 blur-[140px] rounded-full pointer-events-none"></div>
+        <div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-brand-600/15 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                <!-- Left Column: Content -->
+                <div class="lg:col-span-7 text-center lg:text-left">
+                    <!-- Trust Badge -->
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-amber-400 text-xs font-semibold mb-6 shadow-inner">
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+                            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+                            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+                            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+                            <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400"></i>
+                        </div>
+                        <span class="text-white/90">4.7 Stars on Google (38 Reviews)</span>
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6">
+                        World-Class <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-brand-500">Smile Makeovers</span> in Nairobi
+                    </h1>
+
+                    <p class="text-lg text-slate-300 mb-8 max-w-2xl mx-auto lg:mx-0 font-light">
+                        Welcome to Parklands' premier dental studio. From advanced dental implants to stunning cosmetic transformations, we combine precision technology with personalized gentle care.
+                    </p>
+
+                    <!-- CTAs -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                        <a href="https://wa.me/254722987654?text=Hello%20Smilecraft%20Cosmetic%20%26%20Implant%20Dentistry%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-8 py-4 rounded-xl shadow-xl shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                            <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+                            Book via WhatsApp Now
+                        </a>
+                        <a href="tel:+254722987654" 
+                           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white font-medium px-6 py-4 rounded-xl backdrop-blur-md border border-white/10 transition-all">
+                            <i data-lucide="phone" class="w-4 h-4"><span>+254 722 987 654</span></i>
+                        </a>
+                    </div>
+
+                    <!-- Micro Trust Indicators -->
+                    <div class="mt-10 pt-8 border-t border-white/10 grid grid-cols-3 gap-4 text-center lg:text-left">
+                        <div>
+                            <p class="text-2xl font-bold text-white">Parklands</p>
+                            <p class="text-xs text-slate-400">Convenient Location</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-white">100%</p>
+                            <p class="text-xs text-slate-400">Sterile & Safe</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-white">Expert</p>
+                            <p class="text-xs text-slate-400">Implant Specialists</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Visual Card / Image Placeholder -->
+                <div class="lg:col-span-5">
+                    <div class="relative mx-auto max-w-md lg:max-w-none">
+                        <!-- Glassmorphism Card Frame -->
+                        <div class="absolute -inset-1 rounded-3xl bg-gradient-to-tr from-brand-teal to-brand-500 opacity-30 blur-lg"></div>
+                        <div class="relative bg-slate-800/80 backdrop-blur-xl border border-white/10 p-6 sm:p-8 rounded-3xl shadow-2xl">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-teal">
+                                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-white">Premium Patient Care</h3>
+                                    <p class="text-xs text-slate-400">Pain-free modern dentistry</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-3 bg-white/5 p-3.5 rounded-xl border border-white/5">
+                                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                                    <span class="text-sm text-slate-200">State-of-the-art Dental Implants</span>
+                                </div>
+                                <div class="flex items-center gap-3 bg-white/5 p-3.5 rounded-xl border border-white/5">
+                                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                                    <span class="text-sm text-slate-200">Professional Teeth Whitening</span>
+                                </div>
+                                <div class="flex items-center gap-3 bg-white/5 p-3.5 rounded-xl border border-white/5">
+                                    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                                    <span class="text-sm text-slate-200">Porcelain Veneers & Crowns</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                                <span>📍 Parklands Road, Nairobi</span>
+                                <span class="text-emerald-400 font-medium">Open Today</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Services / Key Features Section -->
+    <section id="services" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-xs font-semibold uppercase tracking-widest text-brand-teal mb-3">Tailored Treatments</h2>
+                <p class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Crafting Confident Smiles in Nairobi</p>
+                <p class="mt-4 text-slate-600">We utilize advanced dental technology and techniques to ensure your comfort and long-lasting results.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-8 hover:shadow-xl hover:border-brand-500/20 transition-all group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                        <i data-lucide="activity" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Dental Implants</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Permanent, natural-looking replacements for missing teeth that restore your full bite strength and confidence.
+                    </p>
+                    <a href="https://wa.me/254722987654?text=Hello%2C%20I%27d%20like%20to%20inquire%20about%20Dental%20Implants." 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+                        Inquire on WhatsApp <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-8 hover:shadow-xl hover:border-brand-500/20 transition-all group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                        <i data-lucide="sparkles" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Cosmetic Dentistry</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Veneers, teeth whitening, and complete smile makeovers designed to give you a camera-ready, radiant smile.
+                    </p>
+                    <a href="https://wa.me/254722987654?text=Hello%2C%20I%27d%20like%20to%20inquire%20about%20Cosmetic%20Dentistry." 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+                        Inquire on WhatsApp <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-8 hover:shadow-xl hover:border-brand-500/20 transition-all group">
+                    <div class="w-14 h-14 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                        <i data-lucide="heart-pulse" class="w-7 h-7"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">General & Family Care</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Routine check-ups, deep cleaning, fillings, and preventative treatments to keep your oral health in pristine condition.
+                    </p>
+                    <a href="https://wa.me/254722987654?text=Hello%2C%20I%27d%20like%20to%20book%20a%20Dental%20Checkup." 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700">
+                        Inquire on WhatsApp <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Us Section -->
+    <section id="why-us" class="py-24 bg-slate-100/70 border-y border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-xs font-semibold uppercase tracking-widest text-brand-teal mb-3">The Smilecraft Difference</h2>
+                    <p class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-6">Why Nairobi Clients Trust Us With Their Smiles</p>
+                    <p class="text-slate-600 mb-8">
+                        We believe visiting the dentist should be a comfortable, stress-free experience. Our clinic on Parklands Road is equipped with modern sterilization technology and a soothing atmosphere.
+                    </p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">Experienced Dental Specialists</h4>
+                                <p class="text-sm text-slate-600">Skilled professionals specializing in complex cosmetic and implant procedures.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">Transparent & Affordable Pricing</h4>
+                                <p class="text-sm text-slate-600">Clear cost estimates with no hidden surprises before any procedure begins.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-900">Prime Parklands Location</h4>
+                                <p class="text-sm text-slate-600">Easily accessible with secure parking on Parklands Road, Nairobi.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Highlight Box / Stats -->
+                <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-slate-200/80 relative">
+                    <div class="absolute -top-4 -right-4 bg-amber-400 text-slate-900 font-bold px-4 py-2 rounded-xl text-sm shadow-md flex items-center gap-1.5">
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i> 4.7 Star Rating
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-4">Ready to Transform Your Smile?</h3>
+                    <p class="text-slate-600 text-sm mb-8">
+                        Booking an appointment takes less than a minute. Message our friendly front desk directly on WhatsApp for prompt scheduling.
+                    </p>
+                    <a href="https://wa.me/254722987654?text=Hello%20Smilecraft%20Cosmetic%20%26%20Implant%20Dentistry%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-600/20 transition-all">
+                        <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+                        Chat with Us on WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof / Testimonials Section -->
+    <section id="reviews" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-1.5 text-amber-500 mb-3">
+                    <i data-lucide="star" class="w-5 h-5 fill-amber-500"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-amber-500"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-amber-500"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-amber-500"></i>
+                    <i data-lucide="star" class="w-5 h-5 fill-amber-500"></i>
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Loved by Our Patients</h2>
+                <p class="mt-4 text-slate-600">Read verified experiences from real clients who trust us with their dental health.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Review 1 -->
+                <div class="bg-slate-50 p-8 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-1 text-amber-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                        </div>
+                        <p class="text-slate-700 italic text-sm leading-relaxed mb-6">
+                            "Smilecraft is absolute perfection! I had dental implant procedures done here in Parklands and the professionalism is unmatched. Painless, clean, and the staff made me feel so relaxed. Highly recommended!"
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 pt-4 border-t border-slate-200/60">
+                        <div class="w-10 h-10 rounded-full bg-brand-teal/20 text-brand-teal font-bold flex items-center justify-center text-sm">
+                            AN
+                        </div>
+                        <div>
+                            <p class="font-semibold text-slate-900 text-sm">Amina N.</p>
+                            <p class="text-xs text-slate-500">Google Review</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="bg-slate-50 p-8 rounded-2xl border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-1 text-amber-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                            <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i>
+                        </div>
+                        <p class="text-slate-700 italic text-sm leading-relaxed mb-6">
+                            "Best dental studio in Nairobi by far. Outstanding cosmetic work and very friendly doctors. Booking via WhatsApp was seamless and straightforward. Will definitely be coming back for regular checkups."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 pt-4 border-t border-slate-200/60">
+                        <div class="w-10 h-10 rounded-full bg-brand-600/20 text-brand-600 font-bold flex items-center justify-center text-sm">
+                            KM
+                        </div>
+                        <div>
+                            <p class="font-semibold text-slate-900 text-sm">Kevin M.</p>
+                            <p class="text-xs text-slate-500">Google Review</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Operating Hours & Location Section -->
+    <section id="contact" class="py-24 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                
+                <!-- Info Column -->
+                <div>
+                    <h2 class="text-xs font-semibold uppercase tracking-widest text-brand-teal mb-3">Visit Our Clinic</h2>
+                    <p class="text-3xl font-bold tracking-tight mb-6">Location & Operating Hours</p>
+                    <p class="text-slate-300 mb-8 text-sm leading-relaxed">
+                        Conveniently situated in the heart of Parklands, Nairobi. Drop by or schedule your appointment in advance via WhatsApp.
+                    </p>
+
+                    <div class="space-y-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-brand-teal shrink-0">
+                                <i data-lucide="map-pin" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-white">Address</h4>
+                                <p class="text-sm text-slate-300">Parklands Road, Nairobi, Kenya</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-brand-teal shrink-0">
+                                <i data-lucide="phone" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-white">Phone / WhatsApp</h4>
+                                <a href="tel:+254722987654" class="text-sm text-slate-300 hover:text-brand-teal transition-colors">+254 722 987 654</a>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-brand-teal shrink-0">
+                                <i data-lucide="clock" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-white">Working Hours</h4>
+                                <p class="text-sm text-slate-300">Monday – Saturday: 8:00 AM – 6:00 PM</p>
+                                <p class="text-sm text-slate-400">Sunday: Closed / Emergency Only</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Placeholder Column -->
+                <div class="bg-slate-800 rounded-3xl border border-white/10 p-4 flex flex-col justify-between h-[400px] lg:h-auto relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-slate-800 flex flex-col items-center justify-center text-center p-6">
+                        <div class="w-16 h-16 rounded-full bg-brand-teal/20 text-brand-teal flex items-center justify-center mb-4">
+                            <i data-lucide="map" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-white mb-2">Parklands Road, Nairobi</h4>
+                        <p class="text-sm text-slate-400 max-w-sm mb-6">Easily accessible clinic location with secure parking available for patients.</p>
+                        <a href="https://wa.me/254722987654?text=Hello%2C%20I%27d%20like%20directions%20to%20your%20Parklands%20Road%20clinic." 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm px-5 py-2.5 rounded-xl border border-white/10 transition-all">
+                            <i data-lucide="navigation" class="w-4 h-4"></i> Get Directions on WhatsApp
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <section class="py-20 bg-gradient-to-r from-brand-600 to-brand-teal text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]"></div>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-3xl sm:text-4xl font-bold tracking-tight mb-4">Ready to Flaunt Your Best Smile?</h2>
+            <p class="text-lg text-white/90 max-w-2xl mx-auto mb-8 font-light">
+                Book your consultation today with Smilecraft Cosmetic & Implant Dentistry in Parklands, Nairobi.
+            </p>
+            <a href="https://wa.me/254722987654?text=Hello%20Smilecraft%20Cosmetic%20%26%20Implant%20Dentistry%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="inline-flex items-center gap-3 bg-white text-brand-900 font-semibold px-8 py-4 rounded-xl shadow-xl hover:bg-slate-100 transition-all hover:scale-105 active:scale-95">
+                <i data-lucide="message-circle" class="w-5 h-5 fill-brand-600 text-brand-600"></i>
+                Book via WhatsApp
+            </a>
+        </div>
+    </section>
+
+    <!-- Professional Footer -->
+    <footer class="bg-slate-950 text-slate-400 py-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+                
+                <!-- Brand Info -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-teal flex items-center justify-center text-white">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <span class="block font-bold text-white text-base leading-tight tracking-tight">Smilecraft</span>
+                            <span class="block text-[10px] font-medium text-brand-teal tracking-wider uppercase">Cosmetic & Implant Dentistry</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-400 max-w-sm mb-4">
+                        Your trusted dental studio for advanced implants, cosmetic transformations, and gentle family dental care in Parklands, Nairobi.
+                    </p>
+                    <div class="flex items-center gap-2 text-xs text-amber-400">
+                        <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
+                        <span>Rated 4.7 Stars on Google (38 Reviews)</span>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-semibold text-white text-sm mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#services" class="hover:text-white transition-colors">Services</a></li>
+                        <li><a href="#why-us" class="hover:text-white transition-colors">Why Choose Us</a></li>
+                        <li><a href="#reviews" class="hover:text-white transition-colors">Patient Reviews</a></li>
+                        <li><a href="#contact" class="hover:text-white transition-colors">Location & Hours</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div>
+                    <h4 class="font-semibold text-white text-sm mb-4">Contact Info</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li>Parklands Road, Nairobi</li>
+                        <li><a href="tel:+254722987654" class="hover:text-white transition-colors">+254 722 987 654</a></li>
+                        <li>
+                            <a href="https://wa.me/254722987654?text=Hello%20Smilecraft%20Cosmetic%20%26%20Implant%20Dentistry%2C%20I%20found%20your%20website%20and%20would%20like%20to%20book%20an%20appointment." 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="text-brand-teal hover:underline inline-flex items-center gap-1 mt-1">
+                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp Chat
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+                <p>&copy; <span id="current-year"></span> Smilecraft Cosmetic & Implant Dentistry. All rights reserved.</p>
+                <p class="mt-2 sm:mt-0">Parklands Road, Nairobi, Kenya</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script to set dynamic copyright year -->
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+
+    <!-- Lucide Icons Initialization -->
+    <script>lucide.createIcons();</script>
+</body>
+</html>

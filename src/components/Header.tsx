@@ -4,8 +4,8 @@ import { SystemRateLimits } from "../types";
 import { RateLimitPill } from "./RateLimitPill";
 
 interface HeaderProps {
-  activeTab: "storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study";
-  setActiveTab: (tab: "storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study") => void;
+  activeTab: "storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study" | "whatsapp";
+  setActiveTab: (tab: "storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study" | "whatsapp") => void;
   rateLimits: SystemRateLimits;
   onRefreshRateLimits: () => void;
   isRefreshingLimits: boolean;
@@ -80,6 +80,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <GraduationCap className="w-3.5 h-3.5" />
               <span>Long Format Studies</span>
+            </button>
+
+            <button
+              id="tab-whatsapp-btn"
+              onClick={() => setActiveTab("whatsapp")}
+              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                activeTab === "whatsapp"
+                  ? "bg-emerald-500 text-white font-bold shadow-xs"
+                  : "text-emerald-400 hover:text-emerald-200"
+              }`}
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>WhatsApp AI</span>
             </button>
 
             <button

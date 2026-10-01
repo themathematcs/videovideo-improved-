@@ -10,37 +10,66 @@ import { JsonExportView } from "./components/JsonExportView";
 import { PythonScriptView } from "./components/PythonScriptView";
 import { ProjectPlan, Scene, StockMediaItem, SystemRateLimits } from "./types";
 import { Download, FileJson, Terminal, Film, Sparkles, AlertCircle, Play, Music } from "lucide-react";
+import { WhatsAppSettingsPanel } from "./components/WhatsAppSettingsPanel";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study">("auto");
-  
-  // Initial script using the exact test prompt requested by the user
-  const [script, setScript] = useState(
-    "Software engineering is evolving fast. Developers are using modern tools to build applications faster than ever before."
-  );
-  const [projectName, setProjectName] = useState("software_evolution");
+  const [activeTab, setActiveTab] = useState<"storyboard" | "audio" | "json" | "python" | "auto" | "remotion_study" | "whatsapp">("auto");
 
-  const [plan, setPlan] = useState<ProjectPlan>({
-    project_name: "software_evolution",
-    scenes: [
-      {
-        scene_number: 1,
-        script_line: "Software engineering is evolving fast.",
-        search_keywords: "software engineer coding fast",
-        media_type: "video",
-      },
-      {
-        scene_number: 2,
-        script_line: "Developers are using modern tools to build applications faster than ever before.",
-        search_keywords: "developer computer office workspace",
-        media_type: "video",
-      },
-    ],
-    audio_suggestions: {
-      music_keywords: ["tech ambient synth", "cinematic inspirational", "lofi chill coding"],
-      sfx_keywords: ["keyboard typing", "futuristic swoosh", "data server hum"],
-    },
+  // Load saved data from localStorage on mount
+  const [script, setScript] = useState(() => {
+    const saved = localStorage.getItem('broll_script');
+    return saved || "Software engineering is evolving fast. Developers are using modern tools to build applications faster than ever before.";
   });
+  const [projectName, setProjectName] = useState(() => {
+    const saved = localStorage.getItem('broll_project_name');
+    return saved || "software_evolution";
+  });
+
+  // Save script and project name to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('broll_script', script);
+  }, [script]);
+
+  useEffect(() => {
+    localStorage.setItem('broll_project_name', projectName);
+  }, [projectName]);
+
+  const [plan, setPlan] = useState<ProjectPlan>(() => {
+    const saved = localStorage.getItem('broll_plan');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // Fall back to default if saved data is invalid
+      }
+    }
+    return {
+      project_name: "software_evolution",
+      scenes: [
+        {
+          scene_number: 1,
+          script_line: "Software engineering is evolving fast.",
+          search_keywords: "software engineer coding fast",
+          media_type: "video",
+        },
+        {
+          scene_number: 2,
+          script_line: "Developers are using modern tools to build applications faster than ever before.",
+          search_keywords: "developer computer office workspace",
+          media_type: "video",
+        },
+      ],
+      audio_suggestions: {
+        music_keywords: ["tech ambient synth", "cinematic inspirational", "lofi chill coding"],
+        sfx_keywords: ["keyboard typing", "futuristic swoosh", "data server hum"],
+      },
+    };
+  });
+
+  // Save plan to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('broll_plan', JSON.stringify(plan));
+  }, [plan]);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [autoSearchOnAnalyze, setAutoSearchOnAnalyze] = useState(true);
@@ -308,8 +337,11 @@ export default function App() {
           </div>
         )}
 
+        {/* WhatsApp AI Tab */}
+        {activeTab === "whatsapp" && <WhatsAppSettingsPanel />}
+
         {/* Script Input & Presets - shown for manual Storyboard, Audio, JSON, and Python workflows */}
-        {activeTab !== "auto" && (
+        {activeTab !== "auto" && activeTab !== "whatsapp" && (
           <>
             <ScriptInput
               script={script}
